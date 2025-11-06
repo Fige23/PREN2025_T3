@@ -1,0 +1,27 @@
+//         __  ___   ______   ______   __  __    _   __
+//        /  |/  /  / ____/  / ____/  / / / /   / | / /
+//       / /|_/ /  / /      / /_     / / / /   /  |/ /
+//      / /  / /  / /___   / __/    / /_/ /   / /|  /
+//     /_/  /_/   \____/  /_/       \____/   /_/ |_/
+//     (c) Hochschule Luzern T&A  ==== www.hslu.ch ====
+//
+//     \brief   Common settings of the FTM3
+//     \author  Christian Jost, christian.jost@hslu.ch
+//     \date    15.04.2025
+//     ------------------------------------------------
+
+#ifndef SOURCES_FTM3_H_
+#define SOURCES_FTM3_H_
+
+#define FTM3_CLOCK              60000000  // 60 MHz
+#define FTM3_MODULO               0x0FFF  // 4095
+
+
+// calulate nr of TOF count for a given number of milliseconds
+#define FTM3_TOFS_MS(x)         ((uint16_t)(((FTM3_CLOCK / 1000) * x) / (FTM3_MODULO + 1)))
+
+void ftm3_init(void);
+
+
+
+#endif /* SOURCES_FTM3_H_ */

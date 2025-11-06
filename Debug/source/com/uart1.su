@@ -1,0 +1,16 @@
+C:\Users\felix\Documents\MCUXpressoIDE_11.10.0_3148\workspace_PREN\PREN_Puzzleroboter\CMSIS/core_cm4.h:1684:22:__NVIC_EnableIRQ	16	static
+C:\Users\felix\Documents\MCUXpressoIDE_11.10.0_3148\workspace_PREN\PREN_Puzzleroboter\CMSIS/core_cm4.h:1722:22:__NVIC_DisableIRQ	16	static
+C:\Users\felix\Documents\MCUXpressoIDE_11.10.0_3148\workspace_PREN\PREN_Puzzleroboter\CMSIS/core_cm4.h:1814:22:__NVIC_SetPriority	16	static
+C:\Users\felix\Documents\MCUXpressoIDE_11.10.0_3148\workspace_PREN\PREN_Puzzleroboter\source/platform.h:70:22:NVIC_DisableIRQEx	16	static
+../source/com/uart1.c:41:6:UART1_RX_TX_IRQHandler	16	static
+../source/com/uart1.c:78:6:UART1_ERR_IRQHandler	4	static
+../source/com/uart1.c:95:6:uart1WriteChar	16	static
+../source/com/uart1.c:113:6:uart1Write	16	static
+../source/com/uart1.c:126:6:uart1WriteLine	16	static
+../source/com/uart1.c:140:6:uart1ReadChar	16	static
+../source/com/uart1.c:168:10:uart1ReadLine	24	static
+../source/com/uart1.c:191:6:uart1HasLineReceived	16	static
+../source/com/uart1.c:211:10:uart1RxBufCount	4	static
+../source/com/uart1.c:231:5:_write	32	static
+../source/com/uart1.c:254:5:_read	24	static
+../source/com/uart1.c:276:6:uart1_init	24	static

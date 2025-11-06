@@ -1,0 +1,4 @@
+../source/io/led.c:73:6:ledSetColorLeft	16	static
+../source/io/led.c:84:6:ledSetColorRight	16	static
+../source/io/led.c:95:6:ledSetColor	24	static
+../source/io/led.c:122:6:ledInit	4	static
