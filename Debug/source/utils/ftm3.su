@@ -1,5 +1,0 @@
-C:\Users\felix\Documents\MCUXpressoIDE_11.10.0_3148\workspace_PREN\PREN_Puzzleroboter\CMSIS/core_cm4.h:1684:22:__NVIC_EnableIRQ	16	static
-C:\Users\felix\Documents\MCUXpressoIDE_11.10.0_3148\workspace_PREN\PREN_Puzzleroboter\CMSIS/core_cm4.h:1814:22:__NVIC_SetPriority	16	static
-../source/utils/ftm3.c:19:6:Default_Handler_FTM3	4	static
-../source/utils/ftm3.c:44:6:FTM3_IRQHandler	8	static
-../source/utils/ftm3.c:57:6:ftm3_init	8	static

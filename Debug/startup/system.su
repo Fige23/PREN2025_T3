@@ -1,5 +1,0 @@
-../startup/system.c:27:6:SystemInitHook	4	static
-../startup/system.c:55:12:utilCheckStackSize	24	static
-../startup/system.c:75:6:systemPostInit	8	static
-../startup/system.c:85:6:McuHardFault_HandlerC	16	static
-../startup/system.c:155:29:HardFault_Handler	0	static
