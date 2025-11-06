@@ -17,6 +17,8 @@ Release/
 *.d
 *.bin
 *.hex
+*.default_mex
+*.mex
 
 # Backup/Temp
 *~
