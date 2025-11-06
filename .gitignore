@@ -1,0 +1,29 @@
+# MCUXpresso / Eclipse
+Debug/
+Release/
+.settings/
+.metadata/
+.cproject
+.project
+.idea/
+.vscode/
+*.launch
+
+# Build artefacts
+*.elf
+*.axf
+*.map
+*.o
+*.d
+*.bin
+*.hex
+
+# Backup/Temp
+*~
+*.swp
+*.bak
+*.tmp
+
+# User specific
+*.log
+*.DS_Store
