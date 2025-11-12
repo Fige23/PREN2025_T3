@@ -38,6 +38,7 @@ typedef enum {
 
 typedef struct {
 	CommandId_e cmd;
+	int no;
 	float x_mm;
 	float y_mm;
 	float z_mm;

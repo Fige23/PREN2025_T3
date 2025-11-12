@@ -276,7 +276,7 @@ int _read(int fd, char *buf, int count)
  *   - PTC3 Mux3:UART1_RX, (MUX7:LPUART1_RX)
  *   - PTC4 Mux3:UART1_TX, (MUX7:LPUART1_TX)
  */
-void uart0Init(uint16_t baudrate)
+void uart0Init(uint32_t baudrate)
 {
   txBufReadPos = txBufWritePos = txBufCount = 0;
   rxBufReadPos = rxBufWritePos = rxBufCount = 0;

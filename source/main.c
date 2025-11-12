@@ -10,49 +10,41 @@
 //     \date    13.05.2025
 //     ------------------------------------------------
 
+
+// calulate nr of TOF count for a given number of milliseconds
+
+#define TOFS_MS(x)   ((uint16_t)(((FTM3_CLOCK / 1000) * x) / (FTM3_MODULO + 1)))
+
 #include "platform.h"
 #include "uart.h"
 #include "ftm0.h"
 #include "ftm3.h"
 #include "led.h"
-#include "state.h"
-#include "protocol.h"
+#include "serial_port.h"
+#include "cmd.h"
 
-
-// calulate nr of TOF count for a given number of milliseconds
-#define TOFS_MS(x)   ((uint16_t)(((FTM3_CLOCK / 1000) * x) / (FTM3_MODULO + 1)))
 
 
 
 //Main function of Puzzle Robot
-int main(void)
-{
-	/*
-	BOARD_initBootPins();
-	BOARD_initBootClocks();
-	BOARD_initBootPeripherals();
+int main(void){
 
-	uart1_init(115200u); //checken ob passt, übernommen von MC-Car
-	//auch hier übernommen con MC-Car, stimmt sicher nicht
-	ftm0_init(); //zb stepper timer
-	ftm3_init(); //zb systemzeit
+	serial_init(115200);
 
-	protocol_init();
-	state_init();
+	cmd_init();
 
-	while(true){
-
-		//uart empfang vorbereiten, neue befehle übersetzen
-		protocol_task();
-
-		//state machine ausführen
-		state_task();
-
+	for(;;){
+		cmd_poll();
+		__asm volatile("nop");
 	}
 
-
-
-*/
-
 }
+
+
+
+
+
+
+
+
 

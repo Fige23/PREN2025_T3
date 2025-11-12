@@ -9,6 +9,7 @@
 //     \author  Christian Jost, christian.jost@hslu.ch
 //     \date    25.02.2025
 //     ------------------------------------------------
+#include <stdbool.h>
 
 #ifndef SOURCES_UART_H_
 #define SOURCES_UART_H_
@@ -52,7 +53,7 @@ char uart0ReadChar(void);
 uint16_t uart0ReadLine(char *str, uint16_t length);
 bool uart0HasLineReceived(void);
 uint16_t uart0RxBufCount(void);
-void uart0Init(uint16_t baudrate);
+void uart0Init(uint32_t baudrate);
 
 void uart1WriteChar(char ch);
 void uart1Write(const char *str);
@@ -61,15 +62,6 @@ char uart1ReadChar(void);
 uint16_t uart1ReadLine(char *str, uint16_t length);
 bool uart1HasLineReceived(void);
 uint16_t uart1RxBufCount(void);
-void uart1_init(uint16_t baudrate);
-
-void lpuart0WriteChar(char ch);
-void lpuart0Write(const char *str);
-void lpuart0WriteLine(const char *str);
-char lpuart0ReadChar(void);
-uint16_t lpuart0ReadLine(char *str, uint16_t length);
-bool lpuart0HasLineReceived(void);
-uint16_t lpuart0RxBufCount(void);
-void lpuart0Init(uint16_t baudrate);
+void uart1_init(uint32_t baudrate);
 
 #endif /* SOURCES_UART_H_ */
