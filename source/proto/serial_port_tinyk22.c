@@ -7,7 +7,10 @@
 | _ \ _ \ __| \| | | _ \ | | |_  /_  /| |  | __| _ )/ _ \|_   _|
 |  _/   / _|| .` | |  _/ |_| |/ / / / | |__| _|| _ \ (_) | | |
 |_| |_|_\___|_|\_| |_|  \___//___/___||____|___|___/\___/  |_|
-${file_name}	Created on: ${date}	   Author: Fige23	Team 3
+serial_port_tinyk22.c
+Created on: 13.11.2025
+Author: Fige23
+Team 3
 */
 
 #include "serial_port.h"

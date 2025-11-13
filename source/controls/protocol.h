@@ -7,7 +7,10 @@
 | _ \ _ \ __| \| | | _ \ | | |_  /_  /| |  | __| _ )/ _ \|_   _|
 |  _/   / _|| .` | |  _/ |_| |/ / / / | |__| _|| _ \ (_) | | |
 |_| |_|_\___|_|\_| |_|  \___//___/___||____|___|___/\___/  |_|
-${file_name}	Created on: ${date}	   Author: Fige23	Team 3
+protocol.h
+Created on: 13.11.2025
+Author: Fige23
+Team 3
 */
 #ifndef CONTROL_PROTOCOL_H_
 #define CONTROL_PROTOCOL_H_

@@ -7,7 +7,10 @@
 | _ \ _ \ __| \| | | _ \ | | |_  /_  /| |  | __| _ )/ _ \|_   _|
 |  _/   / _|| .` | |  _/ |_| |/ / / / | |__| _|| _ \ (_) | | |
 |_| |_|_\___|_|\_| |_|  \___//___/___||____|___|___/\___/  |_|
-${file_name}	Created on: ${date}	   Author: Fige23	Team 3
+cmd.c
+Created on: 12.11.2025
+Author: Fige23
+Team 3
 */
 #include <stdint.h>
 #include <stdbool.h>
@@ -151,6 +154,55 @@ static bool cmd_pos(int argc, char **argv){
 	replyf("POS x=%ld y=%ld z=%ld phi=%ld%s", (long)g_status.pos.x_mm, (long)g_status.pos.y_mm, (long)g_status.pos.z_mm, (long)g_status.pos.phi_deg, EOL);
 	return true;
 }
+
+static bool cmd_pick(int argc, char **argv){
+	//Picken...
+
+
+	send_ok("PICK");
+	return true;
+}
+
+static bool cmd_place(int argc, char **argv){
+	//Placen
+
+	send_ok("PLACE");
+	return true;
+}
+
+static bool cmd_home(int argc, char **argv){
+	//homen
+
+	send_ok("HOME");
+	return true;
+}
+//noch anpassen...
+static bool cmd_reset(int argc, char **argv){
+	(void)argc; (void)argv;
+	g_status.state = STATE_IDLE;
+	g_status.has_part = false;
+	g_status.homed = false;
+	g_status.last_err = ERR_NONE;
+	send_ok("RESET");
+	return true;
+}
+
+static bool cmd_magnet(int argc, char **argv){
+	//magnet
+
+	send_ok("MAGNET");
+	return true;
+}
+
+static bool cmd_move(int argc, char **argv){
+	//move
+
+
+	send_ok("MOVE");
+	return true;
+}
+
+
 //Hier später weitere befehle einfügen....
 
 
@@ -160,7 +212,13 @@ static bool cmd_pos(int argc, char **argv){
 static const cmd_entry_s s_cmds[] = {
 		{"PING", cmd_ping},
 		{"STATUS", cmd_status},
-		{"POS", cmd_pos}
+		{"POS", cmd_pos},
+		{"PICK", cmd_pick},
+		{"PLACE", cmd_place},
+		{"HOME", cmd_home},
+		{"RESET", cmd_reset},
+		{"MAGNET", cmd_magnet},
+		{"MOVE", cmd_move}
 		//Hier später weitere einfügen....
 };
 
