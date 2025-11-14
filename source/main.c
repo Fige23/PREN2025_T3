@@ -27,7 +27,7 @@ Team 3
 #include "led.h"
 #include "serial_port.h"
 #include "cmd.h"
-
+#include "bot.h"
 
 
 
@@ -40,6 +40,7 @@ int main(void){
 
 	for(;;){
 		cmd_poll();
+		bot_step();
 		__asm volatile("nop");
 	}
 
