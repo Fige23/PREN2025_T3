@@ -129,6 +129,7 @@ static bool cmd_home(int argc, char **argv) {
 
 // --- MAGNET ON|OFF (asynchron) ---
 static bool cmd_magnet(int argc, char **argv) {
+	str_upper(argv[1]); //on, off case insensitive
 	if (argc != 2) {
 		send_err("MAGNET", "SYNTAX");
 		return false;
