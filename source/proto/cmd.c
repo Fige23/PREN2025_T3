@@ -129,7 +129,6 @@ static bool cmd_home(int argc, char **argv) {
 
 // --- MAGNET ON|OFF (asynchron) ---
 static bool cmd_magnet(int argc, char **argv) {
-	str_upper(argv[1]); //on, off case insensitive
 	if (argc != 2) {
 		send_err("MAGNET", "SYNTAX");
 		return false;
@@ -309,7 +308,9 @@ static void dispatch_line(char *line) {
 	if (argc == 0)
 		return;
 
-	str_upper(argv[0]); // Befehl selbst UPPERCASE
+	for(int i=0 ; i < argc; i++){
+		str_upper(argv[i]);	//case insensitive
+	}
 	for (size_t i = 0; i < sizeof(s_cmds) / sizeof(s_cmds[0]); ++i) {
 		if (strcmp(argv[0], s_cmds[i].name) == 0) {
 			(void) s_cmds[i].fn(argc, argv);
