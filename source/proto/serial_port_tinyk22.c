@@ -26,7 +26,7 @@ Team 3
 
 static inline void hw_init(uint32_t baud) {uart1_init(baud);}
 static inline int hw_rx_count(void) {return (int)uart1RxBufCount();}
-static inline int hw_read_char(void) {return uart1ReadChar();}//wenn nichrs da :-1
+static inline int hw_read_char(void) {return uart1ReadChar();}//wenn nichts da :-1
 static inline void hw_write_char(uint8_t c) {uart1WriteChar((char)c);}
 static inline void hw_write_str(const char *s) {uart1Write(s);}
 size_t serial_rx_available(void) {
