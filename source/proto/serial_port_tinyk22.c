@@ -35,7 +35,7 @@ size_t serial_rx_available(void) {
 
 #endif
 
-#ifdef SERIAL_USE_UART
+#ifdef SERIAL_USE_UART0
 
 static inline void hw_init(uint16_t baud) {uart0_init(baud);}
 static inline int hw_rx_count(void) {return (int)uart0RxBufCount();}
