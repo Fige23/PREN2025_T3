@@ -1,4 +1,4 @@
-/*Project: ${project_name}
+/*Project: PREN_Puzzleroboter
  (   (          )   (            )   ) (               )
  )\ ))\ )    ( /(   )\ )      ( /(( /( )\ )      (  ( /(   *   )
  (()/(()/((   )\()) (()/(   (  )\())\()|()/( (  ( )\ )\())` )  /(
@@ -11,6 +11,20 @@
  Created on: 12.11.2025
  Author: Fige23
  Team 3
+
+ UART Command-Parser / Dispatcher.
+ - Liest Zeilen non-blocking von UART (cmd_poll).
+ - Zerlegt eine Zeile in Tokens (argv/argc), macht alles case-insensitive.
+ - Sucht passenden Handler in s_cmds und führt ihn aus.
+ - Handler validieren Syntax/State (homed, estop, has_part, etc.).
+ - Positions-Parameter kommen als Float-Text rein (z.B. x=12.345),
+   werden hier über parse_pos_tokens_mask() direkt zu Fixed-Point ints:
+     x/y/z in 0.001 mm (1 µm), phi in 0.01°.
+ - Hardware-/Zeitkritische Befehle (MOVE, HOME, PICK, PLACE, MAGNET) werden als Actions gequeued.
+	MAGNET ist dabei instant, läuft aber ebenfalls über die Queue, damit die Reihenfolge garantiert bleibt.
+	-> Antwort ist zuerst "QUEUED ... id=..".
+   Finales OK/ERR kommt später aus bot_step().
+ - Synchron ist nur RESET (setzt lokalen Status zurück).
  */
 
 #include <stdint.h>
@@ -22,9 +36,9 @@
 #include <stddef.h>
 
 #include "serial_port.h"
-#include "protocol.h"   // g_status, state_to_str(), err_to_str(), Limits/Scales
-#include "parse_kv.h"   // kv_fixed_any_lower(), kv_fixed_spec_s
-#include "bot.h"        // bot_enqueue(), bot_action_s, bot_action_e
+#include "protocol.h"   // g_status + state/err helper + Limits/Scales
+#include "parse_kv.h"   // parse_pos_tokens_mask() + KV_* masks
+#include "bot.h"        // bot_enqueue() + bot_action_s
 
 #ifndef CMD_LINE_MAX
 #define CMD_LINE_MAX 128
@@ -33,6 +47,8 @@
 // -----------------------------------------------------------------------------
 // UART reply helpers
 // -----------------------------------------------------------------------------
+// Einheitliche Protokoll-Ausgabe nach oben.
+// EOL ist überall gleich, replyf ist unser printf-Wrapper.
 static const char *EOL = "\n";   // End-of-line for replies
 
 static void replyf(const char *fmt, ...) {
@@ -44,25 +60,51 @@ static void replyf(const char *fmt, ...) {
 	serial_puts(buf);
 }
 
+// Standard-OK für rein synchrone Befehle (PING, RESET, ...).
 static void send_ok(const char *cmd) {
 	replyf("OK %s%s", cmd, EOL);
 }
+// Standard-ERR mit einfachem Error-String (SYNTAX, ESTOP, NO_HOME, ...).
 static void send_err(const char *cmd, const char *e) {
 	replyf("ERR %s %s%s", cmd, e, EOL);
 }
 
+// Request-IDs laufen monoton hoch und werden mit jeder Action gepusht.
+// Der Pi verwendet id=.. später zum Zuordnen der finalen OK/ERR.
 static uint16_t s_next_req_id = 1;
 static void send_queued(const char *cmd, uint16_t id) {
 	replyf("QUEUED %s id=%u%s", cmd, (unsigned) id, EOL);
 }
 
+// Kleiner Helper für STATUS-Ausgabe.
 static const char* yesno(bool b) {
 	return b ? "YES" : "NO";
+}
+
+// Formatierung von Fixed-Point Positionen für UART, ohne float printf.
+// um -> "mm.mmm" / cdeg -> "deg.dd".
+static void print_mm3(const char *name, int32_t um)
+{
+    int32_t mm   = um / 1000;
+    int32_t frac = um % 1000;
+    if (frac < 0) frac = -frac;
+
+    replyf("%s=%ld.%03ld ", name, (long)mm, (long)frac);
+}
+
+static void print_deg2(const char *name, int32_t cdeg)
+{
+    int32_t deg  = cdeg / 100;
+    int32_t frac = cdeg % 100;
+    if (frac < 0) frac = -frac;
+
+    replyf("%s=%ld.%02ld ", name, (long)deg, (long)frac);
 }
 
 // -----------------------------------------------------------------------------
 // Command handlers
 // -----------------------------------------------------------------------------
+// Jeder Handler bekommt argc/argv (argv[0] ist der Command-Name).
 typedef bool (*cmd_handler_fp_t)(int argc, char **argv);
 
 typedef struct {
@@ -71,6 +113,7 @@ typedef struct {
 } cmd_entry_s;
 
 // --- PING ---
+// Minimaler Sync-Test: antwortet sofort mit OK.
 static bool cmd_ping(int argc, char **argv) {
 	(void) argc;
 	(void) argv;
@@ -79,30 +122,48 @@ static bool cmd_ping(int argc, char **argv) {
 }
 
 // --- STATUS ---
-static bool cmd_status(int argc, char **argv) {
-	(void) argc;
-	(void) argv;
-	replyf("STATUS state=%s (%d) homed=%s part=%s estop=%s err=%s "
-			"POS x=%ld y=%ld z=%ld phi=%ld%s", state_to_str(g_status.state),
-			(int) g_status.state, yesno(g_status.homed),
-			yesno(g_status.has_part), yesno(g_status.estop),
-			err_to_str(g_status.last_err), (long) g_status.pos.x_mm,
-			(long) g_status.pos.y_mm, (long) g_status.pos.z_mm,
-			(long) g_status.pos.phi_deg, EOL);
-	return true;
+// Gibt den aktuellen globalen Status inkl. interner Position aus.
+// Position wird human-readable formatiert, intern bleibt alles Fixed-Point.
+static bool cmd_status(int argc, char **argv)
+{
+    (void)argc; (void)argv;
+
+    replyf("STATUS state=%s (%d) homed=%s part=%s estop=%s err=%s POS ",
+           state_to_str(g_status.state),
+           (int)g_status.state,
+           yesno(g_status.homed),
+           yesno(g_status.has_part),
+           yesno(g_status.estop),
+           err_to_str(g_status.last_err));
+
+    print_mm3("x", g_status.pos.x_001mm);
+    print_mm3("y", g_status.pos.y_001mm);
+    print_mm3("z", g_status.pos.z_001mm);
+    print_deg2("phi", g_status.pos.phi_001deg);
+
+    replyf("%s", EOL);
+    return true;
 }
 
 // --- POS ---
-static bool cmd_pos(int argc, char **argv) {
-	(void) argc;
-	(void) argv;
-	replyf("POS x=%ld y=%ld z=%ld phi=%ld%s", (long) g_status.pos.x_mm,
-			(long) g_status.pos.y_mm, (long) g_status.pos.z_mm,
-			(long) g_status.pos.phi_deg, EOL);
-	return true;
+// Kurzform von STATUS: nur Position ausgeben.
+static bool cmd_pos(int argc, char **argv)
+{
+    (void)argc; (void)argv;
+
+    replyf("POS ");
+    print_mm3("x", g_status.pos.x_001mm);
+    print_mm3("y", g_status.pos.y_001mm);
+    print_mm3("z", g_status.pos.z_001mm);
+    print_deg2("phi", g_status.pos.phi_001deg);
+    replyf("%s", EOL);
+
+    return true;
 }
 
 // --- HOME (asynchron) ---
+// Startet Homing über Bot-Queue. Keine Parameter erlaubt.
+// Finales OK/ERR kommt aus bot_step().
 static bool cmd_home(int argc, char **argv) {
 	(void) argv;
 	if (argc != 1) {
@@ -128,6 +189,7 @@ static bool cmd_home(int argc, char **argv) {
 }
 
 // --- MAGNET ON|OFF (asynchron) ---
+// Schaltet Magnet über Bot-Queue. Argument muss ON oder OFF sein.
 static bool cmd_magnet(int argc, char **argv) {
 	if (argc != 2) {
 		send_err("MAGNET", "SYNTAX");
@@ -158,33 +220,37 @@ static bool cmd_magnet(int argc, char **argv) {
 	return true;
 }
 
-// --- MOVE x= y= z= phi=  (Floats erlaubt; intern Fixed-Point, asynchron) ---
-static bool cmd_move(int argc, char **argv){
+// --- MOVE x= y= z= phi=  (asynchron) ---
+// Erlaubt Float-Text als Input, intern wird direkt auf Fixed-Point geparst.
+// Optional-Parameter: nicht angegebene Achsen bleiben auf aktueller Position.
+static bool cmd_move(int argc, char **argv)
+{
     if (argc < 2)        { send_err("MOVE","SYNTAX");  return false; }
     if (g_status.estop)  { send_err("MOVE","ESTOP");   return false; }
     if (!g_status.homed) { send_err("MOVE","NO_HOME"); return false; }
 
-    int32_t x_s  = g_status.pos.x_mm    * SCALE_MM;
-    int32_t y_s  = g_status.pos.y_mm    * SCALE_MM;
-    int32_t z_s  = g_status.pos.z_mm    * SCALE_MM;
-    int32_t ph_s = g_status.pos.phi_deg * SCALE_DEG;
+    // Defaults = aktuelle Position (Fixed-Point), damit Teil-MOVEs präzise bleiben.
+    int32_t x_s  = g_status.pos.x_001mm;
+    int32_t y_s  = g_status.pos.y_001mm;
+    int32_t z_s  = g_status.pos.z_001mm;
+    int32_t ph_s = g_status.pos.phi_001deg;
 
-    // MOVE: beliebige Teilmenge erlaubt, aber mindestens 1 Key
+    // MOVE: mindestens 1 Key, erlaubt x/y/z/phi in beliebiger Kombination.
     err_e e = parse_pos_tokens_mask(
         argc, argv, 1, &x_s, &y_s, &z_s, &ph_s,
-        /*require_mask=*/0,                              // mind. 1 Key, aber beliebige Teilmenge
-        /*allowed_mask=*/KV_X | KV_Y | KV_Z | KV_PHI,    // alle vier erlaubt
+        /*require_mask=*/0,
+        /*allowed_mask=*/KV_X | KV_Y | KV_Z | KV_PHI,
         /*seen_out=*/NULL
     );
     if (e != ERR_NONE) { send_err("MOVE", err_to_str(e)); return false; }
 
     bot_action_s a = {
-    		.type=ACT_MOVE,
-			.x_001mm=x_s,
-			.y_001mm=y_s,
-            .z_001mm=z_s,
-			.phi_001deg=ph_s,
-			.req_id=s_next_req_id++
+        .type=ACT_MOVE,
+        .x_001mm=x_s,
+        .y_001mm=y_s,
+        .z_001mm=z_s,
+        .phi_001deg=ph_s,
+        .req_id=s_next_req_id++
     };
 
     if (!bot_enqueue(&a)) { send_err("MOVE","QUEUE_FULL"); return false; }
@@ -193,33 +259,34 @@ static bool cmd_move(int argc, char **argv){
 }
 
 
-// --- PICK / PLACE (asynchron, hier noch ohne Parameter) ---
-static bool cmd_pick(int argc, char **argv){
-    if (g_status.estop)  { send_err("PICK","ESTOP");   return false; }
-    if (!g_status.homed) { send_err("PICK","NO_HOME"); return false; }
-    if (g_status.has_part) { send_err("PICK","RANGE"); return false; } // schon beladen
+// --- PICK (asynchron) ---
+// Nimmt ein Teil an Ziel XY auf. Protokoll erlaubt kein z= (Z läuft intern).
+// Pflicht: x,y. Optional: phi.
+static bool cmd_pick(int argc, char **argv)
+{
+    if (g_status.estop)     { send_err("PICK","ESTOP");   return false; }
+    if (!g_status.homed)    { send_err("PICK","NO_HOME"); return false; }
+    if (g_status.has_part)  { send_err("PICK","RANGE");   return false; }
 
-    // Für PICK keine Defaults → alles explizit
     int32_t x_s=0, y_s=0, z_s=0, ph_s=0;
 
-    // Pflicht: x,y,z — Erlaubt: x,y,z,phi (phi optional)
+    // PICK: x,y Pflicht / phi optional / z verboten (Whitelist!)
     err_e e = parse_pos_tokens_mask(
         argc, argv, 1,
         &x_s, &y_s, &z_s, &ph_s,
-        /*require_mask=*/KV_X | KV_Y,                   // x,y Pflicht
-        /*allowed_mask=*/KV_X | KV_Y | KV_PHI,          // z NICHT erlaubt
+        /*require_mask=*/KV_X | KV_Y,
+        /*allowed_mask=*/KV_X | KV_Y | KV_PHI,
         /*seen_out=*/NULL
     );
     if (e != ERR_NONE) { send_err("PICK", err_to_str(e)); return false; }
 
-    // phi wird akzeptiert, aber von der Engine ggf. ignoriert:
     bot_action_s a = {
-    		.type=ACT_PICK,
-			.x_001mm=x_s,
-			.y_001mm=y_s,
-            .z_001mm=z_s,
-			.phi_001deg=ph_s,
-			.req_id=s_next_req_id++
+        .type=ACT_PICK,
+        .x_001mm=x_s,
+        .y_001mm=y_s,
+        .z_001mm=z_s,          // bleibt 0, Z-Profil ist intern
+        .phi_001deg=ph_s,
+        .req_id=s_next_req_id++
     };
 
     if (!bot_enqueue(&a)) { send_err("PICK","QUEUE_FULL"); return false; }
@@ -228,29 +295,34 @@ static bool cmd_pick(int argc, char **argv){
 }
 
 
-static bool cmd_place(int argc, char **argv){
-    if (g_status.estop)		{ send_err("PLACE","ESTOP");   return false; }
-    if (!g_status.homed)    { send_err("PLACE","NO_HOME"); return false; }
-    if (!g_status.has_part) { send_err("PLACE","NO_PART"); return false; }
+// --- PLACE (asynchron) ---
+// Legt ein Teil an Ziel XY/PHI ab. Protokoll erlaubt kein z=.
+// Pflicht: x,y,phi.
+static bool cmd_place(int argc, char **argv)
+{
+    if (g_status.estop)      { send_err("PLACE","ESTOP");   return false; }
+    if (!g_status.homed)     { send_err("PLACE","NO_HOME"); return false; }
+    if (!g_status.has_part)  { send_err("PLACE","NO_PART"); return false; }
 
     int32_t x_s=0, y_s=0, z_s=0, ph_s=0;
 
+    // PLACE: x,y,phi Pflicht / z verboten (Whitelist!)
     err_e e = parse_pos_tokens_mask(
         argc, argv, 1,
         &x_s, &y_s, &z_s, &ph_s,
-        /*require_mask=*/KV_X | KV_Y | KV_PHI,          // x,y,phi Pflicht
-        /*allowed_mask=*/KV_X | KV_Y | KV_PHI,          // z NICHT erlaubt
+        /*require_mask=*/KV_X | KV_Y | KV_PHI,
+        /*allowed_mask=*/KV_X | KV_Y | KV_PHI,
         /*seen_out=*/NULL
     );
-
     if (e != ERR_NONE) { send_err("PLACE", err_to_str(e)); return false; }
+
     bot_action_s a = {
-    		.type=ACT_PLACE,
-			.x_001mm=x_s,
-			.y_001mm=y_s,
-            .z_001mm=z_s,
-			.phi_001deg=ph_s,
-			.req_id=s_next_req_id++
+        .type=ACT_PLACE,
+        .x_001mm=x_s,
+        .y_001mm=y_s,
+        .z_001mm=z_s,          // bleibt 0, Z-Profil intern
+        .phi_001deg=ph_s,
+        .req_id=s_next_req_id++
     };
 
     if (!bot_enqueue(&a)) { send_err("PLACE","QUEUE_FULL"); return false; }
@@ -259,22 +331,33 @@ static bool cmd_place(int argc, char **argv){
 }
 
 
-// --- RESET (synchron – setzt nur lokalen Status zurück) ---
-static bool cmd_reset(int argc, char **argv) {
-	(void) argc;
-	(void) argv;
-	g_status.state = STATE_IDLE;
-	g_status.has_part = false;
-	g_status.homed = false;
-	g_status.estop = false;
-	g_status.last_err = ERR_NONE;
-	send_ok("RESET");
-	return true;
+
+// --- RESET (synchron) ---
+// Setzt nur den lokalen Status zurück. Keine Queue, keine Bewegung.
+static bool cmd_reset(int argc, char **argv)
+{
+    (void)argc; (void)argv;
+
+    g_status.state = STATE_IDLE;
+    g_status.has_part = false;
+    g_status.homed = false;
+    g_status.estop = false;
+    g_status.last_err = ERR_NONE;
+
+    g_status.pos.x_001mm = 0;
+    g_status.pos.y_001mm = 0;
+    g_status.pos.z_001mm = 0;
+    g_status.pos.phi_001deg = 0;
+
+    send_ok("RESET");
+    return true;
 }
+
 
 // -----------------------------------------------------------------------------
 // Command table
 // -----------------------------------------------------------------------------
+// Alle unterstützten Befehle. argv[0] wird gegen name gematched.
 static const cmd_entry_s s_cmds[] = {
 		{ "PING", cmd_ping },
 		{ "STATUS", cmd_status },
@@ -289,6 +372,7 @@ static const cmd_entry_s s_cmds[] = {
 // -----------------------------------------------------------------------------
 // Dispatch & line collection
 // -----------------------------------------------------------------------------
+// Macht ein String in-place uppercase (für case-insensitive Parsing).
 static void str_upper(char *s) {
 	while (*s) {
 		*s = (char) toupper((unsigned char )*s);
@@ -296,6 +380,8 @@ static void str_upper(char *s) {
 	}
 }
 
+// Zerlegt eine komplette Zeile in Tokens und ruft den passenden Handler.
+// Unbekannte Befehle liefern "ERR <cmd> UNKNOWN".
 static void dispatch_line(char *line) {
 	char *argv[12];
 	int argc = 0;
@@ -323,10 +409,15 @@ static void dispatch_line(char *line) {
 // -----------------------------------------------------------------------------
 // Public API
 // -----------------------------------------------------------------------------
+// Init meldet dem Pi, dass der Parser bereit ist.
 void cmd_init(void) {
 	serial_puts("CMD_READY\n");
 }
 
+// Non-blocking Zeilensammler.
+// - Liest Bytes von UART bis \n oder \r.
+// - Bei kompletter Zeile -> dispatch_line().
+// - Bei Overflow -> Zeile verwerfen + ERR LINE OVERFLOW.
 void cmd_poll(void) {
 	static char s_line[CMD_LINE_MAX];
 	static size_t s_len = 0;

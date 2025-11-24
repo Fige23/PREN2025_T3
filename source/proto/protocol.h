@@ -1,4 +1,4 @@
-/*Project: ${project_name}
+/*Project: PREN_Puzzleroboter
  (   (          )   (            )   ) (               )
  )\ ))\ )    ( /(   )\ )      ( /(( /( )\ )      (  ( /(   *   )
 (()/(()/((   )\()) (()/(   (  )\())\()|()/( (  ( )\ )\())` )  /(
@@ -71,10 +71,18 @@ typedef enum {
 	ERR_INTERNAL
 }err_e;
 
-//vorläufig pos in ganzen mm
+
+// Position intern in Fixed-Point
+// x/y/z: 0.001 mm (= 1 µm)
+// phi:   0.001°
 typedef struct {
-	int32_t x_mm, y_mm, z_mm, phi_deg;
-}pos_s;
+    int32_t x_001mm;
+    int32_t y_001mm;
+    int32_t z_001mm;
+    int32_t phi_001deg;
+} pos_s;
+
+
 
 typedef struct {
 	bot_state_e state;
