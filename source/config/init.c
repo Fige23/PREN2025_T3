@@ -7,22 +7,32 @@
 | _ \ _ \ __| \| | | _ \ | | |_  /_  /| |  | __| _ )/ _ \|_   _|  
 |  _/   / _|| .` | |  _/ |_| |/ / / / | |__| _|| _ \ (_) | | |    
 |_| |_|_\___|_|\_| |_|  \___//___/___||____|___|___/\___/  |_|    
-motion.h	Created on: 24.11.2025	   Author: Fige23	Team 3                                                                
+init.c	Created on: 25.11.2025	   Author: Fige23	Team 3                                                                
 */
 
-#ifndef MOTION_MOTION_H_
-#define MOTION_MOTION_H_
 
-#include <stdint.h>
-#include <stdbool.h>
+#include "magnet.h"
 #include "protocol.h"
+#include "platform.h"
 
-err_e motion_start(bot_action_s *cur);
-err_e home_start(bot_action_s *cur);
+void magnet_init(void){
+/*
+	SIM->SCGC5 |= SIM_SCGC5_PORTA(1);
+	PORTA->PCR[1] = PORT_PCR_MUX(1);
+	GPIOA->PDDR |= GPIO_PDDR_PDD(1);
+	GPIOA->PDOR |= (1<<0);
 
-err_e job_start_pick(bot_action_s *cur);
-err_e job_start_place(bot_action_s *cur);
+	GPIOA->PSOR = (1<<0);
+*/
 
 
 
-#endif /* MOTION_MOTION_H_ */
+
+
+
+
+
+
+
+
+}

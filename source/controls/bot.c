@@ -28,6 +28,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+#include "magnet.h"
 #include "bot.h"
 #include "protocol.h"     // g_status (globaler Status), state/error enums
 #include "serial_port.h"  // serial_puts() für UART-Ausgabe

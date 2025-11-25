@@ -21,6 +21,12 @@ Team 3
 #define TOFS_MS(x)   ((uint16_t)(((FTM3_CLOCK / 1000) * x) / (FTM3_MODULO + 1)))
 
 #include "platform.h"
+#include "board.h"
+#include "pin_mux.h"
+#include "peripherals.h"
+#include "clock_config.h"
+#include "fsl_gpio.h"
+
 #include "uart.h"
 #include "ftm0.h"
 #include "ftm3.h"
@@ -28,15 +34,20 @@ Team 3
 #include "serial_port.h"
 #include "cmd.h"
 #include "bot.h"
-
+//#include "init.h"
 
 
 //Main function of Puzzle Robot
 int main(void){
+	BOARD_InitBootPins();
+	BOARD_InitBootClocks();
+	BOARD_InitBootPeripherals();
 
 	serial_init(115200);
+	//magnet_init();
+	//cmd_init();
 
-	cmd_init();
+	GPIO_PinWrite(BOARD_INITPINS_Magnet_GPIO, BOARD_INITPINS_Magnet_PIN, true);
 
 	for(;;){
 		cmd_poll();
