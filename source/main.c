@@ -39,15 +39,21 @@ Team 3
 
 //Main function of Puzzle Robot
 int main(void){
+	//Diese Funktionen auslagern in init file:
+	//Wrapper Funktionen schreiben für GPIO ein aus, nur ein file inkludieren.
+
 	BOARD_InitBootPins();
 	BOARD_InitBootClocks();
 	BOARD_InitBootPeripherals();
+	GPIO_PinWrite(BOARD_INITPINS_Magnet_GPIO, BOARD_INITPINS_Magnet_PIN, true);	//Schaltet pin High
+	GPIO_PinWrite(BOARD_INITPINS_Magnet_GPIO, BOARD_INITPINS_Magnet_PIN, false);//Schaltet pin Low
+
+
 
 	serial_init(115200);
 	//magnet_init();
 	//cmd_init();
 
-	GPIO_PinWrite(BOARD_INITPINS_Magnet_GPIO, BOARD_INITPINS_Magnet_PIN, true);
 
 	for(;;){
 		cmd_poll();
