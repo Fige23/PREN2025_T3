@@ -78,11 +78,137 @@ static void NVIC_init(void) {
 } */
 
 /***********************************************************************************************************************
+ * FTM3 initialization code
+ **********************************************************************************************************************/
+/* clang-format off */
+/* TEXT BELOW IS USED AS SETTING FOR TOOLS *************************************
+instance:
+- name: 'FTM3'
+- type: 'ftm'
+- mode: 'EdgeAligned'
+- custom_name_enabled: 'false'
+- type_id: 'ftm_2.6.0'
+- functional_group: 'BOARD_InitPeripherals'
+- peripheral: 'FTM3'
+- config_sets:
+  - ftm_main_config:
+    - ftm_config:
+      - clockSource: 'kFTM_SystemClock'
+      - clockSourceFreq: 'GetFreq'
+      - timerPrescaler: '32'
+      - timerOutputFrequency: '10 kHz'
+      - systemClockSource: 'BusInterfaceClock'
+      - systemClockSourceFreq: 'mirrored_value'
+      - faultMode: 'kFTM_Fault_Disable'
+      - inputFilterPeriod: '1'
+      - faultInputs:
+        - 0:
+          - enableFaultInput: 'false'
+          - faultLevelVal: 'low'
+          - useFaultFilter: 'false'
+        - 1:
+          - enableFaultInput: 'false'
+          - faultLevelVal: 'low'
+          - useFaultFilter: 'false'
+        - 2:
+          - enableFaultInput: 'false'
+          - faultLevelVal: 'low'
+          - useFaultFilter: 'false'
+        - 3:
+          - enableFaultInput: 'false'
+          - faultLevelVal: 'low'
+          - useFaultFilter: 'false'
+      - deadTimePrescale: 'kFTM_Deadtime_Prescale_1'
+      - deadTimePeriod: '0'
+      - pwmSyncMode: 'kFTM_SoftwareTrigger'
+      - swTriggerResetCount: 'true'
+      - hwTriggerResetCount: 'false'
+      - reloadPoints: ''
+      - extTriggers: ''
+      - chnlInitState: ''
+      - chnlPolarity: ''
+      - bdmMode: 'kFTM_BdmMode_0'
+      - useGlobalTimeBase: 'false'
+    - timer_interrupts: ''
+    - enable_irq: 'false'
+    - ftm_interrupt:
+      - IRQn: 'FTM3_IRQn'
+      - enable_interrrupt: 'enabled'
+      - enable_priority: 'false'
+      - priority: '0'
+      - enable_custom_name: 'false'
+    - EnableTimerInInit: 'true'
+  - ftm_edge_aligned_mode:
+    - ftm_edge_aligned_channels_config:
+      - 0:
+        - channelId: ''
+        - edge_aligned_mode: 'kFTM_OutputCompare'
+        - output_compare:
+          - chnNumber: 'kFTM_Chnl_0'
+          - output_compare_mode: 'kFTM_ToggleOnMatch'
+          - compareValueStr: '1000'
+          - enable_chan_irq: 'true'
+      - 1:
+        - channelId: ''
+        - edge_aligned_mode: 'kFTM_OutputCompare'
+        - output_compare:
+          - chnNumber: 'kFTM_Chnl_1'
+          - output_compare_mode: 'kFTM_ToggleOnMatch'
+          - compareValueStr: '1000'
+          - enable_chan_irq: 'true'
+      - 2:
+        - channelId: ''
+        - edge_aligned_mode: 'kFTM_OutputCompare'
+        - output_compare:
+          - chnNumber: 'kFTM_Chnl_2'
+          - output_compare_mode: 'kFTM_ToggleOnMatch'
+          - compareValueStr: '1000'
+          - enable_chan_irq: 'true'
+      - 3:
+        - channelId: ''
+        - edge_aligned_mode: 'kFTM_OutputCompare'
+        - output_compare:
+          - chnNumber: 'kFTM_Chnl_3'
+          - output_compare_mode: 'kFTM_ToggleOnMatch'
+          - compareValueStr: '1000'
+          - enable_chan_irq: 'true'
+ * BE CAREFUL MODIFYING THIS COMMENT - IT IS YAML SETTINGS FOR TOOLS **********/
+/* clang-format on */
+const ftm_config_t FTM3_config = {
+  .prescale = kFTM_Prescale_Divide_32,
+  .faultMode = kFTM_Fault_Disable,
+  .faultFilterValue = 0,
+  .deadTimePrescale = kFTM_Deadtime_Prescale_1,
+  .deadTimeValue = 0,
+  .pwmSyncMode = kFTM_SoftwareTrigger,
+  .swTriggerResetCount = true,
+  .hwTriggerResetCount = false,
+  .reloadPoints = 0,
+  .extTriggers = 0,
+  .chnlInitState = 0,
+  .chnlPolarity = 0,
+  .bdmMode = kFTM_BdmMode_0,
+  .useGlobalTimeBase = false
+};
+
+static void FTM3_init(void) {
+  FTM_Init(FTM3_PERIPHERAL, &FTM3_config);
+  FTM_SetTimerPeriod(FTM3_PERIPHERAL, FTM3_TIMER_MODULO_VALUE);
+  FTM_SetupOutputCompare(FTM3_PERIPHERAL, kFTM_Chnl_0, kFTM_ToggleOnMatch, 1000U);
+  FTM_SetupOutputCompare(FTM3_PERIPHERAL, kFTM_Chnl_1, kFTM_ToggleOnMatch, 1000U);
+  FTM_SetupOutputCompare(FTM3_PERIPHERAL, kFTM_Chnl_2, kFTM_ToggleOnMatch, 1000U);
+  FTM_SetupOutputCompare(FTM3_PERIPHERAL, kFTM_Chnl_3, kFTM_ToggleOnMatch, 1000U);
+  FTM_EnableInterrupts(FTM3_PERIPHERAL, kFTM_Chnl0InterruptEnable | kFTM_Chnl1InterruptEnable | kFTM_Chnl2InterruptEnable | kFTM_Chnl3InterruptEnable);
+  FTM_StartTimer(FTM3_PERIPHERAL, kFTM_SystemClock);
+}
+
+/***********************************************************************************************************************
  * Initialization functions
  **********************************************************************************************************************/
 void BOARD_InitPeripherals(void)
 {
   /* Initialize components */
+  FTM3_init();
 }
 
 /***********************************************************************************************************************

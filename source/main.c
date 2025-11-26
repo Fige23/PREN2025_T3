@@ -25,30 +25,36 @@ Team 3
 #include "pin_mux.h"
 #include "peripherals.h"
 #include "clock_config.h"
-#include "fsl_gpio.h"
+
 
 #include "uart.h"
-#include "ftm0.h"
-#include "ftm3.h"
-#include "led.h"
 #include "serial_port.h"
 #include "cmd.h"
 #include "bot.h"
-//#include "init.h"
+#include "io.h"
 
 
 //Main function of Puzzle Robot
 int main(void){
-	//Diese Funktionen auslagern in init file:
-	//Wrapper Funktionen schreiben für GPIO ein aus, nur ein file inkludieren.
+
 
 	BOARD_InitBootPins();
 	BOARD_InitBootClocks();
 	BOARD_InitBootPeripherals();
-	GPIO_PinWrite(BOARD_INITPINS_Magnet_GPIO, BOARD_INITPINS_Magnet_PIN, true);	//Schaltet pin High
-	GPIO_PinWrite(BOARD_INITPINS_Magnet_GPIO, BOARD_INITPINS_Magnet_PIN, false);//Schaltet pin Low
-
-
+	/*
+	 * FTM3 Konfiguration:
+	 * -Im ConficTool gemacht, wird durch InitBootPeripherals initialisiert.
+	 * -Modus: Output compare, toggle auf channel 0,1,2,3 für die 4 stepper
+	 * -channel interrupts im config tool aktiviert
+	 *
+	 * TODO:
+	 * -eigenes stepper file
+	 * -FTM3_IRQHandler anlegen und unterscheiden welcher channel interrupt ausgelöst hat
+	 * -Wrapper funktionen erstellen für verwendung.
+	 * -Aktuell wird ftm noch nicht verwendet.
+	 *
+	 *
+	 */
 
 	serial_init(115200);
 	//magnet_init();

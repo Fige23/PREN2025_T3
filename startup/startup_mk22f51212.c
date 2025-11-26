@@ -56,7 +56,6 @@ __attribute__ ((used,section(".FlashConfig"))) const struct {
 //*****************************************************************************
 #if defined (__USE_CMSIS)
 extern void SystemInit(void);
-extern void systemPostInit(void);
 #endif // (__USE_CMSIS)
 
 //*****************************************************************************
@@ -501,7 +500,6 @@ void ResetISR(void) {
     // Call the Redlib library, which in turn calls main()
     __main();
 #else
-    systemPostInit();
     main();
 #endif
 

@@ -38,6 +38,94 @@ void BOARD_InitBootPins(void);
 #define BOARD_INITPINS_Magnet_PIN_MASK (1U << 1U)      /*!<@brief PORT pin mask */
                                                        /* @} */
 
+/*! @name PORTD0 (number 93), STEP_X
+  @{ */
+
+/* Symbols to be used with PORT driver */
+#define BOARD_INITPINS_STEP_X_PORT PORTD               /*!<@brief PORT peripheral base pointer */
+#define BOARD_INITPINS_STEP_X_PIN 0U                   /*!<@brief PORT pin number */
+#define BOARD_INITPINS_STEP_X_PIN_MASK (1U << 0U)      /*!<@brief PORT pin mask */
+                                                       /* @} */
+
+/*! @name PORTD1 (number 94), STEP_Y
+  @{ */
+
+/* Symbols to be used with PORT driver */
+#define BOARD_INITPINS_STEP_Y_PORT PORTD               /*!<@brief PORT peripheral base pointer */
+#define BOARD_INITPINS_STEP_Y_PIN 1U                   /*!<@brief PORT pin number */
+#define BOARD_INITPINS_STEP_Y_PIN_MASK (1U << 1U)      /*!<@brief PORT pin mask */
+                                                       /* @} */
+
+/*! @name PORTD2 (number 95), STEP_Z
+  @{ */
+
+/* Symbols to be used with PORT driver */
+#define BOARD_INITPINS_STEP_Z_PORT PORTD               /*!<@brief PORT peripheral base pointer */
+#define BOARD_INITPINS_STEP_Z_PIN 2U                   /*!<@brief PORT pin number */
+#define BOARD_INITPINS_STEP_Z_PIN_MASK (1U << 2U)      /*!<@brief PORT pin mask */
+                                                       /* @} */
+
+/*! @name PORTD3 (number 96), STEP_PHI
+  @{ */
+
+/* Symbols to be used with PORT driver */
+#define BOARD_INITPINS_STEP_PHI_PORT PORTD               /*!<@brief PORT peripheral base pointer */
+#define BOARD_INITPINS_STEP_PHI_PIN 3U                   /*!<@brief PORT pin number */
+#define BOARD_INITPINS_STEP_PHI_PIN_MASK (1U << 3U)      /*!<@brief PORT pin mask */
+                                                         /* @} */
+
+/*! @name PORTC8 (number 80), DIR_X
+  @{ */
+
+/* Symbols to be used with GPIO driver */
+#define BOARD_INITPINS_DIR_X_GPIO GPIOC               /*!<@brief GPIO peripheral base pointer */
+#define BOARD_INITPINS_DIR_X_GPIO_PIN_MASK (1U << 8U) /*!<@brief GPIO pin mask */
+
+/* Symbols to be used with PORT driver */
+#define BOARD_INITPINS_DIR_X_PORT PORTC               /*!<@brief PORT peripheral base pointer */
+#define BOARD_INITPINS_DIR_X_PIN 8U                   /*!<@brief PORT pin number */
+#define BOARD_INITPINS_DIR_X_PIN_MASK (1U << 8U)      /*!<@brief PORT pin mask */
+                                                      /* @} */
+
+/*! @name PORTC9 (number 81), DIR_Y
+  @{ */
+
+/* Symbols to be used with GPIO driver */
+#define BOARD_INITPINS_DIR_Y_GPIO GPIOC               /*!<@brief GPIO peripheral base pointer */
+#define BOARD_INITPINS_DIR_Y_GPIO_PIN_MASK (1U << 9U) /*!<@brief GPIO pin mask */
+
+/* Symbols to be used with PORT driver */
+#define BOARD_INITPINS_DIR_Y_PORT PORTC               /*!<@brief PORT peripheral base pointer */
+#define BOARD_INITPINS_DIR_Y_PIN 9U                   /*!<@brief PORT pin number */
+#define BOARD_INITPINS_DIR_Y_PIN_MASK (1U << 9U)      /*!<@brief PORT pin mask */
+                                                      /* @} */
+
+/*! @name PORTC10 (number 82), DIR_Z
+  @{ */
+
+/* Symbols to be used with GPIO driver */
+#define BOARD_INITPINS_DIR_Z_GPIO GPIOC                /*!<@brief GPIO peripheral base pointer */
+#define BOARD_INITPINS_DIR_Z_GPIO_PIN_MASK (1U << 10U) /*!<@brief GPIO pin mask */
+
+/* Symbols to be used with PORT driver */
+#define BOARD_INITPINS_DIR_Z_PORT PORTC                /*!<@brief PORT peripheral base pointer */
+#define BOARD_INITPINS_DIR_Z_PIN 10U                   /*!<@brief PORT pin number */
+#define BOARD_INITPINS_DIR_Z_PIN_MASK (1U << 10U)      /*!<@brief PORT pin mask */
+                                                       /* @} */
+
+/*! @name PORTC11 (number 83), DIR_PHI
+  @{ */
+
+/* Symbols to be used with GPIO driver */
+#define BOARD_INITPINS_DIR_PHI_GPIO GPIOC                /*!<@brief GPIO peripheral base pointer */
+#define BOARD_INITPINS_DIR_PHI_GPIO_PIN_MASK (1U << 11U) /*!<@brief GPIO pin mask */
+
+/* Symbols to be used with PORT driver */
+#define BOARD_INITPINS_DIR_PHI_PORT PORTC                /*!<@brief PORT peripheral base pointer */
+#define BOARD_INITPINS_DIR_PHI_PIN 11U                   /*!<@brief PORT pin number */
+#define BOARD_INITPINS_DIR_PHI_PIN_MASK (1U << 11U)      /*!<@brief PORT pin mask */
+                                                         /* @} */
+
 /*!
  * @brief 
  *

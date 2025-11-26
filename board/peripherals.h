@@ -10,10 +10,28 @@
  * Included files
  **********************************************************************************************************************/
 #include "fsl_common.h"
+#include "fsl_clock.h"
+#include "fsl_ftm.h"
 
 #if defined(__cplusplus)
 extern "C" {
 #endif /* __cplusplus */
+
+/***********************************************************************************************************************
+ * Definitions
+ **********************************************************************************************************************/
+/* Definitions for BOARD_InitPeripherals functional group */
+/* Definition of peripheral ID */
+#define FTM3_PERIPHERAL FTM3
+/* Definition of the clock source frequency */
+#define FTM3_CLOCK_SOURCE CLOCK_GetFreq(kCLOCK_BusClk)
+/* Definition of the clock source frequency */
+#define FTM3_TIMER_MODULO_VALUE (((FTM3_CLOCK_SOURCE/ (1U << (FTM3_PERIPHERAL->SC & FTM_SC_PS_MASK))) / 10000) - 1)
+
+/***********************************************************************************************************************
+ * Global variables
+ **********************************************************************************************************************/
+extern const ftm_config_t FTM3_config;
 
 /***********************************************************************************************************************
  * Initialization functions

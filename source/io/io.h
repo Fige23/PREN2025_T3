@@ -7,32 +7,33 @@
 | _ \ _ \ __| \| | | _ \ | | |_  /_  /| |  | __| _ )/ _ \|_   _|  
 |  _/   / _|| .` | |  _/ |_| |/ / / / | |__| _|| _ \ (_) | | |    
 |_| |_|_\___|_|\_| |_|  \___//___/___||____|___|___/\___/  |_|    
-init.c	Created on: 25.11.2025	   Author: Fige23	Team 3                                                                
+io.h	Created on: 26.11.2025	   Author: Fige23	Team 3                                                                
 */
 
+#ifndef IO_IO_H_
+#define IO_IO_H_
 
-#include "magnet.h"
-#include "protocol.h"
-#include "platform.h"
+#include <stdbool.h>
+#include "fsl_gpio.h"
+#include "pin_mux.h"
 
-void magnet_init(void){
-/*
-	SIM->SCGC5 |= SIM_SCGC5_PORTA(1);
-	PORTA->PCR[1] = PORT_PCR_MUX(1);
-	GPIOA->PDDR |= GPIO_PDDR_PDD(1);
-	GPIOA->PDOR |= (1<<0);
+//Magnet funktionen:
 
-	GPIOA->PSOR = (1<<0);
-*/
+void magnet_on(void);
+void magnet_off(void);
+void magnet_toggle(void);
+void magnet_on_off(bool);
 
-
-
-
-
-
-
-
-
+//stepper dir pins:
+// x:PTD0
+// y:PTD1
+// z:PTD2
+// phi:PTD3
+void stepper_x_dir(bool);
+void stepper_y_dir(bool);
+void stepper_z_dir(bool);
+void stepper_phi_dir(bool);
 
 
-}
+
+#endif /* IO_IO_H_ */

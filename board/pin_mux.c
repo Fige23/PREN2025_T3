@@ -15,6 +15,14 @@ processor_version: 16.3.0
 pin_labels:
 - {pin_num: '35', pin_signal: PTA1/UART0_RX/FTM0_CH6/JTAG_TDI/EZP_DI, label: Magnet, identifier: Magnet}
 - {pin_num: '43', pin_signal: PTA13/LLWU_P4/FTM1_CH1/I2S0_TX_FS/FTM1_QD_PHB, label: FTM1, identifier: FTM1}
+- {pin_num: '94', pin_signal: ADC0_SE5b/PTD1/SPI0_SCK/UART2_CTS_b/FTM3_CH1/FB_CS0_b/LPUART0_CTS_b, label: STEP_Y, identifier: STEP_Y}
+- {pin_num: '95', pin_signal: PTD2/LLWU_P13/SPI0_SOUT/UART2_RX/FTM3_CH2/FB_AD4/LPUART0_RX/I2C0_SCL, label: STEP_Z, identifier: STEP_Z}
+- {pin_num: '96', pin_signal: PTD3/SPI0_SIN/UART2_TX/FTM3_CH3/FB_AD3/LPUART0_TX/I2C0_SDA, label: STEP_PHI, identifier: STEP_PHI}
+- {pin_num: '93', pin_signal: PTD0/LLWU_P12/SPI0_PCS0/UART2_RTS_b/FTM3_CH0/FB_ALE/FB_CS1_b/FB_TS_b/LPUART0_RTS_b, label: STEP_X, identifier: STEP_X}
+- {pin_num: '80', pin_signal: ADC1_SE4b/CMP0_IN2/PTC8/FTM3_CH4/I2S0_MCLK/FB_AD7, label: DIR_X, identifier: DIR_X}
+- {pin_num: '81', pin_signal: ADC1_SE5b/CMP0_IN3/PTC9/FTM3_CH5/I2S0_RX_BCLK/FB_AD6/FTM2_FLT0, label: DIR_Y, identifier: DIR_Y}
+- {pin_num: '82', pin_signal: ADC1_SE6b/PTC10/I2C1_SCL/FTM3_CH6/I2S0_RX_FS/FB_AD5, label: DIR_Z, identifier: DIR_Z}
+- {pin_num: '83', pin_signal: ADC1_SE7b/PTC11/LLWU_P11/I2C1_SDA/FTM3_CH7/FB_RW_b, label: DIR_PHI, identifier: DIR_PHI}
  * BE CAREFUL MODIFYING THIS COMMENT - IT IS YAML SETTINGS FOR TOOLS ***********
  */
 /* clang-format on */
@@ -42,6 +50,14 @@ BOARD_InitPins:
 - options: {callFromInitBoot: 'true', coreID: core0, enableClock: 'true'}
 - pin_list:
   - {pin_num: '35', peripheral: GPIOA, signal: 'GPIO, 1', pin_signal: PTA1/UART0_RX/FTM0_CH6/JTAG_TDI/EZP_DI, direction: OUTPUT}
+  - {pin_num: '93', peripheral: FTM3, signal: 'CH, 0', pin_signal: PTD0/LLWU_P12/SPI0_PCS0/UART2_RTS_b/FTM3_CH0/FB_ALE/FB_CS1_b/FB_TS_b/LPUART0_RTS_b, direction: OUTPUT}
+  - {pin_num: '94', peripheral: FTM3, signal: 'CH, 1', pin_signal: ADC0_SE5b/PTD1/SPI0_SCK/UART2_CTS_b/FTM3_CH1/FB_CS0_b/LPUART0_CTS_b, direction: OUTPUT}
+  - {pin_num: '95', peripheral: FTM3, signal: 'CH, 2', pin_signal: PTD2/LLWU_P13/SPI0_SOUT/UART2_RX/FTM3_CH2/FB_AD4/LPUART0_RX/I2C0_SCL, direction: OUTPUT}
+  - {pin_num: '96', peripheral: FTM3, signal: 'CH, 3', pin_signal: PTD3/SPI0_SIN/UART2_TX/FTM3_CH3/FB_AD3/LPUART0_TX/I2C0_SDA, direction: OUTPUT}
+  - {pin_num: '80', peripheral: GPIOC, signal: 'GPIO, 8', pin_signal: ADC1_SE4b/CMP0_IN2/PTC8/FTM3_CH4/I2S0_MCLK/FB_AD7, direction: OUTPUT}
+  - {pin_num: '81', peripheral: GPIOC, signal: 'GPIO, 9', pin_signal: ADC1_SE5b/CMP0_IN3/PTC9/FTM3_CH5/I2S0_RX_BCLK/FB_AD6/FTM2_FLT0, direction: OUTPUT}
+  - {pin_num: '82', peripheral: GPIOC, signal: 'GPIO, 10', pin_signal: ADC1_SE6b/PTC10/I2C1_SCL/FTM3_CH6/I2S0_RX_FS/FB_AD5, direction: OUTPUT}
+  - {pin_num: '83', peripheral: GPIOC, signal: 'GPIO, 11', pin_signal: ADC1_SE7b/PTC11/LLWU_P11/I2C1_SDA/FTM3_CH7/FB_RW_b, direction: OUTPUT}
  * BE CAREFUL MODIFYING THIS COMMENT - IT IS YAML SETTINGS FOR TOOLS ***********
  */
 /* clang-format on */
@@ -56,6 +72,10 @@ void BOARD_InitPins(void)
 {
     /* Port A Clock Gate Control: Clock enabled */
     CLOCK_EnableClock(kCLOCK_PortA);
+    /* Port C Clock Gate Control: Clock enabled */
+    CLOCK_EnableClock(kCLOCK_PortC);
+    /* Port D Clock Gate Control: Clock enabled */
+    CLOCK_EnableClock(kCLOCK_PortD);
 
     gpio_pin_config_t Magnet_config = {
         .pinDirection = kGPIO_DigitalOutput,
@@ -64,8 +84,60 @@ void BOARD_InitPins(void)
     /* Initialize GPIO functionality on pin PTA1 (pin 35)  */
     GPIO_PinInit(BOARD_INITPINS_Magnet_GPIO, BOARD_INITPINS_Magnet_PIN, &Magnet_config);
 
+    gpio_pin_config_t DIR_X_config = {
+        .pinDirection = kGPIO_DigitalOutput,
+        .outputLogic = 0U
+    };
+    /* Initialize GPIO functionality on pin PTC8 (pin 80)  */
+    GPIO_PinInit(BOARD_INITPINS_DIR_X_GPIO, BOARD_INITPINS_DIR_X_PIN, &DIR_X_config);
+
+    gpio_pin_config_t DIR_Y_config = {
+        .pinDirection = kGPIO_DigitalOutput,
+        .outputLogic = 0U
+    };
+    /* Initialize GPIO functionality on pin PTC9 (pin 81)  */
+    GPIO_PinInit(BOARD_INITPINS_DIR_Y_GPIO, BOARD_INITPINS_DIR_Y_PIN, &DIR_Y_config);
+
+    gpio_pin_config_t DIR_Z_config = {
+        .pinDirection = kGPIO_DigitalOutput,
+        .outputLogic = 0U
+    };
+    /* Initialize GPIO functionality on pin PTC10 (pin 82)  */
+    GPIO_PinInit(BOARD_INITPINS_DIR_Z_GPIO, BOARD_INITPINS_DIR_Z_PIN, &DIR_Z_config);
+
+    gpio_pin_config_t DIR_PHI_config = {
+        .pinDirection = kGPIO_DigitalOutput,
+        .outputLogic = 0U
+    };
+    /* Initialize GPIO functionality on pin PTC11 (pin 83)  */
+    GPIO_PinInit(BOARD_INITPINS_DIR_PHI_GPIO, BOARD_INITPINS_DIR_PHI_PIN, &DIR_PHI_config);
+
     /* PORTA1 (pin 35) is configured as PTA1 */
     PORT_SetPinMux(BOARD_INITPINS_Magnet_PORT, BOARD_INITPINS_Magnet_PIN, kPORT_MuxAsGpio);
+
+    /* PORTC10 (pin 82) is configured as PTC10 */
+    PORT_SetPinMux(BOARD_INITPINS_DIR_Z_PORT, BOARD_INITPINS_DIR_Z_PIN, kPORT_MuxAsGpio);
+
+    /* PORTC11 (pin 83) is configured as PTC11 */
+    PORT_SetPinMux(BOARD_INITPINS_DIR_PHI_PORT, BOARD_INITPINS_DIR_PHI_PIN, kPORT_MuxAsGpio);
+
+    /* PORTC8 (pin 80) is configured as PTC8 */
+    PORT_SetPinMux(BOARD_INITPINS_DIR_X_PORT, BOARD_INITPINS_DIR_X_PIN, kPORT_MuxAsGpio);
+
+    /* PORTC9 (pin 81) is configured as PTC9 */
+    PORT_SetPinMux(BOARD_INITPINS_DIR_Y_PORT, BOARD_INITPINS_DIR_Y_PIN, kPORT_MuxAsGpio);
+
+    /* PORTD0 (pin 93) is configured as FTM3_CH0 */
+    PORT_SetPinMux(BOARD_INITPINS_STEP_X_PORT, BOARD_INITPINS_STEP_X_PIN, kPORT_MuxAlt4);
+
+    /* PORTD1 (pin 94) is configured as FTM3_CH1 */
+    PORT_SetPinMux(BOARD_INITPINS_STEP_Y_PORT, BOARD_INITPINS_STEP_Y_PIN, kPORT_MuxAlt4);
+
+    /* PORTD2 (pin 95) is configured as FTM3_CH2 */
+    PORT_SetPinMux(BOARD_INITPINS_STEP_Z_PORT, BOARD_INITPINS_STEP_Z_PIN, kPORT_MuxAlt4);
+
+    /* PORTD3 (pin 96) is configured as FTM3_CH3 */
+    PORT_SetPinMux(BOARD_INITPINS_STEP_PHI_PORT, BOARD_INITPINS_STEP_PHI_PIN, kPORT_MuxAlt4);
 }
 /***********************************************************************************************************************
  * EOF
