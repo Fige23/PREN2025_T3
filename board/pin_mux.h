@@ -25,6 +25,8 @@ extern "C" {
  */
 void BOARD_InitBootPins(void);
 
+#define SOPT5_UART1TXSRC_UART_TX 0x00u /*!<@brief UART 1 transmit data source select: UART1_TX pin */
+
 /*! @name PORTA1 (number 35), Magnet
   @{ */
 
@@ -125,6 +127,24 @@ void BOARD_InitBootPins(void);
 #define BOARD_INITPINS_DIR_PHI_PIN 11U                   /*!<@brief PORT pin number */
 #define BOARD_INITPINS_DIR_PHI_PIN_MASK (1U << 11U)      /*!<@brief PORT pin mask */
                                                          /* @} */
+
+/*! @name PORTE1 (number 2), UART1RX
+  @{ */
+
+/* Symbols to be used with PORT driver */
+#define BOARD_INITPINS_UART1RX_PORT PORTE               /*!<@brief PORT peripheral base pointer */
+#define BOARD_INITPINS_UART1RX_PIN 1U                   /*!<@brief PORT pin number */
+#define BOARD_INITPINS_UART1RX_PIN_MASK (1U << 1U)      /*!<@brief PORT pin mask */
+                                                        /* @} */
+
+/*! @name PORTE0 (number 1), UART1TX
+  @{ */
+
+/* Symbols to be used with PORT driver */
+#define BOARD_INITPINS_UART1TX_PORT PORTE               /*!<@brief PORT peripheral base pointer */
+#define BOARD_INITPINS_UART1TX_PIN 0U                   /*!<@brief PORT pin number */
+#define BOARD_INITPINS_UART1TX_PIN_MASK (1U << 0U)      /*!<@brief PORT pin mask */
+                                                        /* @} */
 
 /*!
  * @brief 

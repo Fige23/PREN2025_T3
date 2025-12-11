@@ -23,6 +23,8 @@ pin_labels:
 - {pin_num: '81', pin_signal: ADC1_SE5b/CMP0_IN3/PTC9/FTM3_CH5/I2S0_RX_BCLK/FB_AD6/FTM2_FLT0, label: DIR_Y, identifier: DIR_Y}
 - {pin_num: '82', pin_signal: ADC1_SE6b/PTC10/I2C1_SCL/FTM3_CH6/I2S0_RX_FS/FB_AD5, label: DIR_Z, identifier: DIR_Z}
 - {pin_num: '83', pin_signal: ADC1_SE7b/PTC11/LLWU_P11/I2C1_SDA/FTM3_CH7/FB_RW_b, label: DIR_PHI, identifier: DIR_PHI}
+- {pin_num: '1', pin_signal: ADC1_SE4a/PTE0/CLKOUT32K/SPI1_PCS1/UART1_TX/I2C1_SDA/RTC_CLKOUT, label: UART1TX, identifier: UART1TX}
+- {pin_num: '2', pin_signal: ADC1_SE5a/PTE1/LLWU_P0/SPI1_SOUT/UART1_RX/I2C1_SCL/SPI1_SIN, label: UART1RX, identifier: UART1RX}
  * BE CAREFUL MODIFYING THIS COMMENT - IT IS YAML SETTINGS FOR TOOLS ***********
  */
 /* clang-format on */
@@ -58,6 +60,8 @@ BOARD_InitPins:
   - {pin_num: '81', peripheral: GPIOC, signal: 'GPIO, 9', pin_signal: ADC1_SE5b/CMP0_IN3/PTC9/FTM3_CH5/I2S0_RX_BCLK/FB_AD6/FTM2_FLT0, direction: OUTPUT}
   - {pin_num: '82', peripheral: GPIOC, signal: 'GPIO, 10', pin_signal: ADC1_SE6b/PTC10/I2C1_SCL/FTM3_CH6/I2S0_RX_FS/FB_AD5, direction: OUTPUT}
   - {pin_num: '83', peripheral: GPIOC, signal: 'GPIO, 11', pin_signal: ADC1_SE7b/PTC11/LLWU_P11/I2C1_SDA/FTM3_CH7/FB_RW_b, direction: OUTPUT}
+  - {pin_num: '2', peripheral: UART1, signal: RX, pin_signal: ADC1_SE5a/PTE1/LLWU_P0/SPI1_SOUT/UART1_RX/I2C1_SCL/SPI1_SIN}
+  - {pin_num: '1', peripheral: UART1, signal: TX, pin_signal: ADC1_SE4a/PTE0/CLKOUT32K/SPI1_PCS1/UART1_TX/I2C1_SDA/RTC_CLKOUT, direction: OUTPUT}
  * BE CAREFUL MODIFYING THIS COMMENT - IT IS YAML SETTINGS FOR TOOLS ***********
  */
 /* clang-format on */
@@ -76,6 +80,8 @@ void BOARD_InitPins(void)
     CLOCK_EnableClock(kCLOCK_PortC);
     /* Port D Clock Gate Control: Clock enabled */
     CLOCK_EnableClock(kCLOCK_PortD);
+    /* Port E Clock Gate Control: Clock enabled */
+    CLOCK_EnableClock(kCLOCK_PortE);
 
     gpio_pin_config_t Magnet_config = {
         .pinDirection = kGPIO_DigitalOutput,
@@ -138,6 +144,19 @@ void BOARD_InitPins(void)
 
     /* PORTD3 (pin 96) is configured as FTM3_CH3 */
     PORT_SetPinMux(BOARD_INITPINS_STEP_PHI_PORT, BOARD_INITPINS_STEP_PHI_PIN, kPORT_MuxAlt4);
+
+    /* PORTE0 (pin 1) is configured as UART1_TX */
+    PORT_SetPinMux(BOARD_INITPINS_UART1TX_PORT, BOARD_INITPINS_UART1TX_PIN, kPORT_MuxAlt3);
+
+    /* PORTE1 (pin 2) is configured as UART1_RX */
+    PORT_SetPinMux(BOARD_INITPINS_UART1RX_PORT, BOARD_INITPINS_UART1RX_PIN, kPORT_MuxAlt3);
+
+    SIM->SOPT5 = ((SIM->SOPT5 &
+                   /* Mask bits to zero which are setting */
+                   (~(SIM_SOPT5_UART1TXSRC_MASK)))
+
+                  /* UART 1 transmit data source select: UART1_TX pin. */
+                  | SIM_SOPT5_UART1TXSRC(SOPT5_UART1TXSRC_UART_TX));
 }
 /***********************************************************************************************************************
  * EOF
