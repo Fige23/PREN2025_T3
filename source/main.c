@@ -58,7 +58,7 @@ int main(void){
 
 	serial_init(115200);
 	//magnet_init();
-	//cmd_init();
+	cmd_init(); //Macht nichts, sendet nur CMD_READY über die UART
 
 
 	for(;;){
