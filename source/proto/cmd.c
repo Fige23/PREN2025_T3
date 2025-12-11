@@ -266,7 +266,7 @@ static bool cmd_pick(int argc, char **argv)
 {
     if (g_status.estop)     { send_err("PICK","ESTOP");   return false; }
     if (!g_status.homed)    { send_err("PICK","NO_HOME"); return false; }
-    if (g_status.has_part)  { send_err("PICK","RANGE");   return false; }
+    if (g_status.has_part)  { send_err("PICK","HAS_PART");   return false; }
 
     int32_t x_s=0, y_s=0, z_s=0, ph_s=0;
 
