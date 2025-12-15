@@ -22,7 +22,7 @@
      * require_mask (Pflicht-Keys)
      * allowed_mask (Whitelist, z.B. Z bei PICK/PLACE verbieten)
 */
-
+#include "robot_config.h"
 #include "parse_kv.h"
 #include <string.h>
 #include <stdio.h>

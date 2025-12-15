@@ -145,7 +145,7 @@ instance:
         - edge_aligned_mode: 'kFTM_OutputCompare'
         - output_compare:
           - chnNumber: 'kFTM_Chnl_0'
-          - output_compare_mode: 'kFTM_ToggleOnMatch'
+          - output_compare_mode: 'kFTM_NoOutputSignal'
           - compareValueStr: '1000'
           - enable_chan_irq: 'true'
       - 1:
@@ -153,7 +153,7 @@ instance:
         - edge_aligned_mode: 'kFTM_OutputCompare'
         - output_compare:
           - chnNumber: 'kFTM_Chnl_1'
-          - output_compare_mode: 'kFTM_ToggleOnMatch'
+          - output_compare_mode: 'kFTM_NoOutputSignal'
           - compareValueStr: '1000'
           - enable_chan_irq: 'true'
       - 2:
@@ -161,7 +161,7 @@ instance:
         - edge_aligned_mode: 'kFTM_OutputCompare'
         - output_compare:
           - chnNumber: 'kFTM_Chnl_2'
-          - output_compare_mode: 'kFTM_ToggleOnMatch'
+          - output_compare_mode: 'kFTM_NoOutputSignal'
           - compareValueStr: '1000'
           - enable_chan_irq: 'true'
       - 3:
@@ -169,7 +169,7 @@ instance:
         - edge_aligned_mode: 'kFTM_OutputCompare'
         - output_compare:
           - chnNumber: 'kFTM_Chnl_3'
-          - output_compare_mode: 'kFTM_ToggleOnMatch'
+          - output_compare_mode: 'kFTM_NoOutputSignal'
           - compareValueStr: '1000'
           - enable_chan_irq: 'true'
  * BE CAREFUL MODIFYING THIS COMMENT - IT IS YAML SETTINGS FOR TOOLS **********/
@@ -194,10 +194,10 @@ const ftm_config_t FTM3_config = {
 static void FTM3_init(void) {
   FTM_Init(FTM3_PERIPHERAL, &FTM3_config);
   FTM_SetTimerPeriod(FTM3_PERIPHERAL, FTM3_TIMER_MODULO_VALUE);
-  FTM_SetupOutputCompare(FTM3_PERIPHERAL, kFTM_Chnl_0, kFTM_ToggleOnMatch, 1000U);
-  FTM_SetupOutputCompare(FTM3_PERIPHERAL, kFTM_Chnl_1, kFTM_ToggleOnMatch, 1000U);
-  FTM_SetupOutputCompare(FTM3_PERIPHERAL, kFTM_Chnl_2, kFTM_ToggleOnMatch, 1000U);
-  FTM_SetupOutputCompare(FTM3_PERIPHERAL, kFTM_Chnl_3, kFTM_ToggleOnMatch, 1000U);
+  FTM_SetupOutputCompare(FTM3_PERIPHERAL, kFTM_Chnl_0, kFTM_NoOutputSignal, 1000U);
+  FTM_SetupOutputCompare(FTM3_PERIPHERAL, kFTM_Chnl_1, kFTM_NoOutputSignal, 1000U);
+  FTM_SetupOutputCompare(FTM3_PERIPHERAL, kFTM_Chnl_2, kFTM_NoOutputSignal, 1000U);
+  FTM_SetupOutputCompare(FTM3_PERIPHERAL, kFTM_Chnl_3, kFTM_NoOutputSignal, 1000U);
   FTM_EnableInterrupts(FTM3_PERIPHERAL, kFTM_Chnl0InterruptEnable | kFTM_Chnl1InterruptEnable | kFTM_Chnl2InterruptEnable | kFTM_Chnl3InterruptEnable);
   FTM_StartTimer(FTM3_PERIPHERAL, kFTM_SystemClock);
 }

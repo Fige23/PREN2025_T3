@@ -18,7 +18,7 @@ protocol.c	Created on: 13.11.2025	   Author: Fige23	Team 3
  - Damit cmd.c und bot.c denselben Blick auf den Systemzustand haben,
    liegt das hier zentral im Protokoll-Modul.
 */
-
+#include "robot_config.h"
 #include "protocol.h"
 
 // Globaler Status mit Startwerten nach Boot.

@@ -30,9 +30,29 @@ robot_config.h	Created on: 24.11.2025	   Author: Fige23	Team 3
 #define VMAX_Z_MM_S        20.0f
 #define VMAX_PHI_DEG_S     90.0f
 
-#endif
+// Auflösung (Fixed-Point)
+#define SCALE_MM    1000   // 0.001 mm
+#define SCALE_DEG    100   // 0.01 °
 
+// Physikalische Limits (UNskaliert)
+#define LIMIT_X_MIN      0
+#define LIMIT_X_MAX    300
+#define LIMIT_Y_MIN      0
+#define LIMIT_Y_MAX    300
+#define LIMIT_Z_MIN      0
+#define LIMIT_Z_MAX    150
+#define LIMIT_PHI_MIN -180
+#define LIMIT_PHI_MAX  180
 
+// Skaliert
+#define LIM_X_MIN_S  ((int32_t)(LIMIT_X_MIN  * SCALE_MM))
+#define LIM_X_MAX_S  ((int32_t)(LIMIT_X_MAX  * SCALE_MM))
+#define LIM_Y_MIN_S  ((int32_t)(LIMIT_Y_MIN  * SCALE_MM))
+#define LIM_Y_MAX_S  ((int32_t)(LIMIT_Y_MAX  * SCALE_MM))
+#define LIM_Z_MIN_S  ((int32_t)(LIMIT_Z_MIN  * SCALE_MM))
+#define LIM_Z_MAX_S  ((int32_t)(LIMIT_Z_MAX  * SCALE_MM))
+#define LIM_P_MIN_S  ((int32_t)(LIMIT_PHI_MIN* SCALE_DEG))
+#define LIM_P_MAX_S  ((int32_t)(LIMIT_PHI_MAX* SCALE_DEG))
 
 
 

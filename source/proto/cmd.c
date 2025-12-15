@@ -35,6 +35,7 @@
 #include <stdio.h>
 #include <stddef.h>
 
+#include "robot_config.h"
 #include "serial_port.h"
 #include "protocol.h"   // g_status + state/err helper + Limits/Scales
 #include "parse_kv.h"   // parse_pos_tokens_mask() + KV_* masks
