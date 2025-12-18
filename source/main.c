@@ -26,12 +26,15 @@ Team 3
 #include "peripherals.h"
 #include "clock_config.h"
 
-
+#include "robot_config.h"
 #include "uart.h"
 #include "serial_port.h"
 #include "cmd.h"
 #include "bot.h"
 #include "io.h"
+#include "ftm3.h"
+#include "motion.h"
+#include "job.h"
 
 
 //Main function of Puzzle Robot
@@ -60,6 +63,11 @@ int main(void){
 	//magnet_init();
 	cmd_init(); //Macht nichts, sendet nur CMD_READY über die UART
 
+	//Init FTM3
+	ftm3_tick_init(STEP_TICK_HZ);
+	motion_init();
+	ftm3_tick_start();
+	job_init();
 
 	for(;;){
 		cmd_poll();

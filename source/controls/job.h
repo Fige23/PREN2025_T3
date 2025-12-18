@@ -7,14 +7,27 @@
 | _ \ _ \ __| \| | | _ \ | | |_  /_  /| |  | __| _ )/ _ \|_   _|  
 |  _/   / _|| .` | |  _/ |_| |/ / / / | |__| _|| _ \ (_) | | |    
 |_| |_|_\___|_|\_| |_|  \___//___/___||____|___|___/\___/  |_|    
-stepper.h	Created on: 15.12.2025	   Author: Fige23	Team 3                                                                
+job.h	Created on: 18.12.2025	   Author: Fige23	Team 3                                                                
 */
 
-#ifndef MOTION_STEPPER_H_
-#define MOTION_STEPPER_H_
+#ifndef CONTROLS_JOB_H_
+#define CONTROLS_JOB_H_
+
+#include <stdbool.h>
+#include "bot.h"
+#include "protocol.h"
+
+void job_init(void);
+
+//Startet einen MOVE-Job (mit z-safety logik) und startet erstes Segment via motion_start()
+err_e job_start_move(const bot_action_s *a);
+
+//Muss zyklisch aufgerufen werden -> gibt true zurück wenn job fertig (OK oder ERR)
+bool job_step(err_e *out_err);
+
+bool job_is_active(void);
 
 
 
 
-
-#endif /* MOTION_STEPPER_H_ */
+#endif /* CONTROLS_JOB_H_ */

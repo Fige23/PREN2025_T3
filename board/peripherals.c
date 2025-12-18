@@ -68,7 +68,8 @@ instance:
 - peripheral: 'NVIC'
 - config_sets:
   - nvic:
-    - interrupt_table: []
+    - interrupt_table:
+      - 0: []
     - interrupts: []
  * BE CAREFUL MODIFYING THIS COMMENT - IT IS YAML SETTINGS FOR TOOLS **********/
 /* clang-format on */
@@ -96,7 +97,7 @@ instance:
       - clockSource: 'kFTM_SystemClock'
       - clockSourceFreq: 'GetFreq'
       - timerPrescaler: '32'
-      - timerOutputFrequency: '10 kHz'
+      - timerOutputFrequency: '50 kHz'
       - systemClockSource: 'BusInterfaceClock'
       - systemClockSourceFreq: 'mirrored_value'
       - faultMode: 'kFTM_Fault_Disable'
@@ -129,12 +130,12 @@ instance:
       - chnlPolarity: ''
       - bdmMode: 'kFTM_BdmMode_0'
       - useGlobalTimeBase: 'false'
-    - timer_interrupts: ''
-    - enable_irq: 'false'
+    - timer_interrupts: 'kFTM_TimeOverflowInterruptEnable'
+    - enable_irq: 'true'
     - ftm_interrupt:
       - IRQn: 'FTM3_IRQn'
       - enable_interrrupt: 'enabled'
-      - enable_priority: 'false'
+      - enable_priority: 'true'
       - priority: '0'
       - enable_custom_name: 'false'
     - EnableTimerInInit: 'true'
@@ -147,31 +148,7 @@ instance:
           - chnNumber: 'kFTM_Chnl_0'
           - output_compare_mode: 'kFTM_NoOutputSignal'
           - compareValueStr: '1000'
-          - enable_chan_irq: 'true'
-      - 1:
-        - channelId: ''
-        - edge_aligned_mode: 'kFTM_OutputCompare'
-        - output_compare:
-          - chnNumber: 'kFTM_Chnl_1'
-          - output_compare_mode: 'kFTM_NoOutputSignal'
-          - compareValueStr: '1000'
-          - enable_chan_irq: 'true'
-      - 2:
-        - channelId: ''
-        - edge_aligned_mode: 'kFTM_OutputCompare'
-        - output_compare:
-          - chnNumber: 'kFTM_Chnl_2'
-          - output_compare_mode: 'kFTM_NoOutputSignal'
-          - compareValueStr: '1000'
-          - enable_chan_irq: 'true'
-      - 3:
-        - channelId: ''
-        - edge_aligned_mode: 'kFTM_OutputCompare'
-        - output_compare:
-          - chnNumber: 'kFTM_Chnl_3'
-          - output_compare_mode: 'kFTM_NoOutputSignal'
-          - compareValueStr: '1000'
-          - enable_chan_irq: 'true'
+          - enable_chan_irq: 'false'
  * BE CAREFUL MODIFYING THIS COMMENT - IT IS YAML SETTINGS FOR TOOLS **********/
 /* clang-format on */
 const ftm_config_t FTM3_config = {
@@ -195,10 +172,11 @@ static void FTM3_init(void) {
   FTM_Init(FTM3_PERIPHERAL, &FTM3_config);
   FTM_SetTimerPeriod(FTM3_PERIPHERAL, FTM3_TIMER_MODULO_VALUE);
   FTM_SetupOutputCompare(FTM3_PERIPHERAL, kFTM_Chnl_0, kFTM_NoOutputSignal, 1000U);
-  FTM_SetupOutputCompare(FTM3_PERIPHERAL, kFTM_Chnl_1, kFTM_NoOutputSignal, 1000U);
-  FTM_SetupOutputCompare(FTM3_PERIPHERAL, kFTM_Chnl_2, kFTM_NoOutputSignal, 1000U);
-  FTM_SetupOutputCompare(FTM3_PERIPHERAL, kFTM_Chnl_3, kFTM_NoOutputSignal, 1000U);
-  FTM_EnableInterrupts(FTM3_PERIPHERAL, kFTM_Chnl0InterruptEnable | kFTM_Chnl1InterruptEnable | kFTM_Chnl2InterruptEnable | kFTM_Chnl3InterruptEnable);
+  FTM_EnableInterrupts(FTM3_PERIPHERAL, kFTM_TimeOverflowInterruptEnable);
+  /* Interrupt vector FTM3_IRQn priority settings in the NVIC. */
+  NVIC_SetPriority(FTM3_IRQN, FTM3_IRQ_PRIORITY);
+  /* Enable interrupt FTM3_IRQN request in the NVIC */
+  EnableIRQ(FTM3_IRQN);
   FTM_StartTimer(FTM3_PERIPHERAL, kFTM_SystemClock);
 }
 

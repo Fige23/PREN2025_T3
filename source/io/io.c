@@ -49,5 +49,19 @@ void stepper_phi_dir(bool onoff){
 	GPIO_PinWrite(BOARD_INITPINS_DIR_PHI_GPIO, BOARD_INITPINS_DIR_PHI_PIN, onoff);
 }
 
+void stepper_x_step(bool level){
+	GPIO_PinWrite(BOARD_INITPINS_STEP_X_GPIO, BOARD_INITPINS_STEP_X_PIN, level);
+}
 
+void stepper_y_step(bool level){
+	GPIO_PinWrite(BOARD_INITPINS_STEP_Y_GPIO, BOARD_INITPINS_STEP_Y_PIN, level);
+}
+
+void stepper_z_step(bool level){
+	GPIO_PinWrite(BOARD_INITPINS_STEP_Z_GPIO, BOARD_INITPINS_STEP_Z_PIN, level);
+}
+
+void stepper_phi_step(bool level){
+	GPIO_PinWrite(BOARD_INITPINS_STEP_PHI_GPIO, BOARD_INITPINS_STEP_PHI_PIN, level);
+}
 

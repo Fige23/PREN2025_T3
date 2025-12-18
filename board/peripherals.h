@@ -26,7 +26,13 @@ extern "C" {
 /* Definition of the clock source frequency */
 #define FTM3_CLOCK_SOURCE CLOCK_GetFreq(kCLOCK_BusClk)
 /* Definition of the clock source frequency */
-#define FTM3_TIMER_MODULO_VALUE (((FTM3_CLOCK_SOURCE/ (1U << (FTM3_PERIPHERAL->SC & FTM_SC_PS_MASK))) / 10000) - 1)
+#define FTM3_TIMER_MODULO_VALUE (((FTM3_CLOCK_SOURCE/ (1U << (FTM3_PERIPHERAL->SC & FTM_SC_PS_MASK))) / 50000) - 1)
+/* FTM3 interrupt vector ID (number). */
+#define FTM3_IRQN FTM3_IRQn
+/* FTM3 interrupt vector priority. */
+#define FTM3_IRQ_PRIORITY 0
+/* FTM3 interrupt handler identifier. */
+#define FTM3_IRQHANDLER FTM3_IRQHandler
 
 /***********************************************************************************************************************
  * Global variables

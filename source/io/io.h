@@ -25,15 +25,25 @@ void magnet_toggle(void);
 void magnet_on_off(bool);
 
 //stepper dir pins:
-// x:PTD0
-// y:PTD1
-// z:PTD2
-// phi:PTD3
+// x:PTC8
+// y:PTC9
+// z:PTC10
+// phi:PTC11
+
 void stepper_x_dir(bool);
 void stepper_y_dir(bool);
 void stepper_z_dir(bool);
 void stepper_phi_dir(bool);
 
+//stepper step pins:
 
+// x:PTD0
+// y:PTD1
+// z:PTD2
+// phi:PTD3
 
+void stepper_x_step(bool);
+void stepper_y_step(bool);
+void stepper_z_step(bool);
+void stepper_phi_step(bool);
 #endif /* IO_IO_H_ */

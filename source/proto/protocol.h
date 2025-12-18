@@ -52,10 +52,10 @@ typedef enum {
 // x/y/z: 0.001 mm (= 1 µm)
 // phi:   0.001°
 typedef struct {
-    int32_t x_001mm;
-    int32_t y_001mm;
-    int32_t z_001mm;
-    int32_t phi_001deg;
+    int32_t x_mm_scaled;
+    int32_t y_mm_scaled;
+    int32_t z_mm_scaled;
+    int32_t phi_deg_scaled;
 } pos_s;
 
 

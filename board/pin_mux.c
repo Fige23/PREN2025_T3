@@ -58,10 +58,10 @@ BOARD_InitPins:
   - {pin_num: '83', peripheral: GPIOC, signal: 'GPIO, 11', pin_signal: ADC1_SE7b/PTC11/LLWU_P11/I2C1_SDA/FTM3_CH7/FB_RW_b, direction: OUTPUT}
   - {pin_num: '2', peripheral: UART1, signal: RX, pin_signal: ADC1_SE5a/PTE1/LLWU_P0/SPI1_SOUT/UART1_RX/I2C1_SCL/SPI1_SIN}
   - {pin_num: '1', peripheral: UART1, signal: TX, pin_signal: ADC1_SE4a/PTE0/CLKOUT32K/SPI1_PCS1/UART1_TX/I2C1_SDA/RTC_CLKOUT, direction: OUTPUT}
-  - {pin_num: '93', peripheral: GPIOD, signal: 'GPIO, 0', pin_signal: PTD0/LLWU_P12/SPI0_PCS0/UART2_RTS_b/FTM3_CH0/FB_ALE/FB_CS1_b/FB_TS_b/LPUART0_RTS_b, identifier: ''}
-  - {pin_num: '94', peripheral: GPIOD, signal: 'GPIO, 1', pin_signal: ADC0_SE5b/PTD1/SPI0_SCK/UART2_CTS_b/FTM3_CH1/FB_CS0_b/LPUART0_CTS_b, identifier: ''}
-  - {pin_num: '95', peripheral: GPIOD, signal: 'GPIO, 2', pin_signal: PTD2/LLWU_P13/SPI0_SOUT/UART2_RX/FTM3_CH2/FB_AD4/LPUART0_RX/I2C0_SCL, identifier: ''}
-  - {pin_num: '96', peripheral: GPIOD, signal: 'GPIO, 3', pin_signal: PTD3/SPI0_SIN/UART2_TX/FTM3_CH3/FB_AD3/LPUART0_TX/I2C0_SDA, identifier: ''}
+  - {pin_num: '93', peripheral: GPIOD, signal: 'GPIO, 0', pin_signal: PTD0/LLWU_P12/SPI0_PCS0/UART2_RTS_b/FTM3_CH0/FB_ALE/FB_CS1_b/FB_TS_b/LPUART0_RTS_b, direction: OUTPUT}
+  - {pin_num: '94', peripheral: GPIOD, signal: 'GPIO, 1', pin_signal: ADC0_SE5b/PTD1/SPI0_SCK/UART2_CTS_b/FTM3_CH1/FB_CS0_b/LPUART0_CTS_b, direction: OUTPUT}
+  - {pin_num: '95', peripheral: GPIOD, signal: 'GPIO, 2', pin_signal: PTD2/LLWU_P13/SPI0_SOUT/UART2_RX/FTM3_CH2/FB_AD4/LPUART0_RX/I2C0_SCL, direction: OUTPUT}
+  - {pin_num: '96', peripheral: GPIOD, signal: 'GPIO, 3', pin_signal: PTD3/SPI0_SIN/UART2_TX/FTM3_CH3/FB_AD3/LPUART0_TX/I2C0_SDA, direction: OUTPUT}
  * BE CAREFUL MODIFYING THIS COMMENT - IT IS YAML SETTINGS FOR TOOLS ***********
  */
 /* clang-format on */
@@ -118,6 +118,34 @@ void BOARD_InitPins(void)
     /* Initialize GPIO functionality on pin PTC11 (pin 83)  */
     GPIO_PinInit(BOARD_INITPINS_DIR_PHI_GPIO, BOARD_INITPINS_DIR_PHI_PIN, &DIR_PHI_config);
 
+    gpio_pin_config_t STEP_X_config = {
+        .pinDirection = kGPIO_DigitalOutput,
+        .outputLogic = 0U
+    };
+    /* Initialize GPIO functionality on pin PTD0 (pin 93)  */
+    GPIO_PinInit(BOARD_INITPINS_STEP_X_GPIO, BOARD_INITPINS_STEP_X_PIN, &STEP_X_config);
+
+    gpio_pin_config_t STEP_Y_config = {
+        .pinDirection = kGPIO_DigitalOutput,
+        .outputLogic = 0U
+    };
+    /* Initialize GPIO functionality on pin PTD1 (pin 94)  */
+    GPIO_PinInit(BOARD_INITPINS_STEP_Y_GPIO, BOARD_INITPINS_STEP_Y_PIN, &STEP_Y_config);
+
+    gpio_pin_config_t STEP_Z_config = {
+        .pinDirection = kGPIO_DigitalOutput,
+        .outputLogic = 0U
+    };
+    /* Initialize GPIO functionality on pin PTD2 (pin 95)  */
+    GPIO_PinInit(BOARD_INITPINS_STEP_Z_GPIO, BOARD_INITPINS_STEP_Z_PIN, &STEP_Z_config);
+
+    gpio_pin_config_t STEP_PHI_config = {
+        .pinDirection = kGPIO_DigitalOutput,
+        .outputLogic = 0U
+    };
+    /* Initialize GPIO functionality on pin PTD3 (pin 96)  */
+    GPIO_PinInit(BOARD_INITPINS_STEP_PHI_GPIO, BOARD_INITPINS_STEP_PHI_PIN, &STEP_PHI_config);
+
     /* PORTA1 (pin 35) is configured as PTA1 */
     PORT_SetPinMux(BOARD_INITPINS_Magnet_PORT, BOARD_INITPINS_Magnet_PIN, kPORT_MuxAsGpio);
 
@@ -134,16 +162,16 @@ void BOARD_InitPins(void)
     PORT_SetPinMux(BOARD_INITPINS_DIR_Y_PORT, BOARD_INITPINS_DIR_Y_PIN, kPORT_MuxAsGpio);
 
     /* PORTD0 (pin 93) is configured as PTD0 */
-    PORT_SetPinMux(PORTD, 0U, kPORT_MuxAsGpio);
+    PORT_SetPinMux(BOARD_INITPINS_STEP_X_PORT, BOARD_INITPINS_STEP_X_PIN, kPORT_MuxAsGpio);
 
     /* PORTD1 (pin 94) is configured as PTD1 */
-    PORT_SetPinMux(PORTD, 1U, kPORT_MuxAsGpio);
+    PORT_SetPinMux(BOARD_INITPINS_STEP_Y_PORT, BOARD_INITPINS_STEP_Y_PIN, kPORT_MuxAsGpio);
 
     /* PORTD2 (pin 95) is configured as PTD2 */
-    PORT_SetPinMux(PORTD, 2U, kPORT_MuxAsGpio);
+    PORT_SetPinMux(BOARD_INITPINS_STEP_Z_PORT, BOARD_INITPINS_STEP_Z_PIN, kPORT_MuxAsGpio);
 
     /* PORTD3 (pin 96) is configured as PTD3 */
-    PORT_SetPinMux(PORTD, 3U, kPORT_MuxAsGpio);
+    PORT_SetPinMux(BOARD_INITPINS_STEP_PHI_PORT, BOARD_INITPINS_STEP_PHI_PIN, kPORT_MuxAsGpio);
 
     /* PORTE0 (pin 1) is configured as UART1_TX */
     PORT_SetPinMux(BOARD_INITPINS_UART1TX_PORT, BOARD_INITPINS_UART1TX_PIN, kPORT_MuxAlt3);

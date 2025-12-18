@@ -24,8 +24,8 @@ typedef enum {
 typedef struct {
   bot_action_e type;
   // Ziele in Fixed-Point:
-  int32_t x_001mm, y_001mm, z_001mm;  // 0.001 mm
-  int32_t phi_001deg;                 // 0.01°
+  int32_t x_mm_scaled, y_mm_scaled, z_mm_scaled;  // 0.001 mm
+  int32_t phi_deg_scaled;                 // 0.01°
   bool    on;                         // für MAGNET
   uint16_t req_id;                    // Antwort-Korrelation
 } bot_action_s;

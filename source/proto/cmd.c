@@ -137,10 +137,10 @@ static bool cmd_status(int argc, char **argv)
            yesno(g_status.estop),
            err_to_str(g_status.last_err));
 
-    print_mm3("x", g_status.pos.x_001mm);
-    print_mm3("y", g_status.pos.y_001mm);
-    print_mm3("z", g_status.pos.z_001mm);
-    print_deg2("phi", g_status.pos.phi_001deg);
+    print_mm3("x", g_status.pos.x_mm_scaled);
+    print_mm3("y", g_status.pos.y_mm_scaled);
+    print_mm3("z", g_status.pos.z_mm_scaled);
+    print_deg2("phi", g_status.pos.phi_deg_scaled);
 
     replyf("%s", EOL);
     return true;
@@ -153,10 +153,10 @@ static bool cmd_pos(int argc, char **argv)
     (void)argc; (void)argv;
 
     replyf("POS ");
-    print_mm3("x", g_status.pos.x_001mm);
-    print_mm3("y", g_status.pos.y_001mm);
-    print_mm3("z", g_status.pos.z_001mm);
-    print_deg2("phi", g_status.pos.phi_001deg);
+    print_mm3("x", g_status.pos.x_mm_scaled);
+    print_mm3("y", g_status.pos.y_mm_scaled);
+    print_mm3("z", g_status.pos.z_mm_scaled);
+    print_deg2("phi", g_status.pos.phi_deg_scaled);
     replyf("%s", EOL);
 
     return true;
@@ -228,13 +228,14 @@ static bool cmd_move(int argc, char **argv)
 {
     if (argc < 2)        { send_err("MOVE","SYNTAX");  return false; }
     if (g_status.estop)  { send_err("MOVE","ESTOP");   return false; }
-    if (!g_status.homed) { send_err("MOVE","NO_HOME"); return false; }
+
+    if (REQUIRE_HOME_FOR_MOVE && !g_status.homed) { send_err("MOVE","NO_HOME"); return false; }
 
     // Defaults = aktuelle Position (Fixed-Point), damit Teil-MOVEs präzise bleiben.
-    int32_t x_s  = g_status.pos.x_001mm;
-    int32_t y_s  = g_status.pos.y_001mm;
-    int32_t z_s  = g_status.pos.z_001mm;
-    int32_t ph_s = g_status.pos.phi_001deg;
+    int32_t x_s  = g_status.pos.x_mm_scaled;
+    int32_t y_s  = g_status.pos.y_mm_scaled;
+    int32_t z_s  = g_status.pos.z_mm_scaled;
+    int32_t ph_s = g_status.pos.phi_deg_scaled;
 
     // MOVE: mindestens 1 Key, erlaubt x/y/z/phi in beliebiger Kombination.
     err_e e = parse_pos_tokens_mask(
@@ -247,10 +248,10 @@ static bool cmd_move(int argc, char **argv)
 
     bot_action_s a = {
         .type=ACT_MOVE,
-        .x_001mm=x_s,
-        .y_001mm=y_s,
-        .z_001mm=z_s,
-        .phi_001deg=ph_s,
+        .x_mm_scaled=x_s,
+        .y_mm_scaled=y_s,
+        .z_mm_scaled=z_s,
+        .phi_deg_scaled=ph_s,
         .req_id=s_next_req_id++
     };
 
@@ -266,7 +267,7 @@ static bool cmd_move(int argc, char **argv)
 static bool cmd_pick(int argc, char **argv)
 {
     if (g_status.estop)     { send_err("PICK","ESTOP");   return false; }
-    if (!g_status.homed)    { send_err("PICK","NO_HOME"); return false; }
+    if (REQUIRE_HOME_FOR_MOVE && !g_status.homed)    { send_err("PICK","NO_HOME"); return false; }
     if (g_status.has_part)  { send_err("PICK","HAS_PART");   return false; }
 
     int32_t x_s=0, y_s=0, z_s=0, ph_s=0;
@@ -283,10 +284,10 @@ static bool cmd_pick(int argc, char **argv)
 
     bot_action_s a = {
         .type=ACT_PICK,
-        .x_001mm=x_s,
-        .y_001mm=y_s,
-        .z_001mm=z_s,          // bleibt 0, Z-Profil ist intern
-        .phi_001deg=ph_s,
+        .x_mm_scaled=x_s,
+        .y_mm_scaled=y_s,
+        .z_mm_scaled=z_s,          // bleibt 0, Z-Profil ist intern
+        .phi_deg_scaled=ph_s,
         .req_id=s_next_req_id++
     };
 
@@ -302,7 +303,7 @@ static bool cmd_pick(int argc, char **argv)
 static bool cmd_place(int argc, char **argv)
 {
     if (g_status.estop)      { send_err("PLACE","ESTOP");   return false; }
-    if (!g_status.homed)     { send_err("PLACE","NO_HOME"); return false; }
+    if (REQUIRE_HOME_FOR_MOVE && !g_status.homed)     { send_err("PLACE","NO_HOME"); return false; }
     if (!g_status.has_part)  { send_err("PLACE","NO_PART"); return false; }
 
     int32_t x_s=0, y_s=0, z_s=0, ph_s=0;
@@ -319,10 +320,10 @@ static bool cmd_place(int argc, char **argv)
 
     bot_action_s a = {
         .type=ACT_PLACE,
-        .x_001mm=x_s,
-        .y_001mm=y_s,
-        .z_001mm=z_s,          // bleibt 0, Z-Profil intern
-        .phi_001deg=ph_s,
+        .x_mm_scaled=x_s,
+        .y_mm_scaled=y_s,
+        .z_mm_scaled=z_s,          // bleibt 0, Z-Profil intern
+        .phi_deg_scaled=ph_s,
         .req_id=s_next_req_id++
     };
 
@@ -345,10 +346,10 @@ static bool cmd_reset(int argc, char **argv)
     g_status.estop = false;
     g_status.last_err = ERR_NONE;
 
-    g_status.pos.x_001mm = 0;
-    g_status.pos.y_001mm = 0;
-    g_status.pos.z_001mm = 0;
-    g_status.pos.phi_001deg = 0;
+    g_status.pos.x_mm_scaled = 0;
+    g_status.pos.y_mm_scaled = 0;
+    g_status.pos.z_mm_scaled = 0;
+    g_status.pos.phi_deg_scaled = 0;
 
     send_ok("RESET");
     return true;
