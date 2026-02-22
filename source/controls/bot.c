@@ -54,7 +54,15 @@ static void replyf(const char *fmt, ...)
     va_start(ap, fmt);
     vsnprintf(buf, sizeof(buf), fmt, ap);
     va_end(ap);
+
+#if USE_SEMIHOST_CONSOLE
+    // MCUXpresso Debug Console (Redlib semihost)
+    printf("%s", buf);
+    fflush(stdout);
+#else
+    // UART
     serial_puts(buf);
+#endif
 }
 
 static const char* act_name(bot_action_e t)
