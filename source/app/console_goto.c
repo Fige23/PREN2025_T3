@@ -1,44 +1,31 @@
-/*Project: PREN_Puzzleroboter
- (   (          )   (            )   ) (               )          
- )\ ))\ )    ( /(   )\ )      ( /(( /( )\ )      (  ( /(   *   )  
-(()/(()/((   )\()) (()/(   (  )\())\()|()/( (  ( )\ )\())` )  /(  
- /(_))(_))\ ((_)\   /(_))  )\((_)((_)\ /(_)))\ )((_|(_)\  ( )(_)) 
-(_))(_))((_) _((_) (_)) _ ((_)_((_)((_|_)) ((_|(_)_  ((_)(_(_())  
-| _ \ _ \ __| \| | | _ \ | | |_  /_  /| |  | __| _ )/ _ \|_   _|  
-|  _/   / _|| .` | |  _/ |_| |/ / / / | |__| _|| _ \ (_) | | |    
-|_| |_|_\___|_|\_| |_|  \___//___/___||____|___|___/\___/  |_|    
-console_goto.c	Created on: 22.02.2026	   Author: Fige23	Team 3                                                                
-*/
-
-
 #include "robot_config.h"
 
 #if ENABLE_CONSOLE_GOTO
 
-#include <stdint.h>
-#include <stdbool.h>
-#include <string.h>
 #include <stdio.h>
-#include <stdarg.h>
+#include <string.h>
+#include <stdint.h>
 
-#include "serial_port.h"
 #include "protocol.h"
 #include "bot.h"
-#include "parse_kv.h"
+#include "job.h"
 
-// Falls du in deinem Status-Struct andere Namen hast, ändere NUR diese Macro-Zeile:
-#define POSE_CMD   (g_status.pos_cmd)   // alternativ: (g_status.pos)
+// Falls du es anders benannt hast: nur diese Zeile anpassen
+#define POSE_CMD (g_status.pos_cmd)
 
-static inline int32_t iabs32(int32_t v) { return (v < 0) ? -v : v; }
+static uint16_t s_req_id = 1;
 
-static void sp(const char *fmt, ...)
+static void print_help(void)
 {
-    char buf[160];
-    va_list ap;
-    va_start(ap, fmt);
-    vsnprintf(buf, sizeof(buf), fmt, ap);
-    va_end(ap);
-    serial_puts(buf);
+    printf("\r\n=== CONSOLE GOTO (semihost) ===\r\n");
+    printf("Input:\r\n");
+    printf("  x y [z] [phi]\r\n");
+    printf("Examples:\r\n");
+    printf("  120 50\r\n");
+    printf("  120 50 10\r\n");
+    printf("  120 50 10 90\r\n");
+    printf("Commands: pos | home | ?\r\n\r\n");
+    fflush(stdout);
 }
 
 static void print_pose(void)
@@ -48,44 +35,40 @@ static void print_pose(void)
     int32_t z = POSE_CMD.z_mm_scaled;
     int32_t p = POSE_CMD.phi_deg_scaled;
 
-    sp("POS x=%ld.%03ld y=%ld.%03ld z=%ld.%03ld phi=%ld.%02ld\r\n",
-       (long)(x / SCALE_MM), (long)iabs32(x % SCALE_MM),
-       (long)(y / SCALE_MM), (long)iabs32(y % SCALE_MM),
-       (long)(z / SCALE_MM), (long)iabs32(z % SCALE_MM),
-       (long)(p / SCALE_DEG), (long)iabs32(p % SCALE_DEG));
-}
+    long x_i = (long)(x / SCALE_MM);
+    long y_i = (long)(y / SCALE_MM);
+    long z_i = (long)(z / SCALE_MM);
+    long p_i = (long)(p / SCALE_DEG);
 
-static void print_help(void)
-{
-    sp("\r\n=== CONSOLE GOTO MODE ===\r\n");
-    sp("Eingabe:\r\n");
-    sp("  x=120 y=50 z=0 phi=0\r\n");
-    sp("  oder kurz: 120 50 [z] [phi]\r\n");
-    sp("Commands:  pos | home | ?\r\n\r\n");
+    long x_f = (long)(x % SCALE_MM); if (x_f < 0) x_f = -x_f;
+    long y_f = (long)(y % SCALE_MM); if (y_f < 0) y_f = -y_f;
+    long z_f = (long)(z % SCALE_MM); if (z_f < 0) z_f = -z_f;
+    long p_f = (long)(p % SCALE_DEG); if (p_f < 0) p_f = -p_f;
+
+    printf("POS x=%ld.%03ld  y=%ld.%03ld  z=%ld.%03ld  phi=%ld.%02ld\r\n",
+           x_i, x_f, y_i, y_f, z_i, z_f, p_i, p_f);
+    fflush(stdout);
 }
 
 static void queue_home(void)
 {
-    static uint16_t req = 30000;
-
     bot_action_s a = {
         .type = ACT_HOME,
-        .target_pos = { .x_mm_scaled=0, .y_mm_scaled=0, .z_mm_scaled=0, .phi_deg_scaled=0 },
+        .target_pos = {0},
         .magnet_on = false,
-        .request_id = req++
+        .request_id = s_req_id++
     };
 
     if (!bot_enqueue(&a)) {
-        sp("ERR QUEUE_FULL\r\n");
-        return;
+        printf("ERR queue_full\r\n");
+    } else {
+        printf("QUEUED HOME id=%u\r\n", (unsigned)a.request_id);
     }
-    sp("QUEUED HOME id=%u\r\n", (unsigned)a.request_id);
+    fflush(stdout);
 }
 
 static void queue_goto(int32_t x_s, int32_t y_s, int32_t z_s, int32_t ph_s)
 {
-    static uint16_t req = 1;
-
     bot_action_s a = {
         .type = ACT_MOVE,
         .target_pos = {
@@ -95,20 +78,25 @@ static void queue_goto(int32_t x_s, int32_t y_s, int32_t z_s, int32_t ph_s)
             .phi_deg_scaled = ph_s
         },
         .magnet_on = false,
-        .request_id = req++
+        .request_id = s_req_id++
     };
 
     if (!bot_enqueue(&a)) {
-        sp("ERR QUEUE_FULL\r\n");
-        return;
+        printf("ERR queue_full\r\n");
+    } else {
+        printf("QUEUED GOTO id=%u\r\n", (unsigned)a.request_id);
     }
-    sp("QUEUED GOTO id=%u\r\n", (unsigned)a.request_id);
+    fflush(stdout);
 }
 
 static void handle_line(char *line)
 {
-    // trim leading
+    // newline strip
+    line[strcspn(line, "\r\n")] = 0;
+
+    // trim leading spaces
     while (*line == ' ' || *line == '\t') line++;
+
     if (*line == '\0') return;
 
     if (!strcmp(line, "?") || !strcmp(line, "help") || !strcmp(line, "HELP")) {
@@ -124,72 +112,26 @@ static void handle_line(char *line)
         return;
     }
 
-    // Defaults = aktuelle Pose (damit "120 50" nur XY ändert)
+    // defaults = aktuelle pose (damit "120 50" nur XY ändert)
     int32_t x_s  = POSE_CMD.x_mm_scaled;
     int32_t y_s  = POSE_CMD.y_mm_scaled;
     int32_t z_s  = POSE_CMD.z_mm_scaled;
     int32_t ph_s = POSE_CMD.phi_deg_scaled;
 
-    // tokenize whitespace
-    char *argv[8];
-    int argc = 0;
-    for (char *tok = strtok(line, " \t"); tok && argc < 8; tok = strtok(NULL, " \t")) {
-        argv[argc++] = tok;
-    }
-    if (argc < 2) {
-        sp("ERR need at least x y\r\n");
+    // parse 2-4 ints (mm / deg)
+    int x=0, y=0, z=0, phi=0;
+    int n = sscanf(line, "%d %d %d %d", &x, &y, &z, &phi);
+
+    if (n < 2) {
+        printf("ERR: need at least x y\r\n");
+        fflush(stdout);
         return;
     }
 
-    // key=value erkannt?
-    bool has_eq = false;
-    for (int i=0;i<argc;i++) {
-        if (strchr(argv[i], '=')) { has_eq = true; break; }
-    }
-
-    err_e e = ERR_NONE;
-
-    if (has_eq) {
-        // parse: x=.. y=.. z=.. phi=..
-        char *argv2[9];
-        argv2[0] = "GOTO";
-        for (int i=0;i<argc;i++) argv2[i+1] = argv[i];
-
-        e = parse_pos_tokens_mask(
-            argc+1, argv2, 1,
-            &x_s, &y_s, &z_s, &ph_s,
-            KV_X | KV_Y,
-            KV_X | KV_Y | KV_Z | KV_PHI,
-            NULL
-        );
-    } else {
-        // parse: x y [z] [phi] -> in key=value umformen
-        char tx[24], ty[24], tz[24], tp[24];
-        snprintf(tx, sizeof(tx), "x=%s", argv[0]);
-        snprintf(ty, sizeof(ty), "y=%s", argv[1]);
-
-        char *argv2[6];
-        int n = 0;
-        argv2[n++] = "GOTO";
-        argv2[n++] = tx;
-        argv2[n++] = ty;
-
-        if (argc >= 3) { snprintf(tz, sizeof(tz), "z=%s", argv[2]); argv2[n++] = tz; }
-        if (argc >= 4) { snprintf(tp, sizeof(tp), "phi=%s", argv[3]); argv2[n++] = tp; }
-
-        e = parse_pos_tokens_mask(
-            n, argv2, 1,
-            &x_s, &y_s, &z_s, &ph_s,
-            KV_X | KV_Y,
-            KV_X | KV_Y | KV_Z | KV_PHI,
-            NULL
-        );
-    }
-
-    if (e != ERR_NONE) {
-        sp("ERR %s\r\n", err_to_str(e));
-        return;
-    }
+    x_s = x * SCALE_MM;
+    y_s = y * SCALE_MM;
+    if (n >= 3) z_s = z * SCALE_MM;
+    if (n >= 4) ph_s = phi * SCALE_DEG;
 
     queue_goto(x_s, y_s, z_s, ph_s);
 }
@@ -197,53 +139,32 @@ static void handle_line(char *line)
 void console_goto_init(void)
 {
     print_help();
-    serial_puts("> ");
+    printf("> ");
+    fflush(stdout);
 }
 
 void console_goto_poll(void)
 {
-    static char line[96];
-    static uint32_t len = 0;
 
-    int ch;
-    while ((ch = serial_getchar_nonblock()) >= 0) {
 
-        if (ch == '\r' || ch == '\n') {
-            serial_puts("\r\n");
-            line[len] = '\0';
-            handle_line(line);
-            len = 0;
-            serial_puts("> ");
-            continue;
-        }
+    // Während Bewegung/Job läuft: NICHT blockierend auf input warten
+    if (job_is_active()) return;
 
-        // Backspace
-        if (ch == 0x08 || ch == 0x7F) {
-            if (len > 0) {
-                len--;
-#if CONSOLE_GOTO_ECHO
-                serial_puts("\b \b");
-#endif
-            }
-            continue;
-        }
-
-        if (len < sizeof(line) - 1) {
-            line[len++] = (char)ch;
-#if CONSOLE_GOTO_ECHO
-            char c[2] = { (char)ch, 0 };
-            serial_puts(c);
-#endif
-        } else {
-            // overflow -> reset
-            len = 0;
-            serial_puts("\r\nERR LINE OVERFLOW\r\n> ");
-        }
+    // Blockierendes Lesen ist ok, weil wir hier "idle" sind.
+    char line[96];
+    if (!fgets(line, sizeof(line), stdin)) {
+        return;
     }
+
+    handle_line(line);
+
+    printf("> ");
+    fflush(stdout);
 }
 
 #else
-// Wenn ENABLE_CONSOLE_GOTO=0, liefern wir leere Stubs, damit main.c clean bleibt
+
 void console_goto_init(void) {}
 void console_goto_poll(void) {}
+
 #endif

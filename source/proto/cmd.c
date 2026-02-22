@@ -53,13 +53,22 @@ Wichtig:
 // EOL ist überall gleich, replyf ist unser printf-Wrapper.
 static const char *EOL = "\n";   // End-of-line for replies
 
+
+
 static void replyf(const char *fmt, ...) {
 	char buf[192];
 	va_list ap;
 	va_start(ap, fmt);
 	vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
-	serial_puts(buf);
+#if USE_SEMIHOST_CONSOLE
+    // Semihost: Ausgabe in MCUXpresso Debug Console
+    printf("%s", buf);
+    fflush(stdout);
+#else
+    // Dein bisheriger Weg (UART/serial_puts)
+    serial_puts(buf);
+#endif
 }
 
 // Standard-OK für rein synchrone Befehle (PING, RESET, ...).

@@ -12,8 +12,8 @@
 
 #include "platform.h"
 #include "uart.h"
+#include "robot_config.h"
 
-#if UART1_EN
 
 
 /**
@@ -228,15 +228,17 @@ uint16_t uart1RxBufCount(void)
  * @returns
  *   the number of bytes sent.
  */
+
+#if !USE_SEMIHOST_CONSOLE
 int _write(int fd, const char *buf, int count)
 {
   int i = count;
   while (i--) uart1WriteChar(*(uint8_t*)buf++);
   return count;
 }
-#endif
 
-#if UART1_SCANF_EN
+
+
 /**
  * This function redirects the scanf input to the uart
  *
@@ -251,13 +253,14 @@ int _write(int fd, const char *buf, int count)
  * @returns
  *   the number of bytes sent.
  */
+
 int _read(int fd, char *buf, int count)
 {
   *buf = uart1ReadChar();
   return 1;
 }
-#endif
 
+#endif
 /**
  * initializes the uart with the desired baud rate.
  *

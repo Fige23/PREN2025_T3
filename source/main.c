@@ -33,6 +33,7 @@
 #include "motion.h"
 #include "job.h"
 #include "console_goto.h"
+#include "util.h"
 
 /*
  ===============================================================================
@@ -52,14 +53,12 @@
  ===============================================================================
  */
 int main(void) {
-
 	/*
 	 *
 	 * PINS AUF UART GEMUXT
 	 *
 	 *
 	 */
-
 	BOARD_InitBootPins();
 	BOARD_InitBootClocks();
 	BOARD_InitBootPeripherals();
@@ -82,6 +81,8 @@ int main(void) {
 	motion_init();
 	ftm3_tick_start();
 	job_init();
+
+
 
 	for (;;) {
 #if ENABLE_CONSOLE_GOTO
