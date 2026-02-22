@@ -12,20 +12,21 @@
  Author: Fige23
  Team 3
 
- UART Command-Parser / Dispatcher.
- - Liest Zeilen non-blocking von UART (cmd_poll).
- - Zerlegt eine Zeile in Tokens (argv/argc), macht alles case-insensitive.
- - Sucht passenden Handler in s_cmds und führt ihn aus.
- - Handler validieren Syntax/State (homed, estop, has_part, etc.).
- - Positions-Parameter kommen als Float-Text rein (z.B. x=12.345),
-   werden hier über parse_pos_tokens_mask() direkt zu Fixed-Point ints:
-     x/y/z in 0.001 mm (1 µm), phi in 0.01°.
- - Hardware-/Zeitkritische Befehle (MOVE, HOME, PICK, PLACE, MAGNET) werden als Actions gequeued.
-	MAGNET ist dabei instant, läuft aber ebenfalls über die Queue, damit die Reihenfolge garantiert bleibt.
-	-> Antwort ist zuerst "QUEUED ... id=..".
-   Finales OK/ERR kommt später aus bot_step().
- - Synchron ist nur RESET (setzt lokalen Status zurück).
- */
+===============================================================================
+cmd.c  (UART Command Parser / Dispatcher)
+
+Aufgabe:
+- Liest Zeilen non-blocking von UART.
+- Zerlegt Tokens, validiert Syntax und aktuellen Systemzustand (homed/estop/part).
+- Konvertiert Positionswerte direkt in Fixed-Point (via parse_kv.c).
+- Erstellt bot_action_s und queued sie (bot_enqueue()).
+
+Wichtig:
+- cmd.c führt keine Bewegung direkt aus.
+- Sofortige Antwort ist "QUEUED ... id=...".
+- Finales OK/ERR kommt später aus bot_step().
+===============================================================================
+*/
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -137,10 +138,15 @@ static bool cmd_status(int argc, char **argv)
            yesno(g_status.estop),
            err_to_str(g_status.last_err));
 
-    print_mm3("x", g_status.pos.x_mm_scaled);
-    print_mm3("y", g_status.pos.y_mm_scaled);
-    print_mm3("z", g_status.pos.z_mm_scaled);
-    print_deg2("phi", g_status.pos.phi_deg_scaled);
+    print_mm3("x", g_status.pos_cmd.x_mm_scaled);
+    print_mm3("y", g_status.pos_cmd.y_mm_scaled);
+    print_mm3("z", g_status.pos_cmd.z_mm_scaled);
+    print_deg2("phi", g_status.pos_cmd.phi_deg_scaled);
+
+    replyf(" POS_MEASURED");
+    print_mm3("x", g_status.pos_measured.x_mm_scaled);
+    print_mm3("y", g_status.pos_measured.y_mm_scaled);
+
 
     replyf("%s", EOL);
     return true;
@@ -153,10 +159,10 @@ static bool cmd_pos(int argc, char **argv)
     (void)argc; (void)argv;
 
     replyf("POS ");
-    print_mm3("x", g_status.pos.x_mm_scaled);
-    print_mm3("y", g_status.pos.y_mm_scaled);
-    print_mm3("z", g_status.pos.z_mm_scaled);
-    print_deg2("phi", g_status.pos.phi_deg_scaled);
+    print_mm3("x", g_status.pos_cmd.x_mm_scaled);
+    print_mm3("y", g_status.pos_cmd.y_mm_scaled);
+    print_mm3("z", g_status.pos_cmd.z_mm_scaled);
+    print_deg2("phi", g_status.pos_cmd.phi_deg_scaled);
     replyf("%s", EOL);
 
     return true;
@@ -177,15 +183,24 @@ static bool cmd_home(int argc, char **argv) {
 	}
 
 	bot_action_s a = {
-			.type = ACT_HOME,
-			.req_id = s_next_req_id++
+	    .type = ACT_HOME,
+	    .target_pos = {
+	        .x_mm_scaled = 0,
+	        .y_mm_scaled = 0,
+	        .z_mm_scaled = 0,
+	        .phi_deg_scaled = 0
+	    },
+	    .magnet_on = false,
+	    .request_id = s_next_req_id++
 	};
+
+
 	if (!bot_enqueue(&a)) {
 		send_err("HOME", "INTERNAL");
 		return false;
 	}
 
-	send_queued("HOME", a.req_id);
+	send_queued("HOME", a.request_id);
 	return true;
 }
 
@@ -207,17 +222,24 @@ static bool cmd_magnet(int argc, char **argv) {
 	}
 
 	bot_action_s a = {
-			.type = ACT_MAGNET,
-			.on = on,
-			.req_id = s_next_req_id++
+	    .type = ACT_MAGNET,
+	    .target_pos = {   // unbenutzt, aber explizit
+	        .x_mm_scaled = 0,
+	        .y_mm_scaled = 0,
+	        .z_mm_scaled = 0,
+	        .phi_deg_scaled = 0
+	    },
+	    .magnet_on = on,
+	    .request_id = s_next_req_id++
 	};
+
 
 	if (!bot_enqueue(&a)) {
 		send_err("MAGNET", "INTERNAL");
 		return false;
 	}
 
-	send_queued("MAGNET", a.req_id);
+	send_queued("MAGNET", a.request_id);
 	return true;
 }
 
@@ -232,10 +254,10 @@ static bool cmd_move(int argc, char **argv)
     if (REQUIRE_HOME_FOR_MOVE && !g_status.homed) { send_err("MOVE","NO_HOME"); return false; }
 
     // Defaults = aktuelle Position (Fixed-Point), damit Teil-MOVEs präzise bleiben.
-    int32_t x_s  = g_status.pos.x_mm_scaled;
-    int32_t y_s  = g_status.pos.y_mm_scaled;
-    int32_t z_s  = g_status.pos.z_mm_scaled;
-    int32_t ph_s = g_status.pos.phi_deg_scaled;
+    int32_t x_s  = g_status.pos_cmd.x_mm_scaled;
+    int32_t y_s  = g_status.pos_cmd.y_mm_scaled;
+    int32_t z_s  = g_status.pos_cmd.z_mm_scaled;
+    int32_t ph_s = g_status.pos_cmd.phi_deg_scaled;
 
     // MOVE: mindestens 1 Key, erlaubt x/y/z/phi in beliebiger Kombination.
     err_e e = parse_pos_tokens_mask(
@@ -247,16 +269,22 @@ static bool cmd_move(int argc, char **argv)
     if (e != ERR_NONE) { send_err("MOVE", err_to_str(e)); return false; }
 
     bot_action_s a = {
-        .type=ACT_MOVE,
-        .x_mm_scaled=x_s,
-        .y_mm_scaled=y_s,
-        .z_mm_scaled=z_s,
-        .phi_deg_scaled=ph_s,
-        .req_id=s_next_req_id++
+        .type = ACT_MOVE,
+        .target_pos = {
+            .x_mm_scaled = x_s,
+            .y_mm_scaled = y_s,
+            .z_mm_scaled = z_s,
+            .phi_deg_scaled = ph_s
+        },
+        .magnet_on = false,
+        .request_id = s_next_req_id++
     };
 
+
+
     if (!bot_enqueue(&a)) { send_err("MOVE","QUEUE_FULL"); return false; }
-    send_queued("MOVE", a.req_id);
+
+    send_queued("MOVE", a.request_id);
     return true;
 }
 
@@ -283,16 +311,21 @@ static bool cmd_pick(int argc, char **argv)
     if (e != ERR_NONE) { send_err("PICK", err_to_str(e)); return false; }
 
     bot_action_s a = {
-        .type=ACT_PICK,
-        .x_mm_scaled=x_s,
-        .y_mm_scaled=y_s,
-        .z_mm_scaled=z_s,          // bleibt 0, Z-Profil ist intern
-        .phi_deg_scaled=ph_s,
-        .req_id=s_next_req_id++
+        .type = ACT_PICK,
+        .target_pos = {
+            .x_mm_scaled = x_s,
+            .y_mm_scaled = y_s,
+            .z_mm_scaled = z_s,        // bleibt 0 (Z wird intern im Job gemacht)
+            .phi_deg_scaled = ph_s     // optional -> entweder geparst oder default
+        },
+        .magnet_on = false,
+        .request_id = s_next_req_id++
     };
 
+
+
     if (!bot_enqueue(&a)) { send_err("PICK","QUEUE_FULL"); return false; }
-    send_queued("PICK", a.req_id);
+    send_queued("PICK", a.request_id);
     return true;
 }
 
@@ -318,17 +351,23 @@ static bool cmd_place(int argc, char **argv)
     );
     if (e != ERR_NONE) { send_err("PLACE", err_to_str(e)); return false; }
 
+    // (nach parse_pos_tokens_mask)
     bot_action_s a = {
-        .type=ACT_PLACE,
-        .x_mm_scaled=x_s,
-        .y_mm_scaled=y_s,
-        .z_mm_scaled=z_s,          // bleibt 0, Z-Profil intern
-        .phi_deg_scaled=ph_s,
-        .req_id=s_next_req_id++
+        .type = ACT_PLACE,
+        .target_pos = {
+            .x_mm_scaled = x_s,
+            .y_mm_scaled = y_s,
+            .z_mm_scaled = 0,       // bleibt 0 (Z-Profil intern)
+            .phi_deg_scaled = ph_s  // Pflicht
+        },
+        .magnet_on = false,
+        .request_id = s_next_req_id++
     };
 
+
+
     if (!bot_enqueue(&a)) { send_err("PLACE","QUEUE_FULL"); return false; }
-    send_queued("PLACE", a.req_id);
+    send_queued("PLACE", a.request_id);
     return true;
 }
 
@@ -346,10 +385,10 @@ static bool cmd_reset(int argc, char **argv)
     g_status.estop = false;
     g_status.last_err = ERR_NONE;
 
-    g_status.pos.x_mm_scaled = 0;
-    g_status.pos.y_mm_scaled = 0;
-    g_status.pos.z_mm_scaled = 0;
-    g_status.pos.phi_deg_scaled = 0;
+    g_status.pos_cmd.x_mm_scaled = 0;
+    g_status.pos_cmd.y_mm_scaled = 0;
+    g_status.pos_cmd.z_mm_scaled = 0;
+    g_status.pos_cmd.phi_deg_scaled = 0;
 
     send_ok("RESET");
     return true;

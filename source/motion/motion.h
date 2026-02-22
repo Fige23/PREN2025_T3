@@ -19,7 +19,7 @@ motion.h	Created on: 24.11.2025	   Author: Fige23	Team 3
 #include "bot.h"
 
 //nicht fix
-err_e motion_start(bot_action_s *cur);
+err_e motion_start(const bot_action_s *cur);
 //err_e home_start(bot_action_s *cur);
 
 //err_e job_start_pick(bot_action_s *cur);

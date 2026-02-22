@@ -8,7 +8,24 @@
  |  _/   / _|| .` | |  _/ |_| |/ / / / | |__| _|| _ \ (_) | | |
  |_| |_|_\___|_|\_| |_|  \___//___/___||____|___|___/\___/  |_|
  motion.c	Created on: 18.12.2025	   Author: Fige23	Team 3
- */
+
+===============================================================================
+motion.c  (Multi-Axis Stepper Pulse Generator)
+
+Aufgabe:
+- Generiert Step/Dir Pulse für X/Y/Z/PHI aus einer Zielpose.
+- Läuft zeitkritisch über FTM3 Tick-ISR.
+- Nutzt DDA/Bresenham-ähnliche Verteilung, damit alle Achsen synchron ankommen.
+- Updatet pose_cmd anhand Stepper-Zählung (und aktuell pose_meas = pose_cmd).
+
+Wichtig:
+- motion_start(...) startet eine Bewegung.
+- motion_is_done()/motion_last_err() melden Completion.
+- IO ist gekapselt in io.c (Pins toggeln).
+===============================================================================
+*/
+
+
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -144,7 +161,7 @@ static void motion_finish(err_e err) {
 	}
 }
 
-err_e motion_start(bot_action_s *cur) {
+err_e motion_start(const bot_action_s *cur) {
 
 	if (m.active)
 		return ERR_INTERNAL;
@@ -156,10 +173,10 @@ err_e motion_start(bot_action_s *cur) {
 	const int32_t spphi = (int32_t) (STEPS_PER_DEG_PHI + 0.5f);
 
 	//Delta (Ziel - Ist) in scaled units
-	int32_t dx_mm_scaled = cur->x_mm_scaled - g_status.pos.x_mm_scaled;
-	int32_t dy_mm_scaled = cur->y_mm_scaled - g_status.pos.y_mm_scaled;
-	int32_t dz_mm_scaled = cur->z_mm_scaled - g_status.pos.z_mm_scaled;
-	int32_t dphi_deg_scaled = cur->phi_deg_scaled - g_status.pos.phi_deg_scaled;
+	int32_t dx_mm_scaled = cur->target_pos.x_mm_scaled - g_status.pos_cmd.x_mm_scaled;
+	int32_t dy_mm_scaled = cur->target_pos.y_mm_scaled - g_status.pos_cmd.y_mm_scaled;
+	int32_t dz_mm_scaled = cur->target_pos.z_mm_scaled - g_status.pos_cmd.z_mm_scaled;
+	int32_t dphi_deg_scaled = cur->target_pos.phi_deg_scaled - g_status.pos_cmd.phi_deg_scaled;
 
 	//In Steps umrechnen:
 	int32_t sx = scaled_to_steps(dx_mm_scaled, spx, SCALE_MM);
@@ -216,13 +233,13 @@ err_e motion_start(bot_action_s *cur) {
 	m.scale[AX_Z] = SCALE_MM;
 	m.scale[AX_PHI] = SCALE_DEG;
 
-	m.pos_num[AX_X] = (int64_t) g_status.pos.x_mm_scaled
+	m.pos_num[AX_X] = (int64_t) g_status.pos_cmd.x_mm_scaled
 			* (int64_t) m.steps_per_unit[AX_X];
-	m.pos_num[AX_Y] = (int64_t) g_status.pos.y_mm_scaled
+	m.pos_num[AX_Y] = (int64_t) g_status.pos_cmd.y_mm_scaled
 			* (int64_t) m.steps_per_unit[AX_Y];
-	m.pos_num[AX_Z] = (int64_t) g_status.pos.z_mm_scaled
+	m.pos_num[AX_Z] = (int64_t) g_status.pos_cmd.z_mm_scaled
 			* (int64_t) m.steps_per_unit[AX_Z];
-	m.pos_num[AX_PHI] = (int64_t) g_status.pos.phi_deg_scaled
+	m.pos_num[AX_PHI] = (int64_t) g_status.pos_cmd.phi_deg_scaled
 			* (int64_t) m.steps_per_unit[AX_PHI];
 
 	// State reset
@@ -271,9 +288,7 @@ err_e motion_start(bot_action_s *cur) {
     m.step_period_ticks = period;
 
     m.active = true;
-    ftm3_tick_set_callback(motion_tick_isr);
-    ftm3_tick_init(STEP_TICK_HZ);
-    ftm3_tick_start();
+
     return ERR_NONE;
 }
 
@@ -338,19 +353,21 @@ static void motion_tick_isr(void){
 			changed_mask |= (1u<<i);
 		}
 	}
-	//g_status.pos wird nur aktualisiert wenn in diesem slice wirklich etwas verändert wurde:
+	//g_status.pos_cmd wird nur aktualisiert wenn in diesem slice wirklich etwas verändert wurde:
 	if(changed_mask & (1u << AX_X)){
-		g_status.pos.x_mm_scaled = (int32_t)(m.pos_num[AX_X] / (int64_t)m.steps_per_unit[AX_X]);
+		g_status.pos_cmd.x_mm_scaled = (int32_t)(m.pos_num[AX_X] / (int64_t)m.steps_per_unit[AX_X]);
 	}
 	if(changed_mask & (1u << AX_Y)){
-		g_status.pos.y_mm_scaled = (int32_t)(m.pos_num[AX_Y] / (int64_t)m.steps_per_unit[AX_Y]);
+		g_status.pos_cmd.y_mm_scaled = (int32_t)(m.pos_num[AX_Y] / (int64_t)m.steps_per_unit[AX_Y]);
 	}
 	if(changed_mask & (1u << AX_Z)){
-		g_status.pos.z_mm_scaled = (int32_t)(m.pos_num[AX_Z] / (int64_t)m.steps_per_unit[AX_Z]);
+		g_status.pos_cmd.z_mm_scaled = (int32_t)(m.pos_num[AX_Z] / (int64_t)m.steps_per_unit[AX_Z]);
 	}
 	if(changed_mask & (1u << AX_PHI)){
-		g_status.pos.phi_deg_scaled = (int32_t)(m.pos_num[AX_PHI] / (int64_t)m.steps_per_unit[AX_PHI]);
+		g_status.pos_cmd.phi_deg_scaled = (int32_t)(m.pos_num[AX_PHI] / (int64_t)m.steps_per_unit[AX_PHI]);
 	}
+
+	g_status.pos_measured = g_status.pos_cmd; 		//noch keine encoder
 
 	//major left zählt herunter wieviele major steps noch fehlen:
 	if(--m.major_left == 0){

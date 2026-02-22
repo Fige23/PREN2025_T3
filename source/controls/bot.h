@@ -22,12 +22,14 @@ typedef enum {
 } bot_action_e;
 
 typedef struct {
-  bot_action_e type;
-  // Ziele in Fixed-Point:
-  int32_t x_mm_scaled, y_mm_scaled, z_mm_scaled;  // 0.001 mm
-  int32_t phi_deg_scaled;                 // 0.01°
-  bool    on;                         // für MAGNET
-  uint16_t req_id;                    // Antwort-Korrelation
+    bot_action_e type;
+
+    // Zielpose für MOVE/HOME/PICK/PLACE
+    robot_pos_s target_pos;
+
+    // Zusatzdaten je nach Action
+    bool     magnet_on;     // nur für ACT_MAGNET
+    uint16_t request_id;    // Antwort-Korrelation (ID)
 } bot_action_s;
 
 bool bot_enqueue(const bot_action_s *a);

@@ -19,7 +19,7 @@ job.h	Created on: 18.12.2025	   Author: Fige23	Team 3
 
 void job_init(void);
 
-//Startet einen MOVE-Job (mit z-safety logik) und startet erstes Segment via motion_start()
+//Startet einen MOVE-Job (ohne Z-Safety/Phasen) -> fährt direkt auf Zielpose via motion_start()
 err_e job_start_move(const bot_action_s *a);
 
 //Muss zyklisch aufgerufen werden -> gibt true zurück wenn job fertig (OK oder ERR)

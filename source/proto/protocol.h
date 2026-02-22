@@ -48,26 +48,28 @@ typedef enum {
 }err_e;
 
 
-// Position intern in Fixed-Point
-// x/y/z: 0.001 mm (= 1 µm)
-// phi:   0.001°
+// Pose intern in Fixed-Point
+// x/y/z: 0.001 mm (= 1 µm)   -> SCALE_MM = 1000
+// phi:   0.01°               -> SCALE_DEG = 100
 typedef struct {
     int32_t x_mm_scaled;
     int32_t y_mm_scaled;
     int32_t z_mm_scaled;
     int32_t phi_deg_scaled;
-} pos_s;
-
-
+} robot_pos_s;
 
 typedef struct {
-	bot_state_e state;
-	bool homed;
-	bool has_part;
-	bool estop;
-	err_e last_err;
-	pos_s pos;
-}bot_status_s;
+    bot_state_e state;
+    bool homed;
+    bool has_part;
+    bool estop;
+    err_e last_err;
+
+    // Für spätere Encoder-Integration:
+    robot_pos_s pos_cmd;   // "commanded" (Stepper-Zählung / Soll-Ist im Firmware-Sinn)
+    robot_pos_s pos_measured;  // "measured"  (Encoder, später)
+} bot_status_s;
+
 
 extern volatile bot_status_s g_status;
 //string helpers

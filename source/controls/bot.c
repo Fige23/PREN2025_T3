@@ -9,47 +9,39 @@
  |_| |_|_\___|_|\_| |_|  \___//___/___||____|___|___/\___/  |_|
  bot.c  Created on: 14.11.2025   Author: Fige23  Team 3
 
- Bot-Engine / Action-Scheduler.
- - cmd.c/parsing erzeugt bot_action_s und ruft bot_enqueue().
- - bot.c puffert die Actions in einer FIFO-Queue und arbeitet sie nacheinander ab.
- - bot_step() ist der einzige Ort, der finale OK/ERR Antworten ans Pi schickt.
- - Ab hier ist alles Fixed-Point:
-     x/y/z: 0.001 mm (= 1 µm)  -> int32 x_001mm
-     phi : 0.01°              -> int32 phi_001deg
- - Abarbeitung ist bereits asynchron aufgebaut:
-     * wir starten eine Action
-     * warten später auf done (Motion/Job)
-     * erst dann wird OK gesendet
-   Aktuell ist done noch ein Stub, damit der Rest der Architektur schon passt.
+
+
+===============================================================================
+bot.c  (Bot Engine / Action Scheduler)
+
+Aufgabe:
+- Ringbuffer-Queue von bot_action_s (FIFO).
+- Abarbeitung sequenziell:
+    - holt nächste Action
+    - startet Job/Motion (oder schaltet Magnet)
+    - wartet auf completion (job_step/motion_is_done)
+    - setzt g_status.state/last_err
+    - sendet final OK/ERR mit request_id
+
+Design-Regeln:
+- Reihenfolge ist garantiert (Queue).
+- Keine direkte Bewegung aus cmd.c heraus.
+- ESTOP: Queue wird verworfen, Status in EMERGENCY_STOP.
+===============================================================================
 */
+
 
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdarg.h>
 #include <stdio.h>
 
-#include "magnet.h"
-#include "bot.h"
-#include "protocol.h"     // g_status (globaler Status), state/error enums
-#include "serial_port.h"  // serial_puts() für UART-Ausgabe
-#include "robot_config.h"
-
-
-/*Project: PREN_Puzzleroboter
- bot.c  Bot-Engine / Action-Scheduler.
-*/
-
-#include <stdint.h>
-#include <stdbool.h>
-#include <stdarg.h>
-#include <stdio.h>
-
-#include "magnet.h"
+#include "io.h"
 #include "bot.h"
 #include "protocol.h"     // g_status, err_to_str(), state/error enums
 #include "serial_port.h"  // serial_puts()
 #include "job.h"          // job_start_move(), job_step(), job_init()
-
+#include "robot_config.h"
 // -----------------------------------------------------------------------------
 // Reply helper
 // -----------------------------------------------------------------------------
@@ -79,12 +71,12 @@ static const char* act_name(bot_action_e t)
 
 static void reply_ok_action(const bot_action_s *a)
 {
-    replyf("OK %s id=%u%s", act_name(a->type), (unsigned)a->req_id, EOL);
+    replyf("OK %s id=%u%s", act_name(a->type), (unsigned)a->request_id, EOL);
 }
 
 static void reply_err_action(const bot_action_s *a, err_e e)
 {
-    replyf("ERR %s id=%u%s", err_to_str(e), (unsigned)a->req_id, EOL);
+    replyf("ERR %s id=%u%s", err_to_str(e), (unsigned)a->request_id, EOL);
 }
 
 // -----------------------------------------------------------------------------
@@ -92,10 +84,10 @@ static void reply_err_action(const bot_action_s *a, err_e e)
 // -----------------------------------------------------------------------------
 static inline void apply_target_to_status(const bot_action_s *a)
 {
-    g_status.pos.x_mm_scaled    = a->x_mm_scaled;
-    g_status.pos.y_mm_scaled    = a->y_mm_scaled;
-    g_status.pos.z_mm_scaled    = a->z_mm_scaled;
-    g_status.pos.phi_deg_scaled = a->phi_deg_scaled;
+    g_status.pos_cmd.x_mm_scaled    = a->target_pos.x_mm_scaled;
+    g_status.pos_cmd.y_mm_scaled    = a->target_pos.y_mm_scaled;
+    g_status.pos_cmd.z_mm_scaled    = a->target_pos.z_mm_scaled;
+    g_status.pos_cmd.phi_deg_scaled = a->target_pos.phi_deg_scaled;
 }
 
 // -----------------------------------------------------------------------------
@@ -132,7 +124,7 @@ static void bot_queue_clear(void)
 // -----------------------------------------------------------------------------
 // Bot Engine
 // -----------------------------------------------------------------------------
-#ifdef IMPLEMENTATION_STEPPER
+#if IMPLEMENTATION_STEPPER
 void bot_step(void)
 {
     static bool busy = false;
@@ -155,7 +147,7 @@ void bot_step(void)
 
         // Instant Action: MAGNET
         if (cur.type == ACT_MAGNET) {
-            // magnet_set(cur.on);
+            magnet_on_off(cur.magnet_on);
             reply_ok_action(&cur);
             return;
         }
@@ -247,7 +239,7 @@ void bot_step(void)
 
 #endif
 
-#ifdef UART_DEMO
+#if UART_DEMO
 // Optional: alles verwerfen (z.B. bei ESTOP)
 // void bot_queue_clear(void) { q_head=q_tail=q_count=0; }
 
@@ -280,7 +272,7 @@ void bot_step(void)
         // Magnet schaltet nur den Greifer. Keine Achsenbewegung -> kein busy/statewechsel.
         if (cur.type == ACT_MAGNET) {
             //magnet_set(cur.on);
-            replyf("OK MAGNET id=%u%s", (unsigned)cur.req_id, EOL);
+            replyf("OK MAGNET id=%u%s", (unsigned)cur.request_id, EOL);
             return;
         }
 
@@ -299,7 +291,7 @@ void bot_step(void)
                 g_status.state = STATE_ERROR;
                 g_status.last_err = ERR_SYNTAX;
                 replyf("ERR UNKNOWN_ACTION id=%u%s",
-                       (unsigned)cur.req_id, EOL);
+                       (unsigned)cur.request_id, EOL);
                 busy = false;
                 return;
         }
@@ -323,10 +315,10 @@ void bot_step(void)
     switch (cur.type) {
         case ACT_HOME:
             g_status.homed = true;
-            g_status.pos.x_mm_scaled    = 0;
-            g_status.pos.y_mm_scaled    = 0;
-            g_status.pos.z_mm_scaled    = 0;
-            g_status.pos.phi_deg_scaled = 0;
+            g_status.pos_cmd.x_mm_scaled    = 0;
+            g_status.pos_cmd.y_mm_scaled    = 0;
+            g_status.pos_cmd.z_mm_scaled    = 0;
+            g_status.pos_cmd.phi_deg_scaled = 0;
             break;
 
         case ACT_MOVE:
@@ -348,7 +340,7 @@ void bot_step(void)
             g_status.state = STATE_ERROR;
             g_status.last_err = ERR_INTERNAL;
             replyf("ERR INTERNAL id=%u%s",
-                   (unsigned)cur.req_id, EOL);
+                   (unsigned)cur.request_id, EOL);
             busy = false;
             return;
     }
@@ -356,7 +348,7 @@ void bot_step(void)
     // 4) Final OK
     g_status.state = STATE_IDLE;
     replyf("OK %s id=%u%s", act_name(cur.type),
-           (unsigned)cur.req_id, EOL);
+           (unsigned)cur.request_id, EOL);
 
     busy = false;
 }

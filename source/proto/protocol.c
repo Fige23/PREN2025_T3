@@ -9,15 +9,23 @@
 |_| |_|_\___|_|\_| |_|  \___//___/___||____|___|___/\___/  |_|    
 protocol.c	Created on: 13.11.2025	   Author: Fige23	Team 3                                                                
 
- Protokoll-Basics / gemeinsamer Status.
- - Dieses File enthält:
-     * den globalen Systemstatus g_status (für STATUS/POS etc.)
-     * String-Mapper für Error- und State-Enumnamen.
- - g_status wird von cmd.c gelesen (Status-Abfrage),
-   von bot.c/motion.c geschrieben (wenn sich etwas ändert).
- - Damit cmd.c und bot.c denselben Blick auf den Systemzustand haben,
-   liegt das hier zentral im Protokoll-Modul.
+===============================================================================
+protocol.[h|c]
+
+Aufgabe:
+- Zentrale Definition von States/Errors und dem globalen Status g_status.
+- g_status ist die gemeinsame Wahrheit für:
+    state/homed/has_part/estop/last_err
+    pose_cmd  (Stepper-Zählung / commanded)
+    pose_meas (Encoder/Measured, später)
+
+Warum pose_cmd + pose_meas?
+- Heute: ohne Encoder -> pose_meas wird gleich pose_cmd gehalten.
+- Später: AS5311/Encoder -> pose_meas kommt aus Sensor, pose_cmd bleibt Stepper-basiert.
+===============================================================================
 */
+
+
 #include "robot_config.h"
 #include "protocol.h"
 
@@ -25,12 +33,14 @@ protocol.c	Created on: 13.11.2025	   Author: Fige23	Team 3
 // Wird als volatile geführt, weil er aus verschiedenen Kontexten
 // (Main-Loop / später ISR / Bot-Engine) gelesen/geschrieben wird.
 volatile bot_status_s g_status = {
-		.state = STATE_IDLE,
-		.homed = false,
-		.has_part = false,
-		.estop = false,
-		.last_err = ERR_NONE,
-		.pos = {0,0,0,0}
+    .state = STATE_IDLE,
+    .homed = false,
+    .has_part = false,
+    .estop = false,
+    .last_err = ERR_NONE,
+
+    .pos_cmd  = { .x_mm_scaled=0, .y_mm_scaled=0, .z_mm_scaled=0, .phi_deg_scaled=0 },
+    .pos_measured = { .x_mm_scaled=0, .y_mm_scaled=0, .z_mm_scaled=0, .phi_deg_scaled=0 }, //z, phi immer null: ungemessen
 };
 
 // Fehlercode -> Protokoll-String.
