@@ -92,24 +92,6 @@ void BOARD_InitBootPins(void);
 #define BOARD_INITPINS_DIR_PHI_PIN_MASK (1U << 11U)      /*!<@brief PORT pin mask */
                                                          /* @} */
 
-/*! @name PORTE1 (number 2), UART1RX
-  @{ */
-
-/* Symbols to be used with PORT driver */
-#define BOARD_INITPINS_UART1RX_PORT PORTE               /*!<@brief PORT peripheral base pointer */
-#define BOARD_INITPINS_UART1RX_PIN 1U                   /*!<@brief PORT pin number */
-#define BOARD_INITPINS_UART1RX_PIN_MASK (1U << 1U)      /*!<@brief PORT pin mask */
-                                                        /* @} */
-
-/*! @name PORTE0 (number 1), UART1TX
-  @{ */
-
-/* Symbols to be used with PORT driver */
-#define BOARD_INITPINS_UART1TX_PORT PORTE               /*!<@brief PORT peripheral base pointer */
-#define BOARD_INITPINS_UART1TX_PIN 0U                   /*!<@brief PORT pin number */
-#define BOARD_INITPINS_UART1TX_PIN_MASK (1U << 0U)      /*!<@brief PORT pin mask */
-                                                        /* @} */
-
 /*! @name PORTD0 (number 93), STEP_X
   @{ */
 
@@ -161,6 +143,24 @@ void BOARD_InitBootPins(void);
 #define BOARD_INITPINS_STEP_PHI_PIN 3U                   /*!<@brief PORT pin number */
 #define BOARD_INITPINS_STEP_PHI_PIN_MASK (1U << 3U)      /*!<@brief PORT pin mask */
                                                          /* @} */
+
+/*! @name PORTE0 (number 1), UART1TX
+  @{ */
+
+/* Symbols to be used with PORT driver */
+#define BOARD_INITPINS_UART1TX_PORT PORTE               /*!<@brief PORT peripheral base pointer */
+#define BOARD_INITPINS_UART1TX_PIN 0U                   /*!<@brief PORT pin number */
+#define BOARD_INITPINS_UART1TX_PIN_MASK (1U << 0U)      /*!<@brief PORT pin mask */
+                                                        /* @} */
+
+/*! @name PORTE1 (number 2), UART1RX
+  @{ */
+
+/* Symbols to be used with PORT driver */
+#define BOARD_INITPINS_UART1RX_PORT PORTE               /*!<@brief PORT peripheral base pointer */
+#define BOARD_INITPINS_UART1RX_PIN 1U                   /*!<@brief PORT pin number */
+#define BOARD_INITPINS_UART1RX_PIN_MASK (1U << 1U)      /*!<@brief PORT pin mask */
+                                                        /* @} */
 
 /*!
  * @brief 
