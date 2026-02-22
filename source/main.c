@@ -1,24 +1,21 @@
 /*Project: ${project_name}
  (   (          )   (            )   ) (               )
  )\ ))\ )    ( /(   )\ )      ( /(( /( )\ )      (  ( /(   *   )
-(()/(()/((   )\()) (()/(   (  )\())\()|()/( (  ( )\ )\())` )  /(
+ (()/(()/((   )\()) (()/(   (  )\())\()|()/( (  ( )\ )\())` )  /(
  /(_))(_))\ ((_)\   /(_))  )\((_)((_)\ /(_)))\ )((_|(_)\  ( )(_))
-(_))(_))((_) _((_) (_)) _ ((_)_((_)((_|_)) ((_|(_)_  ((_)(_(_())
-| _ \ _ \ __| \| | | _ \ | | |_  /_  /| |  | __| _ )/ _ \|_   _|
-|  _/   / _|| .` | |  _/ |_| |/ / / / | |__| _|| _ \ (_) | | |
-|_| |_|_\___|_|\_| |_|  \___//___/___||____|___|___/\___/  |_|
-main.c
-Created on: 13.11.2025
-Author: Fige23
-Team 3
-*/
+ (_))(_))((_) _((_) (_)) _ ((_)_((_)((_|_)) ((_|(_)_  ((_)(_(_())
+ | _ \ _ \ __| \| | | _ \ | | |_  /_  /| |  | __| _ )/ _ \|_   _|
+ |  _/   / _|| .` | |  _/ |_| |/ / / / | |__| _|| _ \ (_) | | |
+ |_| |_|_\___|_|\_| |_|  \___//___/___||____|___|___/\___/  |_|
+ main.c
+ Created on: 13.11.2025
+ Author: Fige23
+ Team 3
+ */
 
-
-
-// MCFUN artefact:
-// calulate nr of TOF count for a given number of milliseconds
-
-#define TOFS_MS(x)   ((uint16_t)(((FTM3_CLOCK / 1000) * x) / (FTM3_MODULO + 1)))
+#include <string.h>
+#include <stdio.h>
+#include <stdarg.h>
 
 #include "platform.h"
 #include "board.h"
@@ -35,11 +32,33 @@ Team 3
 #include "ftm3.h"
 #include "motion.h"
 #include "job.h"
+#include "console_goto.h"
 
+/*
+ ===============================================================================
+ main.c
 
-//Main function of Puzzle Robot
-int main(void){
+ Aufgabe:
+ - Initialisiert Board/Clocks/Pins, UART/Serial-Port und alle Robot-Module.
+ - Startet den Motion-Tick (FTM3) und ruft danach zyklisch:
+ cmd_poll();  -> nimmt Kommandos entgegen und queued Actions
+ bot_step();  -> arbeitet Actions ab und sendet final OK/ERR
 
+ Wichtige Module:
+ - cmd.c:  Parsing/Validierung, erstellt bot_action_s und queued via bot_enqueue()
+ - bot.c:  Scheduler/State-Machine, startet Jobs/Motion, sendet OK/ERR
+ - job.c:  Sequenzen (später PICK/PLACE), MOVE ist 1 Segment
+ - motion.c: Stepper-Puls-Generator im Timer-ISR, updatet pose_cmd (und aktuell auch pose_meas)
+ ===============================================================================
+ */
+int main(void) {
+
+	/*
+	 *
+	 * PINS AUF UART GEMUXT
+	 *
+	 *
+	 */
 
 	BOARD_InitBootPins();
 	BOARD_InitBootClocks();
@@ -49,19 +68,14 @@ int main(void){
 	 * -Im ConficTool gemacht, wird durch InitBootPeripherals initialisiert.
 	 * -Modus: Output compare, toggle auf channel 0,1,2,3 für die 4 stepper
 	 * -channel interrupts im config tool aktiviert
-	 *
-	 * TODO:
-	 * -eigenes stepper file
-	 * -FTM3_IRQHandler anlegen und unterscheiden welcher channel interrupt ausgelöst hat
-	 * -Wrapper funktionen erstellen für verwendung.
-	 * -Aktuell wird ftm noch nicht verwendet.
-	 *
-	 *
 	 */
 
 	serial_init(115200);
-	//magnet_init();
-	cmd_init(); //Macht nichts, sendet nur CMD_READY über die UART
+#if ENABLE_CONSOLE_GOTO
+	console_goto_init();
+#else
+    cmd_init();	//macht nichts sendet nur CMD_READY per UART
+#endif
 
 	//Init FTM3
 	ftm3_tick_init(STEP_TICK_HZ);
@@ -69,19 +83,15 @@ int main(void){
 	ftm3_tick_start();
 	job_init();
 
-	for(;;){
+	for (;;) {
+#if ENABLE_CONSOLE_GOTO
+		console_goto_poll();
+#else
 		cmd_poll();
+#endif
 		bot_step();
 		__asm volatile("nop");
 	}
 
 }
-
-
-
-
-
-
-
-
 

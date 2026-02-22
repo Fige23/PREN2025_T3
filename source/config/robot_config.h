@@ -8,6 +8,11 @@
 |  _/   / _|| .` | |  _/ |_| |/ / / / | |__| _|| _ \ (_) | | |    
 |_| |_|_\___|_|\_| |_|  \___//___/___||____|___|___/\___/  |_|    
 robot_config.h	Created on: 24.11.2025	   Author: Fige23	Team 3                                                                
+
+=====================================================================
+Config file: Hier können alle Parameter des Roboters angepasst werden
+=====================================================================
+
 */
 
 #ifndef CONFIG_ROBOT_CONFIG_H_
@@ -16,14 +21,23 @@ robot_config.h	Created on: 24.11.2025	   Author: Fige23	Team 3
 // 1 = MOVE nur erlaubt nach HOME, 0 = MOVE auch ohne HOME erlauben
 #define REQUIRE_HOME_FOR_MOVE  0
 
+// -----------------------------------------------------------------------------
+// Debug/Test: GOTO über Konsole (UART) ohne cmd.c Protokoll
+// 1 = Konsole nimmt Koordinaten an und queued ACT_MOVE
+// 0 = normales cmd.c Protokoll (MOVE x=..., PICK, PLACE, ...)
+// -----------------------------------------------------------------------------
+#define ENABLE_CONSOLE_GOTO   1
 
+// Echo beim Tippen in der Konsole
+#define CONSOLE_GOTO_ECHO     1
 
-//Hier umschalten ob UART demonstriert/getestet oder die stepper angesteuert werden sollen.
-//wenn UART_DEMO nicht definiert -> alles ausser MOVE liefert aktuell ERR_NOT_IMPL 19.12.2025
+// --- Build mode selection -----------------------------------------------------
+// Genau EIN Mode soll 1 sein.
+#define IMPLEMENTATION_STEPPER   1
+#define UART_DEMO                0
 
-//#define UART_DEMO
-#ifndef UART_DEMO
-#define IMPLEMENTATION_STEPPER
+#if (IMPLEMENTATION_STEPPER + UART_DEMO) != 1
+#error "Select exactly one mode: IMPLEMENTATION_STEPPER or UART_DEMO"
 #endif
 
 // === Steps/mm oder Steps/µm (je Achse) ===
@@ -57,10 +71,8 @@ robot_config.h	Created on: 24.11.2025	   Author: Fige23	Team 3
 #define LIMIT_PHI_MIN -180
 #define LIMIT_PHI_MAX  180
 
-// Max. Z-Höhe (ab Top=0 nach unten positiv), bei der XY/PHI-Bewegungen erlaubt sind.
-// Wenn z > SAFE_Z_MAX_DURING_XY: erst Z nach oben (zurück) bis zur Safe-Höhe, dann XY/PHI.
-// Wenn Ziel-Z > SAFE-Z: XY/PHI bei Safe-Z, danach Z-only auf Ziel.
-#define SAFE_Z_MAX_DURING_XY   (50 * SCALE_MM)   // 50 mm unterhalb Top sind "safe"
+// Safe-Z Höhe für PICK/PLACE Sequenzen (MOVE ignoriert Safe-Z bewusst)
+#define SAFE_Z_MAX_DURING_XY   (50 * SCALE_MM)
 
 // Skaliert
 #define LIM_X_MIN_S  ((int32_t)(LIMIT_X_MIN  * SCALE_MM))
