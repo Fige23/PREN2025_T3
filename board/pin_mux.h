@@ -162,6 +162,42 @@ void BOARD_InitBootPins(void);
 #define BOARD_INITPINS_DIR_Z_PIN_MASK (1U << 10U)      /*!<@brief PORT pin mask */
                                                        /* @} */
 
+/*! @name PORTB0 (number 53), PHA_1
+  @{ */
+
+/* Symbols to be used with PORT driver */
+#define BOARD_INITPINS_PHA_1_PORT PORTB               /*!<@brief PORT peripheral base pointer */
+#define BOARD_INITPINS_PHA_1_PIN 0U                   /*!<@brief PORT pin number */
+#define BOARD_INITPINS_PHA_1_PIN_MASK (1U << 0U)      /*!<@brief PORT pin mask */
+                                                      /* @} */
+
+/*! @name PORTB1 (number 54), PHB_1
+  @{ */
+
+/* Symbols to be used with PORT driver */
+#define BOARD_INITPINS_PHB_1_PORT PORTB               /*!<@brief PORT peripheral base pointer */
+#define BOARD_INITPINS_PHB_1_PIN 1U                   /*!<@brief PORT pin number */
+#define BOARD_INITPINS_PHB_1_PIN_MASK (1U << 1U)      /*!<@brief PORT pin mask */
+                                                      /* @} */
+
+/*! @name PORTB18 (number 64), PHA_2
+  @{ */
+
+/* Symbols to be used with PORT driver */
+#define BOARD_INITPINS_PHA_2_PORT PORTB                /*!<@brief PORT peripheral base pointer */
+#define BOARD_INITPINS_PHA_2_PIN 18U                   /*!<@brief PORT pin number */
+#define BOARD_INITPINS_PHA_2_PIN_MASK (1U << 18U)      /*!<@brief PORT pin mask */
+                                                       /* @} */
+
+/*! @name PORTB19 (number 65), PHB_2
+  @{ */
+
+/* Symbols to be used with PORT driver */
+#define BOARD_INITPINS_PHB_2_PORT PORTB                /*!<@brief PORT peripheral base pointer */
+#define BOARD_INITPINS_PHB_2_PIN 19U                   /*!<@brief PORT pin number */
+#define BOARD_INITPINS_PHB_2_PIN_MASK (1U << 19U)      /*!<@brief PORT pin mask */
+                                                       /* @} */
+
 /*!
  * @brief 
  *

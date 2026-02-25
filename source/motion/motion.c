@@ -347,8 +347,9 @@ static void motion_tick_isr(void)
         g_status.pos_cmd.phi_deg_scaled = (int32_t)(m.pos_num[AX_PHI] / (int64_t)m.steps_per_unit[AX_PHI]);
     }
 
-    // solange kein encoder: measured = cmd
+	#if !POSITION_ENABLE
     g_status.pos_measured = g_status.pos_cmd;
+	#endif
 
     // major countdown
     if (--m.major_left == 0){

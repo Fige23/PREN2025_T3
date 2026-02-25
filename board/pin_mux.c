@@ -24,6 +24,10 @@ pin_labels:
 - {pin_num: '83', pin_signal: ADC1_SE7b/PTC11/LLWU_P11/I2C1_SDA/FTM3_CH7/FB_RW_b, label: DIR_PHI, identifier: DIR_PHI}
 - {pin_num: '1', pin_signal: ADC1_SE4a/PTE0/CLKOUT32K/SPI1_PCS1/UART1_TX/I2C1_SDA/RTC_CLKOUT, label: UART1TX, identifier: UART1TX}
 - {pin_num: '2', pin_signal: ADC1_SE5a/PTE1/LLWU_P0/SPI1_SOUT/UART1_RX/I2C1_SCL/SPI1_SIN, label: UART1RX, identifier: UART1RX}
+- {pin_num: '53', pin_signal: ADC0_SE8/ADC1_SE8/PTB0/LLWU_P5/I2C0_SCL/FTM1_CH0/FTM1_QD_PHA, label: PHA_1, identifier: PHA_1}
+- {pin_num: '54', pin_signal: ADC0_SE9/ADC1_SE9/PTB1/I2C0_SDA/FTM1_CH1/FTM1_QD_PHB, label: PHB_1, identifier: PHB_1}
+- {pin_num: '64', pin_signal: PTB18/FTM2_CH0/I2S0_TX_BCLK/FB_AD15/FTM2_QD_PHA, label: PHA_2, identifier: PHA_2}
+- {pin_num: '65', pin_signal: PTB19/FTM2_CH1/I2S0_TX_FS/FB_OE_b/FTM2_QD_PHB, label: PHB_2, identifier: PHB_2}
  * BE CAREFUL MODIFYING THIS COMMENT - IT IS YAML SETTINGS FOR TOOLS ***********
  */
 /* clang-format on */
@@ -61,6 +65,10 @@ BOARD_InitPins:
   - {pin_num: '80', peripheral: GPIOC, signal: 'GPIO, 8', pin_signal: ADC1_SE4b/CMP0_IN2/PTC8/FTM3_CH4/I2S0_MCLK/FB_AD7, direction: OUTPUT}
   - {pin_num: '81', peripheral: GPIOC, signal: 'GPIO, 9', pin_signal: ADC1_SE5b/CMP0_IN3/PTC9/FTM3_CH5/I2S0_RX_BCLK/FB_AD6/FTM2_FLT0, direction: OUTPUT}
   - {pin_num: '82', peripheral: GPIOC, signal: 'GPIO, 10', pin_signal: ADC1_SE6b/PTC10/I2C1_SCL/FTM3_CH6/I2S0_RX_FS/FB_AD5, direction: OUTPUT}
+  - {pin_num: '53', peripheral: FTM1, signal: 'QD_PH, A', pin_signal: ADC0_SE8/ADC1_SE8/PTB0/LLWU_P5/I2C0_SCL/FTM1_CH0/FTM1_QD_PHA}
+  - {pin_num: '54', peripheral: FTM1, signal: 'QD_PH, B', pin_signal: ADC0_SE9/ADC1_SE9/PTB1/I2C0_SDA/FTM1_CH1/FTM1_QD_PHB}
+  - {pin_num: '64', peripheral: FTM2, signal: 'QD_PH, A', pin_signal: PTB18/FTM2_CH0/I2S0_TX_BCLK/FB_AD15/FTM2_QD_PHA}
+  - {pin_num: '65', peripheral: FTM2, signal: 'QD_PH, B', pin_signal: PTB19/FTM2_CH1/I2S0_TX_FS/FB_OE_b/FTM2_QD_PHB}
  * BE CAREFUL MODIFYING THIS COMMENT - IT IS YAML SETTINGS FOR TOOLS ***********
  */
 /* clang-format on */
@@ -75,6 +83,8 @@ void BOARD_InitPins(void)
 {
     /* Port A Clock Gate Control: Clock enabled */
     CLOCK_EnableClock(kCLOCK_PortA);
+    /* Port B Clock Gate Control: Clock enabled */
+    CLOCK_EnableClock(kCLOCK_PortB);
     /* Port C Clock Gate Control: Clock enabled */
     CLOCK_EnableClock(kCLOCK_PortC);
     /* Port D Clock Gate Control: Clock enabled */
@@ -147,6 +157,18 @@ void BOARD_InitPins(void)
 
     /* PORTA1 (pin 35) is configured as PTA1 */
     PORT_SetPinMux(BOARD_INITPINS_Magnet_PORT, BOARD_INITPINS_Magnet_PIN, kPORT_MuxAsGpio);
+
+    /* PORTB0 (pin 53) is configured as FTM1_QD_PHA */
+    PORT_SetPinMux(BOARD_INITPINS_PHA_1_PORT, BOARD_INITPINS_PHA_1_PIN, kPORT_MuxAlt6);
+
+    /* PORTB1 (pin 54) is configured as FTM1_QD_PHB */
+    PORT_SetPinMux(BOARD_INITPINS_PHB_1_PORT, BOARD_INITPINS_PHB_1_PIN, kPORT_MuxAlt6);
+
+    /* PORTB18 (pin 64) is configured as FTM2_QD_PHA */
+    PORT_SetPinMux(BOARD_INITPINS_PHA_2_PORT, BOARD_INITPINS_PHA_2_PIN, kPORT_MuxAlt6);
+
+    /* PORTB19 (pin 65) is configured as FTM2_QD_PHB */
+    PORT_SetPinMux(BOARD_INITPINS_PHB_2_PORT, BOARD_INITPINS_PHB_2_PIN, kPORT_MuxAlt6);
 
     /* PORTC10 (pin 82) is configured as PTC10 */
     PORT_SetPinMux(BOARD_INITPINS_DIR_Z_PORT, BOARD_INITPINS_DIR_Z_PIN, kPORT_MuxAsGpio);

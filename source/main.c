@@ -34,7 +34,7 @@
 #include "job.h"
 #include "console_goto.h"
 #include "util.h"
-
+#include "position.h"
 /*
  ===============================================================================
  main.c
@@ -78,6 +78,7 @@ int main(void) {
 
 	//Init FTM3
 	ftm3_tick_init(STEP_TICK_HZ);
+	position_init();
 	motion_init();
 	ftm3_tick_start();
 	job_init();
@@ -90,6 +91,7 @@ int main(void) {
 #else
 		cmd_poll();
 #endif
+		position_poll();
 		bot_step();
 		__asm volatile("nop");
 	}

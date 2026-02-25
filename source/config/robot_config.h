@@ -114,6 +114,32 @@ Config file: Hier können alle Parameter des Roboters angepasst werden
 // Safe-Z Höhe für PICK/PLACE Sequenzen (MOVE ignoriert Safe-Z bewusst)
 #define SAFE_Z_MAX_DURING_XY   (50 * SCALE_MM)
 
+// -----------------------------------------------------------------------------
+// Position feedback (AS5311 Encoder auf X/Y)
+// -----------------------------------------------------------------------------
+#define POSITION_ENABLE               1   // 0=kein Encoder, 1=Encoder aktiv
+#define POSITION_CLOSED_LOOP_ENABLE   1   // 0=nur messen, 1=MOVE korrigiert nach
+
+// AS5311 (Quadratur, x4): 1024 edges pro 2.0mm => 512 counts/mm
+#define ENC_X_COUNTS_PER_MM          512u
+#define ENC_Y_COUNTS_PER_MM          512u
+
+// Falls Encoder-Richtung nicht mit +mm übereinstimmt
+#define ENC_X_INVERT                  0
+#define ENC_Y_INVERT                  0
+
+// Toleranzen (Fixed-Point mm*1000)
+#define POS_TOL_X_SCALED             (20)   // 0.020mm
+#define POS_TOL_Y_SCALED             (20)   // 0.020mm
+
+// Korrektur-Regelung
+#define POS_CORR_P_NUM                1     // gain = NUM/DEN
+#define POS_CORR_P_DEN                1
+#define POS_CORR_MAX_STEP_SCALED    (2000)  // max 2.0mm pro Korrektur
+#define POS_CORR_MAX_ITERS            6
+
+
+
 // Skaliert
 #define LIM_X_MIN_S  ((int32_t)(LIMIT_X_MIN  * SCALE_MM))
 #define LIM_X_MAX_S  ((int32_t)(LIMIT_X_MAX  * SCALE_MM))
