@@ -14,12 +14,14 @@ position.c	Created on: 25.02.2026	   Author: Fige23	Team 3
 #include "position.h"
 #include "robot_config.h"
 
+#ifndef POSITION_ENABLE
+#define POSITION_ENABLE 0
+#endif
+
 #if POSITION_ENABLE
 
 #include "fsl_ftm.h"
 #include "fsl_clock.h"
-#include "fsl_common.h"
-#include "MK22F51212.h"
 
 #ifndef ENC_X_COUNTS_PER_MM
 #define ENC_X_COUNTS_PER_MM 512u
@@ -34,24 +36,19 @@ position.c	Created on: 25.02.2026	   Author: Fige23	Team 3
 #define ENC_Y_INVERT 0
 #endif
 
-#ifndef ENC_PHASE_FILTER_ENABLE
-#define ENC_PHASE_FILTER_ENABLE 1
-#endif
-#ifndef ENC_PHASE_FILTER_VAL
-#define ENC_PHASE_FILTER_VAL 5u
-#endif
-
 typedef struct {
     FTM_Type *ftm;
     uint16_t last_cnt;
-    int32_t  acc_counts;      // integrierte Counts (x4)
-    int32_t  offset_counts;   // Offset (Koordinatensystem)
+    int32_t  acc_counts;      // integrierte Counts (wrap-safe)
+    int32_t  offset_counts;   // Koordinaten-Offset (Nullpunkt)
     uint32_t counts_per_mm;
     bool     invert;
 } enc_axis_s;
 
 static enc_axis_s ex;
 static enc_axis_s ey;
+
+static inline int32_t iabs32(int32_t v) { return (v < 0) ? -v : v; }
 
 static int32_t div_round_s64(int64_t num, int64_t den)
 {
@@ -62,12 +59,14 @@ static int32_t div_round_s64(int64_t num, int64_t den)
 
 static int32_t counts_to_mm_scaled(int32_t counts, uint32_t counts_per_mm)
 {
+    // mm_scaled = counts * SCALE_MM / counts_per_mm
     int64_t num = (int64_t)counts * (int64_t)SCALE_MM;
     return div_round_s64(num, (int64_t)counts_per_mm);
 }
 
 static int32_t mm_scaled_to_counts(int32_t mm_scaled, uint32_t counts_per_mm)
 {
+    // counts = mm_scaled * counts_per_mm / SCALE_MM
     int64_t num = (int64_t)mm_scaled * (int64_t)counts_per_mm;
     return div_round_s64(num, (int64_t)SCALE_MM);
 }
@@ -76,7 +75,7 @@ static void enc_update(enc_axis_s *e)
 {
     uint16_t now = (uint16_t)FTM_GetQuadDecoderCounterValue(e->ftm);
 
-    // wrap-around-safe, solange zwischen reads |delta| < 32768
+    // wrap-safe delta solange zwischen polls |delta| < 32768
     int16_t delta = (int16_t)(now - e->last_cnt);
     e->last_cnt = now;
 
@@ -88,21 +87,23 @@ static void enc_update(enc_axis_s *e)
 
 static void enc_hw_init(enc_axis_s *e, FTM_Type *ftm)
 {
+    // Clock sicher aktivieren (robust, unabhängig vom Treiber-Setting)
+    if (ftm == FTM1) CLOCK_EnableClock(kCLOCK_Ftm1);
+    if (ftm == FTM2) CLOCK_EnableClock(kCLOCK_Ftm2);
+
     ftm_config_t cfg;
     FTM_GetDefaultConfig(&cfg);
     cfg.prescale = kFTM_Prescale_Divide_1;
-
     FTM_Init(ftm, &cfg);
 
     ftm_phase_params_t phA = {
-        .enablePhaseFilter = (ENC_PHASE_FILTER_ENABLE != 0),
-        .phaseFilterVal    = ENC_PHASE_FILTER_VAL,
+        .enablePhaseFilter = true,
+        .phaseFilterVal    = 5u,
         .phasePolarity     = kFTM_QuadPhaseNormal,
     };
-
     ftm_phase_params_t phB = {
-        .enablePhaseFilter = (ENC_PHASE_FILTER_ENABLE != 0),
-        .phaseFilterVal    = ENC_PHASE_FILTER_VAL,
+        .enablePhaseFilter = true,
+        .phaseFilterVal    = 5u,
         .phasePolarity     = kFTM_QuadPhaseNormal,
     };
 
@@ -119,12 +120,6 @@ static void enc_hw_init(enc_axis_s *e, FTM_Type *ftm)
 
 void position_init(void)
 {
-
-
-	CLOCK_EnableClock(kCLOCK_Ftm1);
-	CLOCK_EnableClock(kCLOCK_Ftm2);
-
-
     ex.counts_per_mm = ENC_X_COUNTS_PER_MM;
     ex.invert        = (ENC_X_INVERT != 0);
     enc_hw_init(&ex, FTM1);
@@ -147,7 +142,7 @@ void position_poll(void)
     g_status.pos_measured.x_mm_scaled = counts_to_mm_scaled(x_counts, ex.counts_per_mm);
     g_status.pos_measured.y_mm_scaled = counts_to_mm_scaled(y_counts, ey.counts_per_mm);
 
-    // Z/Phi (noch) open loop
+    // Z/Phi vorerst "unge-messen" -> aus cmd übernehmen
     g_status.pos_measured.z_mm_scaled    = g_status.pos_cmd.z_mm_scaled;
     g_status.pos_measured.phi_deg_scaled = g_status.pos_cmd.phi_deg_scaled;
 }
@@ -181,13 +176,6 @@ void position_sync_measured_to_cmd(void)
     position_set_xy_mm_scaled(g_status.pos_cmd.x_mm_scaled, g_status.pos_cmd.y_mm_scaled);
 }
 
-void position_get_measured(robot_pos_s *out)
-{
-    if (!out) return;
-    position_poll();
-    *out = g_status.pos_measured;
-}
-
 #else
 
 void position_init(void) {}
@@ -198,6 +186,5 @@ int32_t position_get_x_counts(void) { return 0; }
 int32_t position_get_y_counts(void) { return 0; }
 void position_set_xy_mm_scaled(int32_t x_mm_scaled, int32_t y_mm_scaled) { (void)x_mm_scaled; (void)y_mm_scaled; }
 void position_sync_measured_to_cmd(void) {}
-void position_get_measured(robot_pos_s *out) { if (!out) return; *out = g_status.pos_cmd; }
 
 #endif

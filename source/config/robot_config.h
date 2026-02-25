@@ -117,8 +117,8 @@ Config file: Hier können alle Parameter des Roboters angepasst werden
 // -----------------------------------------------------------------------------
 // Position feedback (AS5311 Encoder auf X/Y)
 // -----------------------------------------------------------------------------
-#define POSITION_ENABLE               1   // 0=kein Encoder, 1=Encoder aktiv
-#define POSITION_CLOSED_LOOP_ENABLE   1   // 0=nur messen, 1=MOVE korrigiert nach
+#define POSITION_ENABLE               0   // 0=kein Encoder, 1=Encoder aktiv
+#define POSITION_CLOSED_LOOP_ENABLE   0   // 0=nur messen, 1=MOVE korrigiert nach
 
 // AS5311 (Quadratur, x4): 1024 edges pro 2.0mm => 512 counts/mm
 #define ENC_X_COUNTS_PER_MM          512u
@@ -133,10 +133,10 @@ Config file: Hier können alle Parameter des Roboters angepasst werden
 #define POS_TOL_Y_SCALED             (20)   // 0.020mm
 
 // Korrektur-Regelung
-#define POS_CORR_P_NUM                1     // gain = NUM/DEN
-#define POS_CORR_P_DEN                1
+#define POS_CORR_P_ZAEHLER                1     // gain = NUM/DEN
+#define POS_CORR_P_NENNER                 1
 #define POS_CORR_MAX_STEP_SCALED    (2000)  // max 2.0mm pro Korrektur
-#define POS_CORR_MAX_ITERS            6
+#define POS_CORR_MAX_ITERATIONS            6
 
 
 
