@@ -51,7 +51,7 @@ Config file: Hier können alle Parameter des Roboters angepasst werden
 #define STEPS_PER_DEG_PHI  10
 
 // Pulse-Tick (ISR-Rate) für den Motion-Timer (FTM3)
-#define STEP_TICK_HZ       12000u
+#define STEP_TICK_HZ       24000u
 
 // -----------------------------------------------------------------------------
 // Motion tuning (Step-Domain) + Sound smoothing
@@ -60,7 +60,7 @@ Config file: Hier können alle Parameter des Roboters angepasst werden
 // X/Y Limits in steps/s und steps/s^2 (HIER TUNEN!)
 #define X_MAX_STEP_RATE_SPS      6000u     // max speed (major axis), steps/s
 #define X_START_STEP_RATE_SPS    2000u     // start speed (muss aus Stand gehen)
-#define X_ACCEL_SPS2            25000u     // accel, steps/s^2
+#define X_ACCEL_SPS2             5000u     // accel, steps/s^2
 
 #define Y_MAX_STEP_RATE_SPS      6000u
 #define Y_START_STEP_RATE_SPS    2000u
