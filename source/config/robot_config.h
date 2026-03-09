@@ -136,10 +136,10 @@ Config file: Hier können alle Parameter des Roboters angepasst werden
 #define POS_TOL_Y_SCALED             (20)   // 0.020mm
 
 // Korrektur-Regelung
-#define POS_CORR_P_ZAEHLER                1     // gain = NUM/DEN
-#define POS_CORR_P_NENNER                 1
-#define POS_CORR_MAX_STEP_SCALED    (2000)  // max 2.0mm pro Korrektur
-#define POS_CORR_MAX_ITERATIONS            6
+#define POS_CORR_P_ZAEHLER              1     // gain = NUM/DEN
+#define POS_CORR_P_NENNER               1
+#define POS_CORR_MAX_STEP_SCALED    	(2000)  // max 2.0mm pro Korrektur
+#define POS_CORR_MAX_ITERATIONS         6
 
 
 
