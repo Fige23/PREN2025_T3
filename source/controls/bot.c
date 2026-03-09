@@ -65,6 +65,8 @@ static void replyf(const char *fmt, ...)
 #endif
 }
 
+
+
 static const char* act_name(bot_action_e t)
 {
     switch (t) {
@@ -90,12 +92,12 @@ static void reply_err_action(const bot_action_s *a, err_e e)
 // -----------------------------------------------------------------------------
 // Helpers: Positionsübernahme (Fixed-Point)
 // -----------------------------------------------------------------------------
-static inline void apply_target_to_status(const bot_action_s *a)
+static inline void apply_target_to_internal_pos(const bot_action_s *a)
 {
-    g_status.pos_cmd.x_mm_scaled    = a->target_pos.x_mm_scaled;
-    g_status.pos_cmd.y_mm_scaled    = a->target_pos.y_mm_scaled;
-    g_status.pos_cmd.z_mm_scaled    = a->target_pos.z_mm_scaled;
-    g_status.pos_cmd.phi_deg_scaled = a->target_pos.phi_deg_scaled;
+    g_status.pos_internal.x_mm_scaled    = a->target_pos.x_mm_scaled;
+    g_status.pos_internal.y_mm_scaled    = a->target_pos.y_mm_scaled;
+    g_status.pos_internal.z_mm_scaled    = a->target_pos.z_mm_scaled;
+    g_status.pos_internal.phi_deg_scaled = a->target_pos.phi_deg_scaled;
 }
 
 // -----------------------------------------------------------------------------
@@ -128,7 +130,10 @@ static void bot_queue_clear(void)
 {
     q_head = q_tail = q_count = 0;
 }
-
+void bot_clear_queue(void)
+{
+    bot_queue_clear();
+}
 // -----------------------------------------------------------------------------
 // Bot Engine
 // -----------------------------------------------------------------------------
@@ -139,11 +144,11 @@ void bot_step(void)
     static bot_action_s cur;
 
     // Wenn ESTOP aktiv: keine neuen Actions starten, Queue verwerfen.
-    if (g_status.estop || g_status.state == STATE_EMERGENCY_STOP) {
+    if (g_status.estop) {
         bot_queue_clear();
+        g_status.state = STATE_EMERGENCY_STOP;
+        g_status.last_err = ERR_ESTOP;
 
-        // Falls gerade ein MOVE-Job läuft, lassen wir ihn auslaufen:
-        // motion/job wird per ISR auf ERR_ESTOP finishen, job_step wird dann fertig.
         if (!busy) return;
     }
 
@@ -171,7 +176,6 @@ void bot_step(void)
                     if (e == ERR_ESTOP) {
                         g_status.state = STATE_EMERGENCY_STOP;
                         g_status.estop = true;
-                        g_status.homed = false;
                         bot_queue_clear();
                     } else {
                         g_status.state = STATE_ERROR;
@@ -188,8 +192,22 @@ void bot_step(void)
 
             // Später implementieren
             case ACT_HOME:
+                g_status.state = STATE_ERROR;
+                g_status.last_err = ERR_NOT_IMPLEMENTED;
+                reply_err_action(&cur, ERR_NOT_IMPLEMENTED);
+                return;
+
             case ACT_PICK:
+                g_status.state = STATE_ERROR;
+                g_status.last_err = ERR_NOT_IMPLEMENTED;
+                reply_err_action(&cur, ERR_NOT_IMPLEMENTED);
+                return;
+
             case ACT_PLACE:
+                g_status.state = STATE_ERROR;
+                g_status.last_err = ERR_NOT_IMPLEMENTED;
+                reply_err_action(&cur, ERR_NOT_IMPLEMENTED);
+                return;
             default: {
                 g_status.state = STATE_ERROR;
                 g_status.last_err = ERR_INTERNAL;
@@ -215,7 +233,6 @@ void bot_step(void)
             if (je == ERR_ESTOP) {
                 g_status.state = STATE_EMERGENCY_STOP;
                 g_status.estop = true;
-                g_status.homed = false;
                 bot_queue_clear();
             } else {
                 g_status.state = STATE_ERROR;
@@ -323,23 +340,23 @@ void bot_step(void)
     switch (cur.type) {
         case ACT_HOME:
             g_status.homed = true;
-            g_status.pos_cmd.x_mm_scaled    = 0;
-            g_status.pos_cmd.y_mm_scaled    = 0;
-            g_status.pos_cmd.z_mm_scaled    = 0;
-            g_status.pos_cmd.phi_deg_scaled = 0;
+            g_status.pos_internal.x_mm_scaled    = 0;
+            g_status.pos_internal.y_mm_scaled    = 0;
+            g_status.pos_internal.z_mm_scaled    = 0;
+            g_status.pos_internal.phi_deg_scaled = 0;
             break;
 
         case ACT_MOVE:
-            apply_target_to_status(&cur);
+            apply_target_to_internal_pos(&cur);
             break;
 
         case ACT_PICK:
-            apply_target_to_status(&cur);
+            apply_target_to_internal_pos(&cur);
             g_status.has_part = true;
             break;
 
         case ACT_PLACE:
-            apply_target_to_status(&cur);
+            apply_target_to_internal_pos(&cur);
             g_status.has_part = false;
             break;
 

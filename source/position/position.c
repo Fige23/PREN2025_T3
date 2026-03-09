@@ -128,7 +128,7 @@ void position_init(void)
     ey.invert        = (ENC_Y_INVERT != 0);
     enc_hw_init(&ey, FTM2);
 
-    position_sync_measured_to_cmd();
+    position_sync_measured_to_internal();
 }
 
 void position_poll(void)
@@ -143,8 +143,8 @@ void position_poll(void)
     g_status.pos_measured.y_mm_scaled = counts_to_mm_scaled(y_counts, ey.counts_per_mm);
 
     // Z/Phi vorerst "unge-messen" -> aus cmd übernehmen
-    g_status.pos_measured.z_mm_scaled    = g_status.pos_cmd.z_mm_scaled;
-    g_status.pos_measured.phi_deg_scaled = g_status.pos_cmd.phi_deg_scaled;
+    g_status.pos_measured.z_mm_scaled    = g_status.pos_internal.z_mm_scaled;
+    g_status.pos_measured.phi_deg_scaled = g_status.pos_internal.phi_deg_scaled;
 }
 
 int32_t position_get_x_mm_scaled(void)
@@ -171,17 +171,17 @@ void position_set_xy_mm_scaled(int32_t x_mm_scaled, int32_t y_mm_scaled)
     position_poll();
 }
 
-void position_sync_measured_to_cmd(void)
+void position_sync_measured_to_internal(void)
 {
-    position_set_xy_mm_scaled(g_status.pos_cmd.x_mm_scaled, g_status.pos_cmd.y_mm_scaled);
+    position_set_xy_mm_scaled(g_status.pos_internal.x_mm_scaled, g_status.pos_internal.y_mm_scaled);
 }
 
 #else
 
 void position_init(void) {}
 void position_poll(void) {}
-int32_t position_get_x_mm_scaled(void) { return g_status.pos_cmd.x_mm_scaled; }
-int32_t position_get_y_mm_scaled(void) { return g_status.pos_cmd.y_mm_scaled; }
+int32_t position_get_x_mm_scaled(void) { return g_status.pos_internal.x_mm_scaled; }
+int32_t position_get_y_mm_scaled(void) { return g_status.pos_internal.y_mm_scaled; }
 int32_t position_get_x_counts(void) { return 0; }
 int32_t position_get_y_counts(void) { return 0; }
 void position_set_xy_mm_scaled(int32_t x_mm_scaled, int32_t y_mm_scaled) { (void)x_mm_scaled; (void)y_mm_scaled; }

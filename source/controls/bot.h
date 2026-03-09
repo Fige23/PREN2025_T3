@@ -34,6 +34,6 @@ typedef struct {
 
 bool bot_enqueue(const bot_action_s *a);
 void bot_step(void);                  // im main-Loop aufrufen
-
+void bot_clear_queue(void);
 
 #endif /* CONTROLS_BOT_H_ */

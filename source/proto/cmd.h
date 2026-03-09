@@ -15,4 +15,7 @@ cmd.h		Created on: 13.11.2025	   Author: Fige23	Team 3
 void cmd_init(void);
 void cmd_poll(void);
 
+// komplette Zeile direkt an den normalen Command-Parser übergeben
+void cmd_dispatch_line(char *line);
+
 #endif /* PROTO_CMD_H_ */

@@ -44,7 +44,8 @@ typedef enum {
 	ERR_PLACE_FAIL,
 	ERR_MOTOR,
 	ERR_ESTOP,
-	ERR_INTERNAL
+	ERR_INTERNAL,
+	ERR_NOT_IMPLEMENTED
 }err_e;
 
 
@@ -66,7 +67,7 @@ typedef struct {
     err_e last_err;
 
     // Für spätere Encoder-Integration:
-    robot_pos_s pos_cmd;   // "commanded" (Stepper-Zählung / Soll-Ist im Firmware-Sinn)
+    robot_pos_s pos_internal;   // "commanded" (Stepper-Zählung / Soll-Ist im Firmware-Sinn)
     robot_pos_s pos_measured;  // "measured"  (Encoder, später)
 } bot_status_s;
 
