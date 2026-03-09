@@ -24,6 +24,9 @@ void magnet_off(void);
 void magnet_toggle(void);
 void magnet_on_off(bool);
 
+//Not-Aus soft (nur software-stop)
+bool estop_button_pressed(void);
+
 //stepper dir pins:
 // x:PTC8
 // y:PTC9
