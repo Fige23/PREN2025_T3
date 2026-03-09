@@ -65,3 +65,12 @@ void stepper_phi_step(bool level){
 	GPIO_PinWrite(BOARD_INITPINS_STEP_PHI_GPIO, BOARD_INITPINS_STEP_PHI_PIN, level);
 }
 
+bool estop_button_pressed(void)
+{
+    // aktiv low mit Pull-up
+    return GPIO_PinRead(BOARD_INITPINS_ESTOP_GPIO,
+                        BOARD_INITPINS_ESTOP_PIN) == 0u;
+}
+
+
+

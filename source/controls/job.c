@@ -139,10 +139,10 @@ bool job_step(err_e *out_err)
     if (okx && oky) {
         // Ziel erreicht (innerhalb Toleranz) -> Job fertig
         // Optional: pos_cmd exakt auf Soll setzen (saubere "Soll-Welt")
-        g_status.pos_cmd.x_mm_scaled = j.final_target.x_mm_scaled;
-        g_status.pos_cmd.y_mm_scaled = j.final_target.y_mm_scaled;
-        g_status.pos_cmd.z_mm_scaled = j.final_target.z_mm_scaled;
-        g_status.pos_cmd.phi_deg_scaled = j.final_target.phi_deg_scaled;
+        g_status.pos_internal.x_mm_scaled = j.final_target.x_mm_scaled;
+        g_status.pos_internal.y_mm_scaled = j.final_target.y_mm_scaled;
+        g_status.pos_internal.z_mm_scaled = j.final_target.z_mm_scaled;
+        g_status.pos_internal.phi_deg_scaled = j.final_target.phi_deg_scaled;
 
         j.last_err = ERR_NONE;
         j.active = false;
@@ -180,7 +180,7 @@ bool job_step(err_e *out_err)
     // => wir müssen command weiter verschieben, damit physisch nachgezogen wird.
     bot_action_s corr = {0};
     corr.type = ACT_MOVE;
-    corr.target_pos = g_status.pos_cmd; // Startpunkt für Delta ist pos_cmd in motion_start()
+    corr.target_pos = g_status.pos_internal; // Startpunkt für Delta ist pos_cmd in motion_start()
     corr.target_pos.x_mm_scaled += cx;
     corr.target_pos.y_mm_scaled += cy;
 

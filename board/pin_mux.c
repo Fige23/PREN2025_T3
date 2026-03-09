@@ -28,6 +28,7 @@ pin_labels:
 - {pin_num: '54', pin_signal: ADC0_SE9/ADC1_SE9/PTB1/I2C0_SDA/FTM1_CH1/FTM1_QD_PHB, label: PHB_1, identifier: PHB_1}
 - {pin_num: '64', pin_signal: PTB18/FTM2_CH0/I2S0_TX_BCLK/FB_AD15/FTM2_QD_PHA, label: PHA_2, identifier: PHA_2}
 - {pin_num: '65', pin_signal: PTB19/FTM2_CH1/I2S0_TX_FS/FB_OE_b/FTM2_QD_PHB, label: PHB_2, identifier: PHB_2}
+- {pin_num: '42', pin_signal: PTA12/FTM1_CH0/I2S0_TXD0/FTM1_QD_PHA, label: ESTOP, identifier: ESTOP}
  * BE CAREFUL MODIFYING THIS COMMENT - IT IS YAML SETTINGS FOR TOOLS ***********
  */
 /* clang-format on */
@@ -69,6 +70,7 @@ BOARD_InitPins:
   - {pin_num: '54', peripheral: FTM1, signal: 'QD_PH, B', pin_signal: ADC0_SE9/ADC1_SE9/PTB1/I2C0_SDA/FTM1_CH1/FTM1_QD_PHB}
   - {pin_num: '64', peripheral: FTM2, signal: 'QD_PH, A', pin_signal: PTB18/FTM2_CH0/I2S0_TX_BCLK/FB_AD15/FTM2_QD_PHA}
   - {pin_num: '65', peripheral: FTM2, signal: 'QD_PH, B', pin_signal: PTB19/FTM2_CH1/I2S0_TX_FS/FB_OE_b/FTM2_QD_PHB}
+  - {pin_num: '42', peripheral: GPIOA, signal: 'GPIO, 12', pin_signal: PTA12/FTM1_CH0/I2S0_TXD0/FTM1_QD_PHA, direction: INPUT, pull_select: up, pull_enable: enable}
  * BE CAREFUL MODIFYING THIS COMMENT - IT IS YAML SETTINGS FOR TOOLS ***********
  */
 /* clang-format on */
@@ -98,6 +100,13 @@ void BOARD_InitPins(void)
     };
     /* Initialize GPIO functionality on pin PTA1 (pin 35)  */
     GPIO_PinInit(BOARD_INITPINS_Magnet_GPIO, BOARD_INITPINS_Magnet_PIN, &Magnet_config);
+
+    gpio_pin_config_t ESTOP_config = {
+        .pinDirection = kGPIO_DigitalInput,
+        .outputLogic = 0U
+    };
+    /* Initialize GPIO functionality on pin PTA12 (pin 42)  */
+    GPIO_PinInit(BOARD_INITPINS_ESTOP_GPIO, BOARD_INITPINS_ESTOP_PIN, &ESTOP_config);
 
     gpio_pin_config_t DIR_X_config = {
         .pinDirection = kGPIO_DigitalOutput,
@@ -157,6 +166,17 @@ void BOARD_InitPins(void)
 
     /* PORTA1 (pin 35) is configured as PTA1 */
     PORT_SetPinMux(BOARD_INITPINS_Magnet_PORT, BOARD_INITPINS_Magnet_PIN, kPORT_MuxAsGpio);
+
+    /* PORTA12 (pin 42) is configured as PTA12 */
+    PORT_SetPinMux(BOARD_INITPINS_ESTOP_PORT, BOARD_INITPINS_ESTOP_PIN, kPORT_MuxAsGpio);
+
+    PORTA->PCR[12] = ((PORTA->PCR[12] &
+                       /* Mask bits to zero which are setting */
+                       (~(PORT_PCR_PS_MASK | PORT_PCR_PE_MASK | PORT_PCR_ISF_MASK)))
+
+                      /* Pull Select: Internal pullup resistor is enabled on the corresponding pin, if the
+                       * corresponding PE field is set. */
+                      | (uint32_t)(kPORT_PullUp));
 
     /* PORTB0 (pin 53) is configured as FTM1_QD_PHA */
     PORT_SetPinMux(BOARD_INITPINS_PHA_1_PORT, BOARD_INITPINS_PHA_1_PIN, kPORT_MuxAlt6);

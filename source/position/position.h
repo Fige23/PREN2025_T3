@@ -30,6 +30,6 @@ int32_t position_get_y_counts(void);
 void position_set_xy_mm_scaled(int32_t x_mm_scaled, int32_t y_mm_scaled);
 
 // Praktisch nach Homing: measured an pos_cmd anpassen (Offset)
-void position_sync_measured_to_cmd(void);
+void position_sync_measured_to_internal(void);
 
 #endif /* POSITION_POSITION_H_ */

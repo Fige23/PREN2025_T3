@@ -35,6 +35,7 @@
 #include "console_goto.h"
 #include "util.h"
 #include "position.h"
+#include "console_uart_sim.h"
 /*
  ===============================================================================
  main.c
@@ -52,6 +53,32 @@
  - motion.c: Stepper-Puls-Generator im Timer-ISR, updatet pose_cmd (und aktuell auch pose_meas)
  ===============================================================================
  */
+
+
+//polling ESTOP
+static void estop_poll(void)
+{
+    static bool last = false;
+    bool now = estop_button_pressed();
+
+    // Flankenerkennung: nur beim Drücken latchen
+    if (now && !last) {
+        g_status.estop = true;
+    }
+
+    last = now;
+}
+/*
+ * FTM3 Konfiguration:
+ * -Im ConficTool gemacht, wird durch InitBootPeripherals initialisiert.
+ * -Modus: Output compare, toggle auf channel 0,1,2,3 für die 4 stepper
+ * -channel interrupts im config tool aktiviert
+ */
+
+
+
+
+
 int main(void) {
 	/*
 	 *
@@ -62,19 +89,18 @@ int main(void) {
 	BOARD_InitBootPins();
 	BOARD_InitBootClocks();
 	BOARD_InitBootPeripherals();
-	/*
-	 * FTM3 Konfiguration:
-	 * -Im ConficTool gemacht, wird durch InitBootPeripherals initialisiert.
-	 * -Modus: Output compare, toggle auf channel 0,1,2,3 für die 4 stepper
-	 * -channel interrupts im config tool aktiviert
-	 */
+
 
 	serial_init(115200);
-#if ENABLE_CONSOLE_GOTO
-	console_goto_init();
-#else
-    cmd_init();	//macht nichts sendet nur CMD_READY per UART
-#endif
+
+	#if ENABLE_CONSOLE_GOTO
+	    console_goto_init();
+	#elif ENABLE_CONSOLE_UART_SIM
+	    cmd_init();
+	    console_uart_sim_init();
+	#else
+	    cmd_init();
+	#endif
 
 	//Init FTM3
 	ftm3_tick_init(STEP_TICK_HZ);
@@ -86,14 +112,17 @@ int main(void) {
 
 
 	for (;;) {
-#if ENABLE_CONSOLE_GOTO
-		console_goto_poll();
-#else
-		cmd_poll();
-#endif
-		position_poll();
-		bot_step();
-		__asm volatile("nop");
+	#if ENABLE_CONSOLE_GOTO
+	    console_goto_poll();
+	#elif ENABLE_CONSOLE_UART_SIM
+	    console_uart_sim_poll();
+	#else
+	    cmd_poll();
+	#endif
+	    estop_poll();
+	    position_poll();
+	    bot_step();
+	    __asm volatile("nop");
 	}
 
 }

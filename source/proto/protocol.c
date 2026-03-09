@@ -39,7 +39,7 @@ volatile bot_status_s g_status = {
     .estop = false,
     .last_err = ERR_NONE,
 
-    .pos_cmd  = { .x_mm_scaled=0, .y_mm_scaled=0, .z_mm_scaled=0, .phi_deg_scaled=0 },
+    .pos_internal  = { .x_mm_scaled=0, .y_mm_scaled=0, .z_mm_scaled=0, .phi_deg_scaled=0 },
     .pos_measured = { .x_mm_scaled=0, .y_mm_scaled=0, .z_mm_scaled=0, .phi_deg_scaled=0 }, //z, phi immer null: ungemessen
 };
 
@@ -64,6 +64,8 @@ const char* err_to_str(err_e e) {
 		return "MOTOR";
 	case ERR_ESTOP:
 		return "ESTOP";
+	case ERR_NOT_IMPLEMENTED:
+		return "NOT_IMPLEMENTED";
 	default:
 		return "INTERNAL";
 	}

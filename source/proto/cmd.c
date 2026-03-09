@@ -147,15 +147,15 @@ static bool cmd_status(int argc, char **argv)
            yesno(g_status.estop),
            err_to_str(g_status.last_err));
 
-    print_mm3("x", g_status.pos_cmd.x_mm_scaled);
-    print_mm3("y", g_status.pos_cmd.y_mm_scaled);
-    print_mm3("z", g_status.pos_cmd.z_mm_scaled);
-    print_deg2("phi", g_status.pos_cmd.phi_deg_scaled);
-
-    replyf(" POS_MEASURED");
+    print_mm3("x", g_status.pos_internal.x_mm_scaled);
+    print_mm3("y", g_status.pos_internal.y_mm_scaled);
+    print_mm3("z", g_status.pos_internal.z_mm_scaled);
+    print_deg2("phi", g_status.pos_internal.phi_deg_scaled);
+#if POSITION_ENABLE
+    replyf(" POS_MEASURED ");
     print_mm3("x", g_status.pos_measured.x_mm_scaled);
     print_mm3("y", g_status.pos_measured.y_mm_scaled);
-
+#endif
 
     replyf("%s", EOL);
     return true;
@@ -168,10 +168,10 @@ static bool cmd_pos(int argc, char **argv)
     (void)argc; (void)argv;
 
     replyf("POS ");
-    print_mm3("x", g_status.pos_cmd.x_mm_scaled);
-    print_mm3("y", g_status.pos_cmd.y_mm_scaled);
-    print_mm3("z", g_status.pos_cmd.z_mm_scaled);
-    print_deg2("phi", g_status.pos_cmd.phi_deg_scaled);
+    print_mm3("x", g_status.pos_internal.x_mm_scaled);
+    print_mm3("y", g_status.pos_internal.y_mm_scaled);
+    print_mm3("z", g_status.pos_internal.z_mm_scaled);
+    print_deg2("phi", g_status.pos_internal.phi_deg_scaled);
     replyf("%s", EOL);
 
     return true;
@@ -257,16 +257,18 @@ static bool cmd_magnet(int argc, char **argv) {
 // Optional-Parameter: nicht angegebene Achsen bleiben auf aktueller Position.
 static bool cmd_move(int argc, char **argv)
 {
+
+
     if (argc < 2)        { send_err("MOVE","SYNTAX");  return false; }
     if (g_status.estop)  { send_err("MOVE","ESTOP");   return false; }
 
     if (REQUIRE_HOME_FOR_MOVE && !g_status.homed) { send_err("MOVE","NO_HOME"); return false; }
 
     // Defaults = aktuelle Position (Fixed-Point), damit Teil-MOVEs präzise bleiben.
-    int32_t x_s  = g_status.pos_cmd.x_mm_scaled;
-    int32_t y_s  = g_status.pos_cmd.y_mm_scaled;
-    int32_t z_s  = g_status.pos_cmd.z_mm_scaled;
-    int32_t ph_s = g_status.pos_cmd.phi_deg_scaled;
+    int32_t x_s  = g_status.pos_internal.x_mm_scaled;
+    int32_t y_s  = g_status.pos_internal.y_mm_scaled;
+    int32_t z_s  = g_status.pos_internal.z_mm_scaled;
+    int32_t ph_s = g_status.pos_internal.phi_deg_scaled;
 
     // MOVE: mindestens 1 Key, erlaubt x/y/z/phi in beliebiger Kombination.
     err_e e = parse_pos_tokens_mask(
@@ -383,23 +385,54 @@ static bool cmd_place(int argc, char **argv)
 
 
 // --- RESET (synchron) ---
-// Setzt nur den lokalen Status zurück. Keine Queue, keine Bewegung.
 static bool cmd_reset(int argc, char **argv)
 {
-    (void)argc; (void)argv;
+    (void)argc;
+    (void)argv;
 
-    g_status.state = STATE_IDLE;
-    g_status.has_part = false;
-    g_status.homed = false;
+    bot_clear_queue();
+
     g_status.estop = false;
+    g_status.state = STATE_IDLE;
     g_status.last_err = ERR_NONE;
 
-    g_status.pos_cmd.x_mm_scaled = 0;
-    g_status.pos_cmd.y_mm_scaled = 0;
-    g_status.pos_cmd.z_mm_scaled = 0;
-    g_status.pos_cmd.phi_deg_scaled = 0;
+    g_status.has_part = false;
+    g_status.homed = false;
+
+    g_status.pos_internal.x_mm_scaled = 0;
+    g_status.pos_internal.y_mm_scaled = 0;
+    g_status.pos_internal.z_mm_scaled = 0;
+    g_status.pos_internal.phi_deg_scaled = 0;
+
+    // pos_measured bewusst NICHT künstlich nullen.
+    // Falls Encoder aktiv sind, bleibt dort der aktuell gemessene Wert stehen.
+    // Falls keine Encoder aktiv sind, wird position_poll() measured wieder aus internal ableiten.
 
     send_ok("RESET");
+    return true;
+}
+
+static bool cmd_clear_estop(int argc, char **argv)
+{
+    (void)argc;
+    (void)argv;
+
+    if (!g_status.estop) {
+        send_err("CLEAR_ESTOP", "NO_ESTOP");
+        return false;
+    }
+
+    bot_clear_queue();
+
+    g_status.estop = false;
+    g_status.state = STATE_IDLE;
+    g_status.last_err = ERR_NONE;
+
+#if POSITION_ENABLE
+    g_status.pos_internal = g_status.pos_measured;
+#endif
+
+    send_ok("CLEAR_ESTOP");
     return true;
 }
 
@@ -417,7 +450,11 @@ static const cmd_entry_s s_cmds[] = {
 		{ "MOVE", cmd_move },
 		{ "PICK", cmd_pick },
 		{ "PLACE", cmd_place },
-		{ "RESET", cmd_reset }, };
+		{ "RESET", cmd_reset },
+		{ "CLEAR_ESTOP", cmd_clear_estop },
+		{ "CESTOP", cmd_clear_estop },
+		{ "UNLATCH", cmd_clear_estop }
+};
 
 // -----------------------------------------------------------------------------
 // Dispatch & line collection
@@ -432,7 +469,7 @@ static void str_upper(char *s) {
 
 // Zerlegt eine komplette Zeile in Tokens und ruft den passenden Handler.
 // Unbekannte Befehle liefern "ERR <cmd> UNKNOWN".
-static void dispatch_line(char *line) {
+void cmd_dispatch_line(char *line) {
 	char *argv[12];
 	int argc = 0;
 
@@ -477,7 +514,7 @@ void cmd_poll(void) {
 		if (ch == '\n' || ch == '\r') {
 			if (s_len > 0) {
 				s_line[s_len] = '\0';
-				dispatch_line(s_line);
+				cmd_dispatch_line(s_line);
 				s_len = 0;
 			}
 		} else {
