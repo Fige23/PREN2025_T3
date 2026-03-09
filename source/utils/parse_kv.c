@@ -152,11 +152,13 @@ err_e kv_fixed_any_lower(const char *tok, const kv_fixed_spec_s *specs,
     // Range-Checks (pro Achse + int32 Overflow verhindern).
     if (s < specs[idx].min_scaled || s > specs[idx].max_scaled)
         return ERR_RANGE;
-    if (s < INT32_MIN || s > INT32_MAX)
+
+    if (s < -2147483648LL || s > 2147483647LL)
         return ERR_RANGE;
 
     *specs[idx].dst_scaled = (int32_t)s;
     *seen_mask |= specs[idx].bit;
+
     return ERR_NONE;
 }
 
@@ -222,6 +224,8 @@ err_e parse_pos_tokens_mask(int argc, char **argv, int start,
                             uint8_t require_mask, uint8_t allowed_mask,
                             uint8_t *seen_out)
 {
+
+
     uint8_t seen = 0;
 
     kv_fixed_spec_s spec[] = {
@@ -232,10 +236,12 @@ err_e parse_pos_tokens_mask(int argc, char **argv, int start,
     };
 
     for (int i = start; i < argc; ++i) {
+
         err_e e = kv_fixed_any_lower(argv[i],
                 spec, sizeof(spec)/sizeof(spec[0]), &seen);
         if (e != ERR_NONE) return e;
     }
+
 
     // Whitelist erzwingen
     if ((seen & ~allowed_mask) != 0) return ERR_SYNTAX;

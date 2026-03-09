@@ -42,15 +42,6 @@ static int32_t scaled_to_steps(int32_t d_scaled, int32_t steps_per_unit, int32_t
     else          return (int32_t)((num - scale/2) / scale);
 }
 
-// period_ticks = ceil( STEP_TICK_HZ / v_sps )
-static inline uint32_t ticks_from_v_q16(uint32_t v_sps_q16)
-{
-    if (v_sps_q16 == 0u) v_sps_q16 = 1u;
-    uint64_t num = ((uint64_t)STEP_TICK_HZ << 16);
-    uint32_t period = (uint32_t)((num + (uint64_t)v_sps_q16 - 1u) / (uint64_t)v_sps_q16);
-    if (period < MIN_STEP_PERIOD_TICKS) period = MIN_STEP_PERIOD_TICKS;
-    return period;
-}
 
 // stop_steps = (v^2 - vmin^2)/(2a)  (Q16.16), return steps (floor)
 static inline uint32_t stop_steps_from_vmin_q16(uint32_t v_q16, uint32_t vmin_q16, uint32_t a_q16)
@@ -77,6 +68,63 @@ static inline uint32_t dv_per_step_q16(uint32_t a_q16, uint32_t v_q16)
     if (dv == 0u) dv = 1u;
     return dv;
 }
+
+static inline uint32_t ticks_from_v_q16(uint32_t v_sps_q16)
+{
+    if (v_sps_q16 == 0u) v_sps_q16 = 1u;
+    uint64_t num = ((uint64_t)STEP_TICK_HZ << 16);
+    uint32_t period = (uint32_t)((num + (uint64_t)v_sps_q16 - 1u) / (uint64_t)v_sps_q16);
+    if (period < MIN_STEP_PERIOD_TICKS) period = MIN_STEP_PERIOD_TICKS;
+    return period;
+}
+
+static uint32_t isqrt_u64(uint64_t x)
+{
+    uint64_t op = x;
+    uint64_t res = 0;
+    uint64_t one = 1ull << 62;
+
+    while (one > op) {
+        one >>= 2;
+    }
+
+    while (one != 0) {
+        if (op >= res + one) {
+            op -= (res + one);
+            res += (one << 1);
+        }
+        res >>= 1;
+        one >>= 2;
+    }
+
+    return (uint32_t)res;
+}
+
+static uint32_t profile_speed_q16(uint32_t steps_done,
+                                  uint32_t steps_left,
+                                  uint32_t v_start_q16,
+                                  uint32_t v_max_q16,
+                                  uint32_t a_q16)
+{
+    uint64_t vstart2 = (uint64_t)v_start_q16 * (uint64_t)v_start_q16; // Q32
+    uint64_t two_a   = 2ull * (uint64_t)a_q16;                        // Q16
+
+    uint64_t vacc2 = vstart2 + two_a * (uint64_t)steps_done;          // Q32
+    uint64_t vdec2 = vstart2 + two_a * (uint64_t)steps_left;          // Q32
+
+    uint32_t v_acc_q16 = isqrt_u64(vacc2);
+    uint32_t v_dec_q16 = isqrt_u64(vdec2);
+
+    uint32_t v_cmd_q16 = v_acc_q16;
+    if (v_dec_q16 < v_cmd_q16) v_cmd_q16 = v_dec_q16;
+    if (v_max_q16 < v_cmd_q16) v_cmd_q16 = v_max_q16;
+
+    if (v_cmd_q16 < v_start_q16) v_cmd_q16 = v_start_q16;
+
+    return v_cmd_q16;
+}
+
+
 
 // --- pin wrappers ---
 static void step_set(axis_e ax, bool level)
@@ -169,10 +217,10 @@ err_e motion_start(const bot_action_s *cur)
     const int32_t spz   = (int32_t)(STEPS_PER_MM_Z + 0.5f);
     const int32_t spphi = (int32_t)(STEPS_PER_DEG_PHI + 0.5f);
 
-    int32_t dx = cur->target_pos.x_mm_scaled    - g_status.pos_cmd.x_mm_scaled;
-    int32_t dy = cur->target_pos.y_mm_scaled    - g_status.pos_cmd.y_mm_scaled;
-    int32_t dz = cur->target_pos.z_mm_scaled    - g_status.pos_cmd.z_mm_scaled;
-    int32_t dp = cur->target_pos.phi_deg_scaled - g_status.pos_cmd.phi_deg_scaled;
+    int32_t dx = cur->target_pos.x_mm_scaled    - g_status.pos_internal.x_mm_scaled;
+    int32_t dy = cur->target_pos.y_mm_scaled    - g_status.pos_internal.y_mm_scaled;
+    int32_t dz = cur->target_pos.z_mm_scaled    - g_status.pos_internal.z_mm_scaled;
+    int32_t dp = cur->target_pos.phi_deg_scaled - g_status.pos_internal.phi_deg_scaled;
 
     int32_t sx = scaled_to_steps(dx, spx,   SCALE_MM);
     int32_t sy = scaled_to_steps(dy, spy,   SCALE_MM);
@@ -218,10 +266,10 @@ err_e motion_start(const bot_action_s *cur)
     m.scale[AX_Z]   = SCALE_MM;
     m.scale[AX_PHI] = SCALE_DEG;
 
-    m.pos_num[AX_X]   = (int64_t)g_status.pos_cmd.x_mm_scaled    * (int64_t)m.steps_per_unit[AX_X];
-    m.pos_num[AX_Y]   = (int64_t)g_status.pos_cmd.y_mm_scaled    * (int64_t)m.steps_per_unit[AX_Y];
-    m.pos_num[AX_Z]   = (int64_t)g_status.pos_cmd.z_mm_scaled    * (int64_t)m.steps_per_unit[AX_Z];
-    m.pos_num[AX_PHI] = (int64_t)g_status.pos_cmd.phi_deg_scaled * (int64_t)m.steps_per_unit[AX_PHI];
+    m.pos_num[AX_X]   = (int64_t)g_status.pos_internal.x_mm_scaled    * (int64_t)m.steps_per_unit[AX_X];
+    m.pos_num[AX_Y]   = (int64_t)g_status.pos_internal.y_mm_scaled    * (int64_t)m.steps_per_unit[AX_Y];
+    m.pos_num[AX_Z]   = (int64_t)g_status.pos_internal.z_mm_scaled    * (int64_t)m.steps_per_unit[AX_Z];
+    m.pos_num[AX_PHI] = (int64_t)g_status.pos_internal.phi_deg_scaled * (int64_t)m.steps_per_unit[AX_PHI];
 
     // reset state
     m.done = false;
@@ -304,7 +352,7 @@ static void motion_tick_isr(void)
 
     if (!m.active) return;
 
-    if (g_status.estop || g_status.state == STATE_EMERGENCY_STOP){
+    if (g_status.estop){
         motion_finish(ERR_ESTOP);
         return;
     }
@@ -335,20 +383,20 @@ static void motion_tick_isr(void)
     }
 
     if (changed_mask & (1u<<AX_X)){
-        g_status.pos_cmd.x_mm_scaled = (int32_t)(m.pos_num[AX_X] / (int64_t)m.steps_per_unit[AX_X]);
+        g_status.pos_internal.x_mm_scaled = (int32_t)(m.pos_num[AX_X] / (int64_t)m.steps_per_unit[AX_X]);
     }
     if (changed_mask & (1u<<AX_Y)){
-        g_status.pos_cmd.y_mm_scaled = (int32_t)(m.pos_num[AX_Y] / (int64_t)m.steps_per_unit[AX_Y]);
+        g_status.pos_internal.y_mm_scaled = (int32_t)(m.pos_num[AX_Y] / (int64_t)m.steps_per_unit[AX_Y]);
     }
     if (changed_mask & (1u<<AX_Z)){
-        g_status.pos_cmd.z_mm_scaled = (int32_t)(m.pos_num[AX_Z] / (int64_t)m.steps_per_unit[AX_Z]);
+        g_status.pos_internal.z_mm_scaled = (int32_t)(m.pos_num[AX_Z] / (int64_t)m.steps_per_unit[AX_Z]);
     }
     if (changed_mask & (1u<<AX_PHI)){
-        g_status.pos_cmd.phi_deg_scaled = (int32_t)(m.pos_num[AX_PHI] / (int64_t)m.steps_per_unit[AX_PHI]);
+        g_status.pos_internal.phi_deg_scaled = (int32_t)(m.pos_num[AX_PHI] / (int64_t)m.steps_per_unit[AX_PHI]);
     }
 
 	#if !POSITION_ENABLE
-    g_status.pos_measured = g_status.pos_cmd;
+    g_status.pos_measured = g_status.pos_internal;
 	#endif
 
     // major countdown
@@ -357,40 +405,34 @@ static void motion_tick_isr(void)
         return;
     }
 
-    // ----------------- time-optimal accel/decel (triangle/trapez automatisch) -----------------
-    uint32_t stop_steps = stop_steps_from_vmin_q16(m.v_q16, m.v_start_q16, m.a_q16);
-    bool need_decel = (m.major_left <= (stop_steps + 1u));
+    // ----------------- positionsbasiertes Profil (Dreieck/Trapez automatisch) -----------------
+    uint32_t steps_done = m.major_total - m.major_left;
+    uint32_t steps_left = m.major_left;
 
-    uint32_t dv = dv_per_step_q16(m.a_q16, m.v_q16);
+    m.v_q16 = profile_speed_q16(steps_done,
+                                steps_left,
+                                m.v_start_q16,
+                                m.v_max_q16,
+                                m.a_q16);
 
-    if (need_decel) {
-        if (m.v_q16 > m.v_start_q16 + dv) m.v_q16 -= dv;
-        else                              m.v_q16  = m.v_start_q16;
-    } else {
-        uint64_t vnew = (uint64_t)m.v_q16 + (uint64_t)dv;
-        if (vnew > (uint64_t)m.v_max_q16) vnew = (uint64_t)m.v_max_q16;
-        m.v_q16 = (uint32_t)vnew;
-    }
-
-    // Zielperiode aus Profil
     m.step_period_target_ticks = ticks_from_v_q16(m.v_q16);
 
-#if ENABLE_PERIOD_SMOOTHING
-    // ----------------- SOUND SMOOTHING (weicher Klang, weniger "Treppengeräusch") -----------------
-    // IIR: period += (target - period) / 2^SHIFT
-    int32_t err = (int32_t)m.step_period_target_ticks - (int32_t)m.step_period_ticks;
-    int32_t delta = (err >> PERIOD_SMOOTH_SHIFT);
+    #if ENABLE_PERIOD_SMOOTHING
+        int32_t err = (int32_t)m.step_period_target_ticks - (int32_t)m.step_period_ticks;
+        int32_t delta = (err >> PERIOD_SMOOTH_SHIFT);
 
-    if (delta == 0 && err != 0) {
-        delta = (err > 0) ? (int32_t)PERIOD_SMOOTH_MINSTEP : -(int32_t)PERIOD_SMOOTH_MINSTEP;
-    }
+        if (delta == 0 && err != 0) {
+            delta = (err > 0) ? (int32_t)PERIOD_SMOOTH_MINSTEP : -(int32_t)PERIOD_SMOOTH_MINSTEP;
+        }
 
-    int32_t newp = (int32_t)m.step_period_ticks + delta;
+        int32_t newp = (int32_t)m.step_period_ticks + delta;
 
-    if (newp < (int32_t)MIN_STEP_PERIOD_TICKS) newp = (int32_t)MIN_STEP_PERIOD_TICKS;
-    m.step_period_ticks = (uint32_t)newp;
-#else
-    // ohne smoothing: direkt springen
-    m.step_period_ticks = m.step_period_target_ticks;
-#endif
+        if (newp < (int32_t)MIN_STEP_PERIOD_TICKS){
+        	newp = (int32_t)MIN_STEP_PERIOD_TICKS;
+        }
+        m.step_period_ticks = (uint32_t)newp;
+
+    #else
+        m.step_period_ticks = m.step_period_target_ticks;
+    #endif
 }

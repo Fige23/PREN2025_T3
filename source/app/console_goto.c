@@ -11,7 +11,7 @@
 #include "job.h"
 
 // Falls du es anders benannt hast: nur diese Zeile anpassen
-#define POSE_CMD (g_status.pos_cmd)
+#define POS_INTERNAL (g_status.pos_internal)
 
 static uint16_t s_req_id = 1;
 
@@ -30,10 +30,10 @@ static void print_help(void)
 
 static void print_pose(void)
 {
-    int32_t x = POSE_CMD.x_mm_scaled;
-    int32_t y = POSE_CMD.y_mm_scaled;
-    int32_t z = POSE_CMD.z_mm_scaled;
-    int32_t p = POSE_CMD.phi_deg_scaled;
+    int32_t x = POS_INTERNAL.x_mm_scaled;
+    int32_t y = POS_INTERNAL.y_mm_scaled;
+    int32_t z = POS_INTERNAL.z_mm_scaled;
+    int32_t p = POS_INTERNAL.phi_deg_scaled;
 
     long x_i = (long)(x / SCALE_MM);
     long y_i = (long)(y / SCALE_MM);
@@ -113,10 +113,10 @@ static void handle_line(char *line)
     }
 
     // defaults = aktuelle pose (damit "120 50" nur XY ändert)
-    int32_t x_s  = POSE_CMD.x_mm_scaled;
-    int32_t y_s  = POSE_CMD.y_mm_scaled;
-    int32_t z_s  = POSE_CMD.z_mm_scaled;
-    int32_t ph_s = POSE_CMD.phi_deg_scaled;
+    int32_t x_s  = POS_INTERNAL.x_mm_scaled;
+    int32_t y_s  = POS_INTERNAL.y_mm_scaled;
+    int32_t z_s  = POS_INTERNAL.z_mm_scaled;
+    int32_t ph_s = POS_INTERNAL.phi_deg_scaled;
 
     // parse 2-4 ints (mm / deg)
     int x=0, y=0, z=0, phi=0;

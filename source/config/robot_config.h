@@ -27,11 +27,12 @@ Config file: Hier können alle Parameter des Roboters angepasst werden
 // 1 = Konsole nimmt Koordinaten an und queued ACT_MOVE
 // 0 = normales cmd.c Protokoll (MOVE x=..., PICK, PLACE, ...)
 // -----------------------------------------------------------------------------
-#define ENABLE_CONSOLE_GOTO     1
+
 
 // Ausgabe (OK/ERR/Status) optional in Debug-Konsole via printf (Semihost).
-#define USE_SEMIHOST_CONSOLE    1
-
+#define ENABLE_CONSOLE_GOTO         0
+#define ENABLE_CONSOLE_UART_SIM     1
+#define USE_SEMIHOST_CONSOLE        1
 // -----------------------------------------------------------------------------
 // Build mode selection
 // Genau EIN Mode soll 1 sein.
@@ -59,8 +60,8 @@ Config file: Hier können alle Parameter des Roboters angepasst werden
 
 // X/Y Limits in steps/s und steps/s^2 (HIER TUNEN!)
 #define X_MAX_STEP_RATE_SPS      6000u     // max speed (major axis), steps/s
-#define X_START_STEP_RATE_SPS    2000u     // start speed (muss aus Stand gehen)
-#define X_ACCEL_SPS2             5000u     // accel, steps/s^2
+#define X_START_STEP_RATE_SPS    500u     // start speed (muss aus Stand gehen)
+#define X_ACCEL_SPS2             500u     // accel, steps/s^2
 
 #define Y_MAX_STEP_RATE_SPS      6000u
 #define Y_START_STEP_RATE_SPS    2000u
@@ -78,7 +79,7 @@ Config file: Hier können alle Parameter des Roboters angepasst werden
 // --- Akustik / Smoothness ---
 // 0 = aus (härtere, "treppige" Änderungen)
 // 1 = an  (Perioden werden weich in kleinen Schritten nachgeführt)
-#define ENABLE_PERIOD_SMOOTHING   1
+#define ENABLE_PERIOD_SMOOTHING   0
 
 // Filterstärke: kleiner = schneller (mehr "direkt"), grösser = weicher (besserer Sound)
 // 3 => ~1/8 pro Update (oft guter Kompromiss)
@@ -117,8 +118,8 @@ Config file: Hier können alle Parameter des Roboters angepasst werden
 // -----------------------------------------------------------------------------
 // Position feedback (AS5311 Encoder auf X/Y)
 // -----------------------------------------------------------------------------
-#define POSITION_ENABLE               0   // 0=kein Encoder, 1=Encoder aktiv
-#define POSITION_CLOSED_LOOP_ENABLE   0   // 0=nur messen, 1=MOVE korrigiert nach
+#define POSITION_ENABLE               1   // 0=kein Encoder, 1=Encoder aktiv
+#define POSITION_CLOSED_LOOP_ENABLE   1   // 0=nur messen, 1=MOVE korrigiert nach
 
 // AS5311 (Quadratur, x4): 1024 edges pro 2.0mm => 512 counts/mm
 #define ENC_X_COUNTS_PER_MM          512u
