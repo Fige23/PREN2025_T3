@@ -60,8 +60,8 @@ Config file: Hier können alle Parameter des Roboters angepasst werden
 
 // X/Y Limits in steps/s und steps/s^2 (HIER TUNEN!)
 #define X_MAX_STEP_RATE_SPS      6000u     // max speed (major axis), steps/s
-#define X_START_STEP_RATE_SPS    500u     // start speed (muss aus Stand gehen)
-#define X_ACCEL_SPS2             500u     // accel, steps/s^2
+#define X_START_STEP_RATE_SPS    200u     // start speed (muss aus Stand gehen)
+#define X_ACCEL_SPS2             25000u     // accel, steps/s^2
 
 #define Y_MAX_STEP_RATE_SPS      6000u
 #define Y_START_STEP_RATE_SPS    2000u
