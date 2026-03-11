@@ -29,6 +29,9 @@ pin_labels:
 - {pin_num: '64', pin_signal: PTB18/FTM2_CH0/I2S0_TX_BCLK/FB_AD15/FTM2_QD_PHA, label: PHA_2, identifier: PHA_2}
 - {pin_num: '65', pin_signal: PTB19/FTM2_CH1/I2S0_TX_FS/FB_OE_b/FTM2_QD_PHB, label: PHB_2, identifier: PHB_2}
 - {pin_num: '42', pin_signal: PTA12/FTM1_CH0/I2S0_TXD0/FTM1_QD_PHA, label: ESTOP, identifier: ESTOP}
+- {pin_num: '97', pin_signal: PTD4/LLWU_P14/SPI0_PCS1/UART0_RTS_b/FTM0_CH4/FB_AD2/EWM_IN/SPI1_PCS0, label: Limit_X, identifier: Limit_X}
+- {pin_num: '98', pin_signal: ADC0_SE6b/PTD5/SPI0_PCS2/UART0_CTS_b/FTM0_CH5/FB_AD1/EWM_OUT_b/SPI1_SCK, label: Limit_Y, identifier: Limit_Y}
+- {pin_num: '99', pin_signal: ADC0_SE7b/PTD6/LLWU_P15/SPI0_PCS3/UART0_RX/FTM0_CH6/FB_AD0/FTM0_FLT0/SPI1_SOUT, label: Limit_Z, identifier: Limit_Z}
  * BE CAREFUL MODIFYING THIS COMMENT - IT IS YAML SETTINGS FOR TOOLS ***********
  */
 /* clang-format on */
@@ -71,6 +74,12 @@ BOARD_InitPins:
   - {pin_num: '64', peripheral: FTM2, signal: 'QD_PH, A', pin_signal: PTB18/FTM2_CH0/I2S0_TX_BCLK/FB_AD15/FTM2_QD_PHA}
   - {pin_num: '65', peripheral: FTM2, signal: 'QD_PH, B', pin_signal: PTB19/FTM2_CH1/I2S0_TX_FS/FB_OE_b/FTM2_QD_PHB}
   - {pin_num: '42', peripheral: GPIOA, signal: 'GPIO, 12', pin_signal: PTA12/FTM1_CH0/I2S0_TXD0/FTM1_QD_PHA, direction: INPUT, pull_select: up, pull_enable: enable}
+  - {pin_num: '97', peripheral: GPIOD, signal: 'GPIO, 4', pin_signal: PTD4/LLWU_P14/SPI0_PCS1/UART0_RTS_b/FTM0_CH4/FB_AD2/EWM_IN/SPI1_PCS0, direction: INPUT, pull_select: up,
+    pull_enable: enable, digital_filter: disable}
+  - {pin_num: '98', peripheral: GPIOD, signal: 'GPIO, 5', pin_signal: ADC0_SE6b/PTD5/SPI0_PCS2/UART0_CTS_b/FTM0_CH5/FB_AD1/EWM_OUT_b/SPI1_SCK, direction: INPUT, pull_select: up,
+    pull_enable: enable}
+  - {pin_num: '99', peripheral: GPIOD, signal: 'GPIO, 6', pin_signal: ADC0_SE7b/PTD6/LLWU_P15/SPI0_PCS3/UART0_RX/FTM0_CH6/FB_AD0/FTM0_FLT0/SPI1_SOUT, direction: INPUT,
+    pull_select: up, pull_enable: enable}
  * BE CAREFUL MODIFYING THIS COMMENT - IT IS YAML SETTINGS FOR TOOLS ***********
  */
 /* clang-format on */
@@ -164,6 +173,27 @@ void BOARD_InitPins(void)
     /* Initialize GPIO functionality on pin PTD3 (pin 96)  */
     GPIO_PinInit(BOARD_INITPINS_STEP_PHI_GPIO, BOARD_INITPINS_STEP_PHI_PIN, &STEP_PHI_config);
 
+    gpio_pin_config_t Limit_X_config = {
+        .pinDirection = kGPIO_DigitalInput,
+        .outputLogic = 0U
+    };
+    /* Initialize GPIO functionality on pin PTD4 (pin 97)  */
+    GPIO_PinInit(BOARD_INITPINS_Limit_X_GPIO, BOARD_INITPINS_Limit_X_PIN, &Limit_X_config);
+
+    gpio_pin_config_t Limit_Y_config = {
+        .pinDirection = kGPIO_DigitalInput,
+        .outputLogic = 0U
+    };
+    /* Initialize GPIO functionality on pin PTD5 (pin 98)  */
+    GPIO_PinInit(BOARD_INITPINS_Limit_Y_GPIO, BOARD_INITPINS_Limit_Y_PIN, &Limit_Y_config);
+
+    gpio_pin_config_t Limit_Z_config = {
+        .pinDirection = kGPIO_DigitalInput,
+        .outputLogic = 0U
+    };
+    /* Initialize GPIO functionality on pin PTD6 (pin 99)  */
+    GPIO_PinInit(BOARD_INITPINS_Limit_Z_GPIO, BOARD_INITPINS_Limit_Z_PIN, &Limit_Z_config);
+
     /* PORTA1 (pin 35) is configured as PTA1 */
     PORT_SetPinMux(BOARD_INITPINS_Magnet_PORT, BOARD_INITPINS_Magnet_PIN, kPORT_MuxAsGpio);
 
@@ -201,6 +231,14 @@ void BOARD_InitPins(void)
 
     /* PORTC9 (pin 81) is configured as PTC9 */
     PORT_SetPinMux(BOARD_INITPINS_DIR_Y_PORT, BOARD_INITPINS_DIR_Y_PIN, kPORT_MuxAsGpio);
+    /* Configure digital filter */
+    PORT_EnablePinsDigitalFilter(
+        /* Digital filter is configured on port D */
+        PORTD,
+        /* Digital filter is configured for PORTD0 */
+        PORT_DFER_DFE_4_MASK,
+        /* Disable digital filter */
+        false);
 
     /* PORTD0 (pin 93) is configured as PTD0 */
     PORT_SetPinMux(BOARD_INITPINS_STEP_X_PORT, BOARD_INITPINS_STEP_X_PIN, kPORT_MuxAsGpio);
@@ -213,6 +251,39 @@ void BOARD_InitPins(void)
 
     /* PORTD3 (pin 96) is configured as PTD3 */
     PORT_SetPinMux(BOARD_INITPINS_STEP_PHI_PORT, BOARD_INITPINS_STEP_PHI_PIN, kPORT_MuxAsGpio);
+
+    /* PORTD4 (pin 97) is configured as PTD4 */
+    PORT_SetPinMux(BOARD_INITPINS_Limit_X_PORT, BOARD_INITPINS_Limit_X_PIN, kPORT_MuxAsGpio);
+
+    PORTD->PCR[4] = ((PORTD->PCR[4] &
+                      /* Mask bits to zero which are setting */
+                      (~(PORT_PCR_PS_MASK | PORT_PCR_PE_MASK | PORT_PCR_ISF_MASK)))
+
+                     /* Pull Select: Internal pullup resistor is enabled on the corresponding pin, if the
+                      * corresponding PE field is set. */
+                     | (uint32_t)(kPORT_PullUp));
+
+    /* PORTD5 (pin 98) is configured as PTD5 */
+    PORT_SetPinMux(BOARD_INITPINS_Limit_Y_PORT, BOARD_INITPINS_Limit_Y_PIN, kPORT_MuxAsGpio);
+
+    PORTD->PCR[5] = ((PORTD->PCR[5] &
+                      /* Mask bits to zero which are setting */
+                      (~(PORT_PCR_PS_MASK | PORT_PCR_PE_MASK | PORT_PCR_ISF_MASK)))
+
+                     /* Pull Select: Internal pullup resistor is enabled on the corresponding pin, if the
+                      * corresponding PE field is set. */
+                     | (uint32_t)(kPORT_PullUp));
+
+    /* PORTD6 (pin 99) is configured as PTD6 */
+    PORT_SetPinMux(BOARD_INITPINS_Limit_Z_PORT, BOARD_INITPINS_Limit_Z_PIN, kPORT_MuxAsGpio);
+
+    PORTD->PCR[6] = ((PORTD->PCR[6] &
+                      /* Mask bits to zero which are setting */
+                      (~(PORT_PCR_PS_MASK | PORT_PCR_PE_MASK | PORT_PCR_ISF_MASK)))
+
+                     /* Pull Select: Internal pullup resistor is enabled on the corresponding pin, if the
+                      * corresponding PE field is set. */
+                     | (uint32_t)(kPORT_PullUp));
 
     /* PORTE0 (pin 1) is configured as UART1_TX */
     PORT_SetPinMux(BOARD_INITPINS_UART1TX_PORT, BOARD_INITPINS_UART1TX_PIN, kPORT_MuxAlt3);

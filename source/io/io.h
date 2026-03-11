@@ -27,6 +27,12 @@ void magnet_on_off(bool);
 //Not-Aus soft (nur software-stop)
 bool estop_button_pressed(void);
 
+
+//Endschalter:
+bool limit_switch_x_pressed(void);
+bool limit_switch_y_pressed(void);
+bool limit_switch_z_pressed(void);
+
 //stepper dir pins:
 // x:PTC8
 // y:PTC9

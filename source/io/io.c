@@ -72,5 +72,17 @@ bool estop_button_pressed(void)
                         BOARD_INITPINS_ESTOP_PIN) == 0u;
 }
 
+bool limit_switch_x_pressed(void){
+	return GPIO_PinRead(BOARD_INITPINS_Limit_X_GPIO, BOARD_INITPINS_Limit_X_PIN) == 0u;
+}
+
+bool limit_switch_y_pressed(void){
+	return GPIO_PinRead(BOARD_INITPINS_Limit_Y_GPIO, BOARD_INITPINS_Limit_Y_PIN) == 0u;
+}
+
+bool limit_switch_z_pressed(void){
+	return GPIO_PinRead(BOARD_INITPINS_Limit_Z_GPIO, BOARD_INITPINS_Limit_Z_PIN) == 0u;
+}
+
 
 

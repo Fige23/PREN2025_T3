@@ -169,9 +169,8 @@ bool job_step(err_e *out_err)
 
     // Mindestkorrektur: mindestens 1 Step (sonst kann’s wegen Rundung bei steps=0 hängen bleiben)
     // 1 Step in mm_scaled: SCALE_MM / STEPS_PER_MM_*
-    int32_t min_x = div_round_s64((int64_t)SCALE_MM, (int64_t)STEPS_PER_MM_X);
-    int32_t min_y = div_round_s64((int64_t)SCALE_MM, (int64_t)STEPS_PER_MM_Y);
-
+    int32_t min_x = div_round_s64((int64_t)SCALE_MM * 1000LL, (int64_t)STEPS_PER_MM_X_Q1000);
+    int32_t min_y = div_round_s64((int64_t)SCALE_MM * 1000LL, (int64_t)STEPS_PER_MM_Y_Q1000);
     if (iabs32(ex) > POS_TOL_X_SCALED && iabs32(cx) < min_x) cx = sign32(ex) * min_x;
     if (iabs32(ey) > POS_TOL_Y_SCALED && iabs32(cy) < min_y) cy = sign32(ey) * min_y;
 

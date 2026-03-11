@@ -36,6 +36,7 @@
 #include "util.h"
 #include "position.h"
 #include "console_uart_sim.h"
+#include "calibration.h"
 /*
  ===============================================================================
  main.c
@@ -74,8 +75,11 @@ static void estop_poll(void)
  * -Modus: Output compare, toggle auf channel 0,1,2,3 für die 4 stepper
  * -channel interrupts im config tool aktiviert
  */
-
-
+void init(void){
+	BOARD_InitBootPins();
+	BOARD_InitBootClocks();
+	BOARD_InitBootPeripherals();
+}
 
 
 
@@ -86,11 +90,43 @@ int main(void) {
 	 *
 	 *
 	 */
-	BOARD_InitBootPins();
-	BOARD_InitBootClocks();
-	BOARD_InitBootPeripherals();
+
+	init();
+
+#if CALIBRATION_MODE
 
 
+    uint64_t steps = 0;
+    uint64_t sum_steps = 0;
+    uint64_t mean_steps = 0;
+    float axis_length_mm = 523.7f;   // hier deine gemessene Strecke eintragen
+    float steps_per_mm = 0.0f;
+    uint32_t steps_per_mm_q1000 = 0;
+
+    for (int i = 0; i < 10; i++)
+    {
+        steps = calibrate_axis_steps_any_switch(CAL_AXIS_X);   // hier Achse wählen
+
+        printf("run %d: %llu steps\r\n", i + 1, (unsigned long long)steps);
+
+        sum_steps += steps;
+        utilWaitUs(10000);
+    }
+
+    mean_steps = sum_steps / 10ULL;
+    steps_per_mm = (float)mean_steps / axis_length_mm;
+    steps_per_mm_q1000 = (uint32_t)(steps_per_mm * 1000.0f + 0.5f);
+
+    printf("\r\nmean steps: %llu\r\n", (unsigned long long)mean_steps);
+    printf("steps_per_mm: %.3f\r\n", steps_per_mm);
+    printf("macro: #define X_STEPS_PER_MM_Q1000 %luU\r\n", (unsigned long)steps_per_mm_q1000);
+
+    while (1)
+    {
+    }
+#endif
+
+#if !CALIBRATION_MODE
 	serial_init(115200);
 
 	#if ENABLE_CONSOLE_GOTO
@@ -124,6 +160,7 @@ int main(void) {
 	    bot_step();
 	    __asm volatile("nop");
 	}
-
+#endif
 }
+
 

@@ -35,11 +35,13 @@ typedef enum {
 static inline int32_t iabs32(int32_t v) { return (v < 0) ? -v : v; }
 
 // d_scaled * steps_per_unit / scale  (rounded)
-static int32_t scaled_to_steps(int32_t d_scaled, int32_t steps_per_unit, int32_t scale)
+static int32_t scaled_to_steps_q1000(int32_t d_scaled, int32_t steps_per_unit_q1000, int32_t scale)
 {
-    int64_t num = (int64_t)d_scaled * (int64_t)steps_per_unit;
-    if (num >= 0) return (int32_t)((num + scale/2) / scale);
-    else          return (int32_t)((num - scale/2) / scale);
+    int64_t num = (int64_t)d_scaled * (int64_t)steps_per_unit_q1000;
+    int64_t den = (int64_t)scale * 1000LL;
+
+    if (num >= 0) return (int32_t)((num + den / 2) / den);
+    else          return (int32_t)((num - den / 2) / den);
 }
 
 
@@ -212,20 +214,20 @@ err_e motion_start(const bot_action_s *cur)
 {
     if (m.active) return ERR_INTERNAL;
 
-    const int32_t spx   = (int32_t)(STEPS_PER_MM_X + 0.5f);
-    const int32_t spy   = (int32_t)(STEPS_PER_MM_Y + 0.5f);
-    const int32_t spz   = (int32_t)(STEPS_PER_MM_Z + 0.5f);
-    const int32_t spphi = (int32_t)(STEPS_PER_DEG_PHI + 0.5f);
+    const int32_t spx   = STEPS_PER_MM_X_Q1000;
+    const int32_t spy   = STEPS_PER_MM_Y_Q1000;
+    const int32_t spz   = STEPS_PER_MM_Z_Q1000;
+    const int32_t spphi = STEPS_PER_DEG_PHI_Q1000;
 
     int32_t dx = cur->target_pos.x_mm_scaled    - g_status.pos_internal.x_mm_scaled;
     int32_t dy = cur->target_pos.y_mm_scaled    - g_status.pos_internal.y_mm_scaled;
     int32_t dz = cur->target_pos.z_mm_scaled    - g_status.pos_internal.z_mm_scaled;
     int32_t dp = cur->target_pos.phi_deg_scaled - g_status.pos_internal.phi_deg_scaled;
 
-    int32_t sx = scaled_to_steps(dx, spx,   SCALE_MM);
-    int32_t sy = scaled_to_steps(dy, spy,   SCALE_MM);
-    int32_t sz = scaled_to_steps(dz, spz,   SCALE_MM);
-    int32_t sp = scaled_to_steps(dp, spphi, SCALE_DEG);
+    int32_t sx = scaled_to_steps_q1000(dx, spx,   SCALE_MM);
+    int32_t sy = scaled_to_steps_q1000(dy, spy,   SCALE_MM);
+    int32_t sz = scaled_to_steps_q1000(dz, spz,   SCALE_MM);
+    int32_t sp = scaled_to_steps_q1000(dp, spphi, SCALE_DEG);
 
     m.sign[AX_X]   = (sx >= 0) ? +1 : -1;
     m.sign[AX_Y]   = (sy >= 0) ? +1 : -1;
@@ -377,7 +379,7 @@ static void motion_tick_isr(void)
             step_set((axis_e)i, true);
             m.pulse_left[i] = PULSE_WIDTH_TICKS;
 
-            m.pos_num[i] += (int64_t)m.sign[i] * (int64_t)m.scale[i];
+            m.pos_num[i] += (int64_t)m.sign[i] * (int64_t)m.scale[i] * 1000LL;
             changed_mask |= (1u<<i);
         }
     }

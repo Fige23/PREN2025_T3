@@ -27,7 +27,7 @@ Config file: Hier können alle Parameter des Roboters angepasst werden
 // 1 = Konsole nimmt Koordinaten an und queued ACT_MOVE
 // 0 = normales cmd.c Protokoll (MOVE x=..., PICK, PLACE, ...)
 // -----------------------------------------------------------------------------
-
+#define CALIBRATION_MODE 0
 
 // Ausgabe (OK/ERR/Status) optional in Debug-Konsole via printf (Semihost).
 #define ENABLE_CONSOLE_GOTO         0
@@ -45,11 +45,12 @@ Config file: Hier können alle Parameter des Roboters angepasst werden
 #endif
 
 // === Steps/mm oder Steps/deg (je Achse) ===
-// (Diese Werte sind mechanik-abhängig und dürfen später kalibriert werden.)
-#define STEPS_PER_MM_X     80
-#define STEPS_PER_MM_Y     80
-#define STEPS_PER_MM_Z     400
-#define STEPS_PER_DEG_PHI  10
+// (Diese Werte sind mechanik-abhängig und müssen kalibriert werden.)
+// --> steps/1000mm
+#define STEPS_PER_MM_X_Q1000      80000
+#define STEPS_PER_MM_Y_Q1000      80000
+#define STEPS_PER_MM_Z_Q1000     400000
+#define STEPS_PER_DEG_PHI_Q1000   10000
 
 
 
@@ -58,17 +59,16 @@ Config file: Hier können alle Parameter des Roboters angepasst werden
 // -----------------------------------------------------------------------------
 
 // Pulse-Tick (ISR-Rate) für den Motion-Timer (FTM3)
-#define STEP_TICK_HZ       24000u          //setzt maximalwert geschwindigkeit (wenns nicht schneller wird hier schrauben!)
+#define STEP_TICK_HZ       240000u          //setzt maximalwert geschwindigkeit (wenns nicht schneller wird hier schrauben!)
 
 // X/Y Limits in steps/s und steps/s^2 (HIER TUNEN!)
-#define X_MAX_STEP_RATE_SPS      6000u     // max speed (major axis), steps/s
-#define X_START_STEP_RATE_SPS     500u     // start speed (muss aus Stand gehen)
-#define X_ACCEL_SPS2             5000u     // accel, steps/s^2
+#define X_MAX_STEP_RATE_SPS      20000u		// max speed (major axis), steps/s
+#define X_START_STEP_RATE_SPS      500u		// start speed (muss aus Stand gehen)
+#define X_ACCEL_SPS2            500000u		// accel, steps/s^2
 
-#define Y_MAX_STEP_RATE_SPS      6000u
-#define Y_START_STEP_RATE_SPS    2000u
-#define Y_ACCEL_SPS2            25000u
-
+#define Y_MAX_STEP_RATE_SPS      20000u		// max speed (major axis), steps/s
+#define Y_START_STEP_RATE_SPS      500u		// start speed (muss aus Stand gehen)
+#define Y_ACCEL_SPS2            500000u		// accel, steps/s^2
 // Z/PHI (erstmal konservativ)
 #define Z_MAX_STEP_RATE_SPS      2000u
 #define Z_START_STEP_RATE_SPS     800u
@@ -86,7 +86,7 @@ Config file: Hier können alle Parameter des Roboters angepasst werden
 // Filterstärke: kleiner = schneller (mehr "direkt"), grösser = weicher (besserer Sound)
 // 3 => ~1/8 pro Update (oft guter Kompromiss)
 // 4 => ~1/16 pro Update (noch smoother, minimal träger)
-#define PERIOD_SMOOTH_SHIFT       3
+#define PERIOD_SMOOTH_SHIFT       1
 
 // Mindeständerung in Ticks pro Update, damit es bei kleinen Fehlern nicht "klebt"
 #define PERIOD_SMOOTH_MINSTEP     1
@@ -95,10 +95,10 @@ Config file: Hier können alle Parameter des Roboters angepasst werden
 // Abgeleitete "mm/s" Werte (nur Info/Debug). Ändern sich mit STEPS_PER_MM_*,
 // die Motor-Limits oben bleiben aber stabil.
 // -----------------------------------------------------------------------------
-#define VMAX_X_MM_S        ((float)X_MAX_STEP_RATE_SPS / (float)STEPS_PER_MM_X)
-#define VMAX_Y_MM_S        ((float)Y_MAX_STEP_RATE_SPS / (float)STEPS_PER_MM_Y)
-#define VMAX_Z_MM_S        ((float)Z_MAX_STEP_RATE_SPS / (float)STEPS_PER_MM_Z)
-#define VMAX_PHI_DEG_S     ((float)PHI_MAX_STEP_RATE_SPS / (float)STEPS_PER_DEG_PHI)
+#define VMAX_X_MM_S   ((float)X_MAX_STEP_RATE_SPS / ((float)STEPS_PER_MM_X_Q1000 / 1000.0f))
+#define VMAX_Y_MM_S   ((float)Y_MAX_STEP_RATE_SPS / ((float)STEPS_PER_MM_Y_Q1000 / 1000.0f))
+#define VMAX_Z_MM_S   ((float)Z_MAX_STEP_RATE_SPS / ((float)STEPS_PER_MM_Z_Q1000 / 1000.0f))
+#define VMAX_PHI_DEG_S ((float)PHI_MAX_STEP_RATE_SPS / ((float)STEPS_PER_DEG_PHI_Q1000 / 1000.0f))
 
 // Auflösung (Fixed-Point)
 #define SCALE_MM    1000   // 0.001 mm
@@ -120,8 +120,8 @@ Config file: Hier können alle Parameter des Roboters angepasst werden
 // -----------------------------------------------------------------------------
 // Position feedback (AS5311 Encoder auf X/Y)
 // -----------------------------------------------------------------------------
-#define POSITION_ENABLE               1   // 0=kein Encoder, 1=Encoder aktiv
-#define POSITION_CLOSED_LOOP_ENABLE   1   // 0=nur messen, 1=MOVE korrigiert nach
+#define POSITION_ENABLE               0   // 0=kein Encoder, 1=Encoder aktiv
+#define POSITION_CLOSED_LOOP_ENABLE   0   // 0=nur messen, 1=MOVE korrigiert nach
 
 // AS5311 (Quadratur, x4): 1024 edges pro 2.0mm => 512 counts/mm
 #define ENC_X_COUNTS_PER_MM          512u

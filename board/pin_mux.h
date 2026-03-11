@@ -25,6 +25,7 @@ extern "C" {
  */
 void BOARD_InitBootPins(void);
 
+#define PORT_DFER_DFE_4_MASK 0x10u     /*!<@brief Digital Filter Enable Mask for item 4. */
 #define SOPT5_UART1TXSRC_UART_TX 0x00u /*!<@brief UART 1 transmit data source select: UART1_TX pin */
 
 /*! @name PORTA1 (number 35), Magnet
@@ -210,6 +211,45 @@ void BOARD_InitBootPins(void);
 #define BOARD_INITPINS_ESTOP_PIN 12U                   /*!<@brief PORT pin number */
 #define BOARD_INITPINS_ESTOP_PIN_MASK (1U << 12U)      /*!<@brief PORT pin mask */
                                                        /* @} */
+
+/*! @name PORTD4 (number 97), Limit_X
+  @{ */
+
+/* Symbols to be used with GPIO driver */
+#define BOARD_INITPINS_Limit_X_GPIO GPIOD               /*!<@brief GPIO peripheral base pointer */
+#define BOARD_INITPINS_Limit_X_GPIO_PIN_MASK (1U << 4U) /*!<@brief GPIO pin mask */
+
+/* Symbols to be used with PORT driver */
+#define BOARD_INITPINS_Limit_X_PORT PORTD               /*!<@brief PORT peripheral base pointer */
+#define BOARD_INITPINS_Limit_X_PIN 4U                   /*!<@brief PORT pin number */
+#define BOARD_INITPINS_Limit_X_PIN_MASK (1U << 4U)      /*!<@brief PORT pin mask */
+                                                        /* @} */
+
+/*! @name PORTD5 (number 98), Limit_Y
+  @{ */
+
+/* Symbols to be used with GPIO driver */
+#define BOARD_INITPINS_Limit_Y_GPIO GPIOD               /*!<@brief GPIO peripheral base pointer */
+#define BOARD_INITPINS_Limit_Y_GPIO_PIN_MASK (1U << 5U) /*!<@brief GPIO pin mask */
+
+/* Symbols to be used with PORT driver */
+#define BOARD_INITPINS_Limit_Y_PORT PORTD               /*!<@brief PORT peripheral base pointer */
+#define BOARD_INITPINS_Limit_Y_PIN 5U                   /*!<@brief PORT pin number */
+#define BOARD_INITPINS_Limit_Y_PIN_MASK (1U << 5U)      /*!<@brief PORT pin mask */
+                                                        /* @} */
+
+/*! @name PORTD6 (number 99), Limit_Z
+  @{ */
+
+/* Symbols to be used with GPIO driver */
+#define BOARD_INITPINS_Limit_Z_GPIO GPIOD               /*!<@brief GPIO peripheral base pointer */
+#define BOARD_INITPINS_Limit_Z_GPIO_PIN_MASK (1U << 6U) /*!<@brief GPIO pin mask */
+
+/* Symbols to be used with PORT driver */
+#define BOARD_INITPINS_Limit_Z_PORT PORTD               /*!<@brief PORT peripheral base pointer */
+#define BOARD_INITPINS_Limit_Z_PIN 6U                   /*!<@brief PORT pin number */
+#define BOARD_INITPINS_Limit_Z_PIN_MASK (1U << 6U)      /*!<@brief PORT pin mask */
+                                                        /* @} */
 
 /*!
  * @brief 
