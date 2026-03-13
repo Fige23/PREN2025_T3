@@ -20,5 +20,5 @@ calibration.h	Created on: 10.03.2026	   Author: Fige23	Team 3
 #define CAL_AXIS_Z  2
 
 uint64_t calibrate_axis_steps_any_switch(int axis);
-
+void calibrate_n_iterations(int iterations);
 #endif

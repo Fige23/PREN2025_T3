@@ -63,7 +63,7 @@ void ftm3_tick_init(uint32_t tick_hz)
 
     NVIC_ClearPendingIRQ(FTM3_IRQn);
 
-    // Priority: nimm z.B. 2 oder 3 (0 ist "super hoch")
+    // Priority
 #ifdef PRIO_FTM3
     NVIC_SetPriority(FTM3_IRQn, PRIO_FTM3);
 #else

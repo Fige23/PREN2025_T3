@@ -33,6 +33,7 @@ Team 3
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stdio.h>
 
 #if CALIBRATION_MODE
 
@@ -190,4 +191,39 @@ uint64_t calibrate_axis_steps_any_switch(int axis)
 
     return 0;
 }
+
+void calibrate_n_iterations(int iterations){
+    uint64_t steps = 0;
+    uint64_t sum_steps = 0;
+    uint64_t mean_steps = 0;
+    float axis_length_mm = 523.7f;   // hier gemessene Strecke eintragen
+    float steps_per_mm = 0.0f;
+    uint32_t steps_per_mm_q1000 = 0;
+
+    for (int i = 0; i < iterations; i++)
+    {
+        steps = calibrate_axis_steps_any_switch(CAL_AXIS_X);   // hier Achse wählen
+
+        printf("run %d: %llu steps\r\n", i + 1, (unsigned long long)steps);
+
+        sum_steps += steps;
+        utilWaitUs(10000);
+    }
+
+    mean_steps = sum_steps / iterations;
+    steps_per_mm = (float)mean_steps / axis_length_mm;
+    steps_per_mm_q1000 = (uint32_t)(steps_per_mm * 1000.0f + 0.5f);
+
+    printf("\r\nmean steps: %llu\r\n", (unsigned long long)mean_steps);
+    printf("steps_per_mm: %.3f\r\n", steps_per_mm);
+    printf("macro: #define X_STEPS_PER_MM_Q1000 %luU\r\n", (unsigned long)steps_per_mm_q1000);
+
+    while (1)
+    {
+    }
+
+
+}
+
+
 #endif

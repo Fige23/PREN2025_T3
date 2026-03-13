@@ -27,7 +27,7 @@ Config file: Hier können alle Parameter des Roboters angepasst werden
 // 1 = Konsole nimmt Koordinaten an und queued ACT_MOVE
 // 0 = normales cmd.c Protokoll (MOVE x=..., PICK, PLACE, ...)
 // -----------------------------------------------------------------------------
-#define CALIBRATION_MODE 0
+#define CALIBRATION_MODE 1
 
 // Ausgabe (OK/ERR/Status) optional in Debug-Konsole via printf (Semihost).
 #define ENABLE_CONSOLE_GOTO         0
@@ -153,7 +153,7 @@ Config file: Hier können alle Parameter des Roboters angepasst werden
 #define LIM_P_MIN_S  ((int32_t)(LIMIT_PHI_MIN* SCALE_DEG))
 #define LIM_P_MAX_S  ((int32_t)(LIMIT_PHI_MAX* SCALE_DEG))
 
-
+// Flips rotation of motor. used in motion.c
 #define INVERT_ROT_X 	0
 #define INVERT_ROT_Y 	0
 #define INVERT_ROT_Z 	0
