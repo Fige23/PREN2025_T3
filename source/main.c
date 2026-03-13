@@ -63,10 +63,10 @@ int main(void) {
 	BOARD_InitBootPeripherals(); //FTM3
 
 #if CALIBRATION_MODE
-	calibrate_n_iterations(5); //blocking!
+    calibrate_n_iterations(CAL_AXIS_X, 5); // blocking
 #endif
 
-#if !CALIBRATION_MODE
+
 	serial_init(115200);	//init uart
 
 	#if ENABLE_CONSOLE_GOTO
@@ -97,7 +97,7 @@ int main(void) {
 	    bot_step();		// führt bewegung aus
 	    __asm volatile("nop");
 	}
-#endif
+
 }
 
 

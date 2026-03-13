@@ -15,10 +15,7 @@ calibration.h	Created on: 10.03.2026	   Author: Fige23	Team 3
 
 #include <stdint.h>
 
-#define CAL_AXIS_X  0
-#define CAL_AXIS_Y  1
-#define CAL_AXIS_Z  2
-
 uint64_t calibrate_axis_steps_any_switch(int axis);
-void calibrate_n_iterations(int iterations);
+void calibrate_n_iterations(int axis, int iterations);
+
 #endif

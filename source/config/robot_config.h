@@ -22,13 +22,32 @@ Config file: Hier können alle Parameter des Roboters angepasst werden
 // 1 = MOVE nur erlaubt nach HOME, 0 = MOVE auch ohne HOME erlauben
 #define REQUIRE_HOME_FOR_MOVE  0
 
+/* ------------------------------------------------------------
+ * Calibration
+ * ---------------------------------------------------------- */
+#define CALIBRATION_MODE                 1
+
+#define CAL_AXIS_X                       0
+#define CAL_AXIS_Y                       1
+#define CAL_AXIS_Z                       2
+
+#define CAL_STEP_WAIT_TIME_US            500U
+#define CAL_MAX_SEARCH_STEPS             200000ULL
+#define CAL_MAX_TRAVEL_STEPS             400000ULL
+
+#define CAL_SWITCH_DEBOUNCE_US           3000U
+#define CAL_SWITCH_LOCKOUT_STEPS         20U
+
+/* Gemessene Achslängen zwischen den gültigen Triggerpunkten */
+#define CAL_AXIS_X_LENGTH_MM             523.7f
+#define CAL_AXIS_Y_LENGTH_MM             0.0f
+#define CAL_AXIS_Z_LENGTH_MM             0.0f
+
 // -----------------------------------------------------------------------------
 // Debug/Test: GOTO über Konsole (Semihost printf/scanf) ohne cmd.c Protokoll
 // 1 = Konsole nimmt Koordinaten an und queued ACT_MOVE
 // 0 = normales cmd.c Protokoll (MOVE x=..., PICK, PLACE, ...)
 // -----------------------------------------------------------------------------
-#define CALIBRATION_MODE 1
-
 // Ausgabe (OK/ERR/Status) optional in Debug-Konsole via printf (Semihost).
 #define ENABLE_CONSOLE_GOTO         0
 #define ENABLE_CONSOLE_UART_SIM     1
