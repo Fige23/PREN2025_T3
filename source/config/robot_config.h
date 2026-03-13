@@ -153,4 +153,12 @@ Config file: Hier können alle Parameter des Roboters angepasst werden
 #define LIM_P_MIN_S  ((int32_t)(LIMIT_PHI_MIN* SCALE_DEG))
 #define LIM_P_MAX_S  ((int32_t)(LIMIT_PHI_MAX* SCALE_DEG))
 
+
+#define INVERT_ROT_X 	0
+#define INVERT_ROT_Y 	0
+#define INVERT_ROT_Z 	0
+#define INVERT_ROT_PHI 	0
+
+
+
 #endif /* CONFIG_ROBOT_CONFIG_H_ */

@@ -140,13 +140,33 @@ static void step_set(axis_e ax, bool level)
     }
 }
 
-static void dir_set(axis_e ax, bool dir_pos)
-{
+static void dir_set(axis_e ax, bool dir_pos){
+
     switch (ax) {
-    case AX_X:   stepper_x_dir(dir_pos);   break;
-    case AX_Y:   stepper_y_dir(dir_pos);   break;
-    case AX_Z:   stepper_z_dir(dir_pos);   break;
-    case AX_PHI: stepper_phi_dir(dir_pos); break;
+    case AX_X:
+#if INVERT_ROT_X
+    	dir_pos = !dir_pos;
+#endif
+    	stepper_x_dir(dir_pos);
+    	break;
+    case AX_Y:
+#if INVERT_ROT_Y
+    	dir_pos = !dir_pos;
+#endif
+    	stepper_y_dir(dir_pos);
+    	break;
+    case AX_Z:
+#if INVERT_ROT_Z
+    	dir_pos = !dir_pos;
+#endif
+    	stepper_z_dir(dir_pos);
+    	break;
+    case AX_PHI:
+#if INVERT_ROT_PHI
+    	dir_pos = !dir_pos;
+#endif
+    	stepper_phi_dir(dir_pos);
+    	break;
     default: break;
     }
 }
