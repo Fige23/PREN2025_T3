@@ -185,6 +185,6 @@ int32_t position_get_y_mm_scaled(void) { return g_status.pos_internal.y_mm_scale
 int32_t position_get_x_counts(void) { return 0; }
 int32_t position_get_y_counts(void) { return 0; }
 void position_set_xy_mm_scaled(int32_t x_mm_scaled, int32_t y_mm_scaled) { (void)x_mm_scaled; (void)y_mm_scaled; }
-void position_sync_measured_to_cmd(void) {}
+void position_sync_measured_to_internal(void) {}
 
 #endif

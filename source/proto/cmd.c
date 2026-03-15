@@ -32,12 +32,12 @@ Wichtig:
 #include <stdbool.h>
 #include <string.h>
 #include <ctype.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <stddef.h>
 
-#include "robot_config.h"
+
+#include <stddef.h>
 #include "serial_port.h"
+#include "robot_config.h"
+#include "proto_io.h"
 #include "protocol.h"   // g_status + state/err helper + Limits/Scales
 #include "parse_kv.h"   // parse_pos_tokens_mask() + KV_* masks
 #include "bot.h"        // bot_enqueue() + bot_action_s
@@ -54,37 +54,20 @@ Wichtig:
 static const char *EOL = "\n";   // End-of-line for replies
 
 
-
-static void replyf(const char *fmt, ...) {
-	char buf[192];
-	va_list ap;
-	va_start(ap, fmt);
-	vsnprintf(buf, sizeof(buf), fmt, ap);
-	va_end(ap);
-#if USE_SEMIHOST_CONSOLE
-    // Semihost: Ausgabe in MCUXpresso Debug Console
-    printf("%s", buf);
-    fflush(stdout);
-#else
-    // Dein bisheriger Weg (UART/serial_puts)
-    serial_puts(buf);
-#endif
-}
-
 // Standard-OK für rein synchrone Befehle (PING, RESET, ...).
 static void send_ok(const char *cmd) {
-	replyf("OK %s%s", cmd, EOL);
+	proto_reply_printf("OK %s%s", cmd, EOL);
 }
 // Standard-ERR mit einfachem Error-String (SYNTAX, ESTOP, NO_HOME, ...).
 static void send_err(const char *cmd, const char *e) {
-	replyf("ERR %s %s%s", cmd, e, EOL);
+	proto_reply_printf("ERR %s %s%s", cmd, e, EOL);
 }
 
 // Request-IDs laufen monoton hoch und werden mit jeder Action gepusht.
 // Der Pi verwendet id=.. später zum Zuordnen der finalen OK/ERR.
 static uint16_t s_next_req_id = 1;
 static void send_queued(const char *cmd, uint16_t id) {
-	replyf("QUEUED %s id=%u%s", cmd, (unsigned) id, EOL);
+	proto_reply_printf("QUEUED %s id=%u%s", cmd, (unsigned) id, EOL);
 }
 
 // Kleiner Helper für STATUS-Ausgabe.
@@ -100,7 +83,7 @@ static void print_mm3(const char *name, int32_t um)
     int32_t frac = um % 1000;
     if (frac < 0) frac = -frac;
 
-    replyf("%s=%ld.%03ld ", name, (long)mm, (long)frac);
+    proto_reply_printf("%s=%ld.%03ld ", name, (long)mm, (long)frac);
 }
 
 static void print_deg2(const char *name, int32_t cdeg)
@@ -109,7 +92,7 @@ static void print_deg2(const char *name, int32_t cdeg)
     int32_t frac = cdeg % 100;
     if (frac < 0) frac = -frac;
 
-    replyf("%s=%ld.%02ld ", name, (long)deg, (long)frac);
+    proto_reply_printf("%s=%ld.%02ld ", name, (long)deg, (long)frac);
 }
 
 // -----------------------------------------------------------------------------
@@ -139,7 +122,7 @@ static bool cmd_status(int argc, char **argv)
 {
     (void)argc; (void)argv;
 
-    replyf("STATUS state=%s (%d) homed=%s part=%s estop=%s err=%s POS ",
+    proto_reply_printf("STATUS state=%s (%d) homed=%s part=%s estop=%s err=%s POS ",
            state_to_str(g_status.state),
            (int)g_status.state,
            yesno(g_status.homed),
@@ -152,12 +135,12 @@ static bool cmd_status(int argc, char **argv)
     print_mm3("z", g_status.pos_internal.z_mm_scaled);
     print_deg2("phi", g_status.pos_internal.phi_deg_scaled);
 #if POSITION_ENABLE
-    replyf(" POS_MEASURED ");
+    proto_reply_printf(" POS_MEASURED ");
     print_mm3("x", g_status.pos_measured.x_mm_scaled);
     print_mm3("y", g_status.pos_measured.y_mm_scaled);
 #endif
 
-    replyf("%s", EOL);
+    proto_reply_printf("%s", EOL);
     return true;
 }
 
@@ -167,12 +150,12 @@ static bool cmd_pos(int argc, char **argv)
 {
     (void)argc; (void)argv;
 
-    replyf("POS ");
+    proto_reply_printf("POS ");
     print_mm3("x", g_status.pos_internal.x_mm_scaled);
     print_mm3("y", g_status.pos_internal.y_mm_scaled);
     print_mm3("z", g_status.pos_internal.z_mm_scaled);
     print_deg2("phi", g_status.pos_internal.phi_deg_scaled);
-    replyf("%s", EOL);
+    proto_reply_printf("%s", EOL);
 
     return true;
 }
@@ -490,7 +473,7 @@ void cmd_dispatch_line(char *line) {
 			return;
 		}
 	}
-	replyf("ERR %s UNKNOWN%s", argv[0], EOL);
+	proto_reply_printf("ERR %s UNKNOWN%s", argv[0], EOL);
 }
 
 // -----------------------------------------------------------------------------
@@ -498,7 +481,7 @@ void cmd_dispatch_line(char *line) {
 // -----------------------------------------------------------------------------
 // Init meldet dem Pi, dass der Parser bereit ist.
 void cmd_init(void) {
-	serial_puts("CMD_READY\n");
+	proto_reply_raw("CMD_READY\n");
 }
 
 // Non-blocking Zeilensammler.
@@ -522,7 +505,7 @@ void cmd_poll(void) {
 				s_line[s_len++] = (char) ch;
 			} else {
 				s_len = 0;
-				replyf("ERR LINE OVERFLOW%s", EOL);
+				proto_reply_printf("ERR LINE OVERFLOW%s", EOL);
 			}
 		}
 	}

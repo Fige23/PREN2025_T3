@@ -33,13 +33,13 @@ Design-Regeln:
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <stdarg.h>
-#include <stdio.h>
+
+
 
 #include "io.h"
 #include "bot.h"
 #include "protocol.h"     // g_status, err_to_str(), state/error enums
-#include "serial_port.h"  // serial_puts()
+#include "proto_io.h"
 #include "job.h"          // job_start_move(), job_step(), job_init()
 #include "robot_config.h"
 // -----------------------------------------------------------------------------
@@ -47,23 +47,6 @@ Design-Regeln:
 // -----------------------------------------------------------------------------
 static const char *EOL = "\n";
 
-static void replyf(const char *fmt, ...)
-{
-    char buf[192];
-    va_list ap;
-    va_start(ap, fmt);
-    vsnprintf(buf, sizeof(buf), fmt, ap);
-    va_end(ap);
-
-#if USE_SEMIHOST_CONSOLE
-    // MCUXpresso Debug Console (Redlib semihost)
-    printf("%s", buf);
-    fflush(stdout);
-#else
-    // UART
-    serial_puts(buf);
-#endif
-}
 
 
 
@@ -81,12 +64,12 @@ static const char* act_name(bot_action_e t)
 
 static void reply_ok_action(const bot_action_s *a)
 {
-    replyf("OK %s id=%u%s", act_name(a->type), (unsigned)a->request_id, EOL);
+    proto_reply_printf("OK %s id=%u%s", act_name(a->type), (unsigned)a->request_id, EOL);
 }
 
 static void reply_err_action(const bot_action_s *a, err_e e)
 {
-    replyf("ERR %s id=%u%s", err_to_str(e), (unsigned)a->request_id, EOL);
+    proto_reply_printf("ERR %s id=%u%s", err_to_str(e), (unsigned)a->request_id, EOL);
 }
 
 // -----------------------------------------------------------------------------
@@ -297,7 +280,7 @@ void bot_step(void)
         // Magnet schaltet nur den Greifer. Keine Achsenbewegung -> kein busy/statewechsel.
         if (cur.type == ACT_MAGNET) {
             //magnet_set(cur.on);
-            replyf("OK MAGNET id=%u%s", (unsigned)cur.request_id, EOL);
+            proto_reply_printf("OK MAGNET id=%u%s", (unsigned)cur.request_id, EOL);
             return;
         }
 
@@ -315,7 +298,7 @@ void bot_step(void)
                 // Unbekannter Typ -> sofort Fehler melden.
                 g_status.state = STATE_ERROR;
                 g_status.last_err = ERR_SYNTAX;
-                replyf("ERR UNKNOWN_ACTION id=%u%s",
+                proto_reply_printf("ERR UNKNOWN_ACTION id=%u%s",
                        (unsigned)cur.request_id, EOL);
                 busy = false;
                 return;
@@ -364,7 +347,7 @@ void bot_step(void)
             // Sollte nicht passieren, weil oben abgefangen.
             g_status.state = STATE_ERROR;
             g_status.last_err = ERR_INTERNAL;
-            replyf("ERR INTERNAL id=%u%s",
+            proto_reply_printf("ERR INTERNAL id=%u%s",
                    (unsigned)cur.request_id, EOL);
             busy = false;
             return;
@@ -372,7 +355,7 @@ void bot_step(void)
 
     // 4) Final OK
     g_status.state = STATE_IDLE;
-    replyf("OK %s id=%u%s", act_name(cur.type),
+    proto_reply_printf("OK %s id=%u%s", act_name(cur.type),
            (unsigned)cur.request_id, EOL);
 
     busy = false;

@@ -32,15 +32,14 @@
 #include "ftm3.h"
 #include "motion.h"
 #include "job.h"
-#include "console_goto.h"
+
 #include "util.h"
 #include "position.h"
 #include "console_uart_sim.h"
 #include "calibration.h"
 
 
-
-//polling ESTOP
+// polling ESTOP
 static void estop_poll(void)
 {
     static bool last = false;
@@ -54,50 +53,55 @@ static void estop_poll(void)
     last = now;
 }
 
-int main(void) {
-	/*
-	 * PINS AUF UART GEMUXT
-	 */
-	BOARD_InitBootPins();
-	BOARD_InitBootClocks();
-	BOARD_InitBootPeripherals(); //FTM3
+static void frontend_init(void)
+{
+    cmd_init();
 
-#if CALIBRATION_MODE
-    calibrate_n_iterations(CAL_AXIS_X, 5); // blocking
+#if ENABLE_CONSOLE_UART_SIM
+    console_uart_sim_init();
 #endif
-
-
-	serial_init(115200);	//init uart
-
-	#if ENABLE_CONSOLE_GOTO
-	    console_goto_init();	//debug
-	#elif ENABLE_CONSOLE_UART_SIM
-	    cmd_init();
-	    console_uart_sim_init();
-	#else
-	    cmd_init();	//macht nix, gibt "CMD READY" aus.
-	#endif
-
-	ftm3_tick_init(STEP_TICK_HZ); //konfiguriert period. interrupt
-	position_init();
-	motion_init();	//setzt callback funktion für isr
-	ftm3_tick_start();	//startet period. interrupt
-	job_init();	//reset j.active = false, j.last_err = none, j.corr_iter = 0
-
-	for (;;) {
-	#if ENABLE_CONSOLE_GOTO
-	    console_goto_poll();	//debug
-	#elif ENABLE_CONSOLE_UART_SIM
-	    console_uart_sim_poll();	//debug: uart schnittstelle auf semihost-konsole
-	#else
-	    cmd_poll(); //pollt uart
-	#endif
-	    estop_poll();	//pollt not-aus
-	    position_poll();	//pollt encoder
-	    bot_step();		// führt bewegung aus
-	    __asm volatile("nop");
-	}
-
 }
 
+static void frontend_poll(void)
+{
+#if ENABLE_CONSOLE_UART_SIM
+    console_uart_sim_poll();
+#else
+    cmd_poll();
+#endif
+}
 
+int main(void)
+{
+    /*
+     * Grundinitialisierung
+     */
+    BOARD_InitBootPins();
+    BOARD_InitBootClocks();
+    BOARD_InitBootPeripherals();   // FTM3 etc.
+
+    serial_init(115200);
+
+    ftm3_tick_init(STEP_TICK_HZ);  // konfiguriert periodischen Interrupt
+    position_init();
+    motion_init();                 // setzt Callback-Funktion für ISR
+    job_init();                    // reset j.active / j.last_err / j.corr_iter
+
+    frontend_init();
+
+#if CALIBRATION_MODE
+    calibrate_n_iterations(CAL_AXIS_X, 5);   // blocking
+#endif
+
+    ftm3_tick_start();             // startet periodischen Interrupt
+
+    for (;;) {
+        frontend_poll();
+
+        estop_poll();              // pollt Not-Aus
+        position_poll();           // pollt Encoder
+        bot_step();                // führt Bot-/Bewegungslogik aus
+
+        __asm volatile("nop");
+    }
+}
