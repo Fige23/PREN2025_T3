@@ -25,7 +25,7 @@ Config file: Hier können alle Parameter des Roboters angepasst werden
 /* ------------------------------------------------------------
  * Calibration
  * ---------------------------------------------------------- */
-#define CALIBRATION_MODE                 1
+#define CALIBRATION_MODE                 0
 
 #define CAL_AXIS_X                       0
 #define CAL_AXIS_Y                       1
@@ -74,51 +74,77 @@ Config file: Hier können alle Parameter des Roboters angepasst werden
 
 
 // -----------------------------------------------------------------------------
-// Motion tuning (Step-Domain) + Sound smoothing
+// Motion timing / pulse engine
 // -----------------------------------------------------------------------------
 
-// Pulse-Tick (ISR-Rate) für den Motion-Timer (FTM3)
-#define STEP_TICK_HZ       240000u          //setzt maximalwert geschwindigkeit (wenns nicht schneller wird hier schrauben!)
+// ISR-Tick für den Motion-Timer (FTM3)
+#define STEP_TICK_HZ                   240000u
 
-// X/Y Limits in steps/s und steps/s^2 (HIER TUNEN!)
-#define X_MAX_STEP_RATE_SPS      20000u		// max speed (major axis), steps/s
-#define X_START_STEP_RATE_SPS      500u		// start speed (muss aus Stand gehen)
-#define X_ACCEL_SPS2            500000u		// accel, steps/s^2
+// STEP High-Zeit in ISR-Ticks
+#define STEP_PULSE_WIDTH_TICKS         2u
 
-#define Y_MAX_STEP_RATE_SPS      20000u		// max speed (major axis), steps/s
-#define Y_START_STEP_RATE_SPS      500u		// start speed (muss aus Stand gehen)
-#define Y_ACCEL_SPS2            500000u		// accel, steps/s^2
-// Z/PHI (erstmal konservativ)
-#define Z_MAX_STEP_RATE_SPS      2000u
-#define Z_START_STEP_RATE_SPS     800u
-#define Z_ACCEL_SPS2            12000u
-
-#define PHI_MAX_STEP_RATE_SPS    1500u
-#define PHI_START_STEP_RATE_SPS   600u
-#define PHI_ACCEL_SPS2           8000u
-
-// --- Akustik / Smoothness ---
-// 0 = aus (härtere, "treppige" Änderungen)
-// 1 = an  (Perioden werden weich in kleinen Schritten nachgeführt)
-#define ENABLE_PERIOD_SMOOTHING   0
-
-// Filterstärke: kleiner = schneller (mehr "direkt"), grösser = weicher (besserer Sound)
-// 3 => ~1/8 pro Update (oft guter Kompromiss)
-// 4 => ~1/16 pro Update (noch smoother, minimal träger)
-#define PERIOD_SMOOTH_SHIFT       1
-
-// Mindeständerung in Ticks pro Update, damit es bei kleinen Fehlern nicht "klebt"
-#define PERIOD_SMOOTH_MINSTEP     1
+// kleinste erlaubte Periodendauer in ISR-Ticks
+#define STEP_MIN_PERIOD_TICKS          2u
 
 // -----------------------------------------------------------------------------
-// Abgeleitete "mm/s" Werte (nur Info/Debug). Ändern sich mit STEPS_PER_MM_*,
-// die Motor-Limits oben bleiben aber stabil.
+// Motion profile
+// Idee:
+// - symmetrisches Beschleunigen und Bremsen
+// - kurze Wege -> Dreiecksprofil
+// - lange Wege -> durch VMAX gedeckelt
+// - VMAX ist also mehr "Deckel/Failsafe" als Soll-Ziel
 // -----------------------------------------------------------------------------
-#define VMAX_X_MM_S   ((float)X_MAX_STEP_RATE_SPS / ((float)STEPS_PER_MM_X_Q1000 / 1000.0f))
-#define VMAX_Y_MM_S   ((float)Y_MAX_STEP_RATE_SPS / ((float)STEPS_PER_MM_Y_Q1000 / 1000.0f))
-#define VMAX_Z_MM_S   ((float)Z_MAX_STEP_RATE_SPS / ((float)STEPS_PER_MM_Z_Q1000 / 1000.0f))
-#define VMAX_PHI_DEG_S ((float)PHI_MAX_STEP_RATE_SPS / ((float)STEPS_PER_DEG_PHI_Q1000 / 1000.0f))
 
+// 1 = Profil aktiv
+#define MOTION_PROFILE_ENABLE          1
+
+// 1 = symmetrisches sqrt-Profil
+#define MOTION_PROFILE_SYMMETRIC       1
+
+// X
+#define X_MAX_STEP_RATE_SPS            12000u
+#define X_START_STEP_RATE_SPS            400u
+#define X_ACCEL_SPS2                    30000u
+
+// Y
+#define Y_MAX_STEP_RATE_SPS            12000u
+#define Y_START_STEP_RATE_SPS            400u
+#define Y_ACCEL_SPS2                    30000u
+
+// Z
+#define Z_MAX_STEP_RATE_SPS             2500u
+#define Z_START_STEP_RATE_SPS            400u
+#define Z_ACCEL_SPS2                    10000u
+
+// PHI
+#define PHI_MAX_STEP_RATE_SPS           1800u
+#define PHI_START_STEP_RATE_SPS          300u
+#define PHI_ACCEL_SPS2                   7000u
+
+// -----------------------------------------------------------------------------
+// Optionales weiches Nachführen der Periodendauer
+// 0 = direkt auf neue Zielperiode springen
+// 1 = weiches Nachführen
+// -----------------------------------------------------------------------------
+#define ENABLE_PERIOD_SMOOTHING         0
+
+// Filterstärke für Perioden-Glättung
+// 1 => stark direkt
+// 2 => 1/4 pro Update
+// 3 => 1/8 pro Update
+// 4 => 1/16 pro Update
+#define PERIOD_SMOOTH_SHIFT             2
+
+// minimale Tick-Änderung bei aktivem Smoothing
+#define PERIOD_SMOOTH_MINSTEP           1
+
+// -----------------------------------------------------------------------------
+// Debug/Info-Werte aus den Motion-Makros abgeleitet
+// -----------------------------------------------------------------------------
+#define VMAX_X_MM_S     ((float)X_MAX_STEP_RATE_SPS   / ((float)STEPS_PER_MM_X_Q1000   / 1000.0f))
+#define VMAX_Y_MM_S     ((float)Y_MAX_STEP_RATE_SPS   / ((float)STEPS_PER_MM_Y_Q1000   / 1000.0f))
+#define VMAX_Z_MM_S     ((float)Z_MAX_STEP_RATE_SPS   / ((float)STEPS_PER_MM_Z_Q1000   / 1000.0f))
+#define VMAX_PHI_DEG_S  ((float)PHI_MAX_STEP_RATE_SPS / ((float)STEPS_PER_DEG_PHI_Q1000 / 1000.0f))
 // Auflösung (Fixed-Point)
 #define SCALE_MM    1000   // 0.001 mm
 #define SCALE_DEG    100   // 0.01 °
