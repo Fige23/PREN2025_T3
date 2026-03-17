@@ -1,4 +1,4 @@
-/*Project: ${project_name}
+/*Project: PREN_Puzzleroboter
  (   (          )   (            )   ) (               )
  )\ ))\ )    ( /(   )\ )      ( /(( /( )\ )      (  ( /(   *   )
  (()/(()/((   )\()) (()/(   (  )\())\()|()/( (  ( )\ )\())` )  /(
@@ -13,10 +13,8 @@
  Team 3
  */
 
-#include <job/job.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdarg.h>
+
+
 
 #include "platform.h"
 #include "board.h"
@@ -25,18 +23,16 @@
 #include "clock_config.h"
 
 #include "robot_config.h"
-#include "uart.h"
 #include "serial_port.h"
 #include "cmd.h"
 #include "bot_engine.h"
 #include "io.h"
 #include "ftm3.h"
 #include "motion.h"
-#include "util.h"
 #include "position.h"
 #include "console_uart_sim.h"
 #include "calibration.h"
-
+#include "job.h"
 
 // polling ESTOP
 static void estop_poll(void)

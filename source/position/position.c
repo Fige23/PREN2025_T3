@@ -170,6 +170,20 @@ void position_set_xy_mm_scaled(int32_t x_mm_scaled, int32_t y_mm_scaled)
 
     position_poll();
 }
+void position_set_x_mm_scaled(int32_t x_mm_scaled)
+{
+    int32_t x_des_counts = mm_scaled_to_counts(x_mm_scaled, ex.counts_per_mm);
+    ex.offset_counts = x_des_counts - ex.acc_counts;
+    position_poll();
+}
+
+void position_set_y_mm_scaled(int32_t y_mm_scaled)
+{
+    int32_t y_des_counts = mm_scaled_to_counts(y_mm_scaled, ey.counts_per_mm);
+    ey.offset_counts = y_des_counts - ey.acc_counts;
+    position_poll();
+}
+
 
 void position_sync_measured_to_internal(void)
 {
@@ -185,6 +199,8 @@ int32_t position_get_y_mm_scaled(void) { return g_status.pos_internal.y_mm_scale
 int32_t position_get_x_counts(void) { return 0; }
 int32_t position_get_y_counts(void) { return 0; }
 void position_set_xy_mm_scaled(int32_t x_mm_scaled, int32_t y_mm_scaled) { (void)x_mm_scaled; (void)y_mm_scaled; }
+void position_set_x_mm_scaled(int32_t x_mm_scaled) { (void)x_mm_scaled; }
+void position_set_y_mm_scaled(int32_t y_mm_scaled) { (void)y_mm_scaled; }
 void position_sync_measured_to_internal(void) {}
 
 #endif

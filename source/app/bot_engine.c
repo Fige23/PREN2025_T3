@@ -7,28 +7,8 @@
  | _ \ _ \ __| \| | | _ \ | | |_  /_  /| |  | __| _ )/ _ \|_   _|
  |  _/   / _|| .` | |  _/ |_| |/ / / / | |__| _|| _ \ (_) | | |
  |_| |_|_\___|_|\_| |_|  \___//___/___||____|___|___/\___/  |_|
- bot.c  Created on: 14.11.2025   Author: Fige23  Team 3
-
-
-
- ===============================================================================
- bot.c  (Bot Engine / Action Scheduler)
-
- Aufgabe:
- - Ringbuffer-Queue von bot_action_s (FIFO).
- - Abarbeitung sequenziell:
- - holt nächste Action
- - startet Job/Motion (oder schaltet Magnet)
- - wartet auf completion (job_step/motion_is_done)
- - setzt g_status.state/last_err
- - sendet final OK/ERR mit request_id
-
- Design-Regeln:
- - Reihenfolge ist garantiert (Queue).
- - Keine direkte Bewegung aus cmd.c heraus.
- - ESTOP: Queue wird verworfen, Status in EMERGENCY_STOP.
- ===============================================================================
- */
+ bot_engine.c  Created on: 14.11.2025   Author: Fige23  Team 3
+*/
 
 
 #include <stdint.h>

@@ -21,9 +21,8 @@ Team 3
 #include "protocol.h"
 #include "robot_config.h"
 
-#if POSITION_ENABLE
+
 #include "position.h"
-#endif
 
 
 typedef enum {
@@ -87,24 +86,25 @@ static const motion_profile_s g_home_z_slow_profile    = HOME_Z_SLOW_PROFILE;
 // -----------------------------------------------------------------------------
 // Local helpers: Referenz anwenden
 // -----------------------------------------------------------------------------
-static void home_apply_x_reference(void)
-{
+#if HOME_ENABLE_X
+static void home_apply_x_reference(void){
     g_status.pos_internal.x_mm_scaled = HOME_X_ZERO_OFFSET_MM_SCALED;
-    g_status.pos_measured.x_mm_scaled = HOME_X_ZERO_OFFSET_MM_SCALED;
+    position_set_x_mm_scaled(HOME_X_ZERO_OFFSET_MM_SCALED);
 }
-
-static void home_apply_y_reference(void)
-{
+#endif
+#if HOME_ENABLE_Y
+static void home_apply_y_reference(void){
     g_status.pos_internal.y_mm_scaled = HOME_Y_ZERO_OFFSET_MM_SCALED;
-    g_status.pos_measured.y_mm_scaled = HOME_Y_ZERO_OFFSET_MM_SCALED;
+    position_set_y_mm_scaled(HOME_Y_ZERO_OFFSET_MM_SCALED);
 }
-
+#endif
+#if HOME_ENABLE_Z
 static void home_apply_z_reference(void)
 {
     g_status.pos_internal.z_mm_scaled = HOME_Z_ZERO_OFFSET_MM_SCALED;
     g_status.pos_measured.z_mm_scaled = HOME_Z_ZERO_OFFSET_MM_SCALED;
 }
-
+#endif
 
 // -----------------------------------------------------------------------------
 // Local helpers: Limitzustände
@@ -255,6 +255,7 @@ static err_e home_start_z_seek_slow(void)
 // -----------------------------------------------------------------------------
 // Local helpers: Start nächste Achse / Abschluss
 // -----------------------------------------------------------------------------
+#if HOME_ENABLE_Z
 static bool home_finish_or_start_next_after_z(err_e *out_err)
 {
 #if HOME_ENABLE_X
@@ -300,7 +301,8 @@ static bool home_finish_or_start_next_after_z(err_e *out_err)
     return true;
 #endif
 }
-
+#endif
+#if HOME_ENABLE_X
 static bool home_finish_or_start_next_after_x(err_e *out_err)
 {
 #if HOME_ENABLE_Y
@@ -328,7 +330,7 @@ static bool home_finish_or_start_next_after_x(err_e *out_err)
     return true;
 #endif
 }
-
+#endif
 
 // -----------------------------------------------------------------------------
 // Public API

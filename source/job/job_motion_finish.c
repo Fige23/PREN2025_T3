@@ -15,44 +15,9 @@ job_motion_finish.c	Created on: 17.03.2026	   Author: Fige23	Team 3
 #include "motion.h"
 #include "protocol.h"
 #include "robot_config.h"
-
-#ifndef POSITION_ENABLE
-#define POSITION_ENABLE 0
-#endif
-
-#ifndef POSITION_CLOSED_LOOP_ENABLE
-#define POSITION_CLOSED_LOOP_ENABLE 0
-#endif
+#include "position.h"
 
 #if POSITION_ENABLE
-#include "position/position.h"
-#endif
-
-// Falls Makros in robot_config.h fehlen, hier robuste Defaults
-#ifndef POS_TOL_X_SCALED
-#define POS_TOL_X_SCALED             20
-#endif
-
-#ifndef POS_TOL_Y_SCALED
-#define POS_TOL_Y_SCALED             20
-#endif
-
-#ifndef POS_CORR_P_ZAEHLER
-#define POS_CORR_P_ZAEHLER           1
-#endif
-
-#ifndef POS_CORR_P_NENNER
-#define POS_CORR_P_NENNER            1
-#endif
-
-#ifndef POS_CORR_MAX_STEP_SCALED
-#define POS_CORR_MAX_STEP_SCALED     2000
-#endif
-
-#ifndef POS_CORR_MAX_ITERATIONS
-#define POS_CORR_MAX_ITERATIONS      6
-#endif
-
 
 static inline int32_t iabs32(int32_t v)
 {
@@ -81,6 +46,7 @@ static int32_t clamp_i32(int32_t v, int32_t lo, int32_t hi)
     if (v > hi) return hi;
     return v;
 }
+#endif
 
 static void set_internal_pos_exact(const robot_pos_s *p)
 {
@@ -205,7 +171,7 @@ bool job_motion_finish_step(job_motion_finish_s *ctx, err_e *out_err)
     corr.target_pos.z_mm_scaled    = ctx->final_target.z_mm_scaled;
     corr.target_pos.phi_deg_scaled = ctx->final_target.phi_deg_scaled;
 
-    err_e e = motion_start(&corr, limit_none);
+    err_e e = motion_start(&corr, limit_none, 0);
     if (e != ERR_NONE) {
         if (out_err) *out_err = e;
         return true;

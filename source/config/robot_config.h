@@ -45,8 +45,8 @@ Config file: Hier können alle zentralen Parameter des Roboters angepasst werden
 #define CALIBRATION_MODE                0
 
 // Position feedback / closed loop
-#define POSITION_ENABLE                 0   // 0=kein Encoder, 1=Encoder aktiv
-#define POSITION_CLOSED_LOOP_ENABLE     0  // 0=nur messen, 1=MOVE korrigiert nach
+#define POSITION_ENABLE                 1   // 0=kein Encoder, 1=Encoder aktiv
+#define POSITION_CLOSED_LOOP_ENABLE     1  // 0=nur messen, 1=MOVE korrigiert nach
 
 /* ============================================================================
  * 2) COMMUNICATION / DEBUG / TEST
