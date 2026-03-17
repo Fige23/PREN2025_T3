@@ -7,27 +7,20 @@
 | _ \ _ \ __| \| | | _ \ | | |_  /_  /| |  | __| _ )/ _ \|_   _|  
 |  _/   / _|| .` | |  _/ |_| |/ / / / | |__| _|| _ \ (_) | | |    
 |_| |_|_\___|_|\_| |_|  \___//___/___||____|___|___/\___/  |_|    
-job.h	Created on: 18.12.2025	   Author: Fige23	Team 3                                                                
+job_move.h	Created on: 17.03.2026	   Author: Fige23	Team 3                                                                
 */
 
-#ifndef CONTROLS_JOB_H_
-#define CONTROLS_JOB_H_
+#ifndef JOB_JOB_MOVE_H_
+#define JOB_JOB_MOVE_H_
+
 
 #include <stdbool.h>
-#include "bot.h"
 #include "protocol.h"
+#include "bot_engine.h"
 
-void job_init(void);
-
-//Startet einen MOVE-Job (ohne Z-Safety/Phasen) -> fährt direkt auf Zielpose via motion_start()
-err_e job_start_move(const bot_action_s *a);
-
-//Muss zyklisch aufgerufen werden -> gibt true zurück wenn job fertig (OK oder ERR)
-bool job_step(err_e *out_err);
-
-bool job_is_active(void);
+err_e job_move_start(const bot_action_s *a);
+bool job_move_step(err_e *out_err);
 
 
 
-
-#endif /* CONTROLS_JOB_H_ */
+#endif /* JOB_JOB_MOVE_H_ */

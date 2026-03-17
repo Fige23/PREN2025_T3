@@ -19,7 +19,7 @@ console_uart_sim.c   Created on: 09.03.2026      Author: Fige23 Team 3
 #include <stdbool.h>
 
 #include "cmd.h"
-#include "job.h"
+#include <job/job.h>
 #include "debug.h"
 
 static void print_help(void)

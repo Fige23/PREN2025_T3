@@ -40,7 +40,7 @@ Wichtig:
 #include "proto_io.h"
 #include "protocol.h"   // g_status + state/err helper + Limits/Scales
 #include "parse_kv.h"   // parse_pos_tokens_mask() + KV_* masks
-#include "bot.h"        // bot_enqueue() + bot_action_s
+#include "bot_engine.h"        // bot_enqueue() + bot_action_s
 
 #ifndef CMD_LINE_MAX
 #define CMD_LINE_MAX 128
@@ -173,7 +173,7 @@ static bool cmd_home(int argc, char **argv) {
 		send_err("HOME", "ESTOP");
 		return false;
 	}
-
+	//prüfen ob pos 0 reicht oder obs negativ sein muss.
 	bot_action_s a = {
 	    .type = ACT_HOME,
 	    .target_pos = {

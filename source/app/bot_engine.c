@@ -11,76 +11,68 @@
 
 
 
-===============================================================================
-bot.c  (Bot Engine / Action Scheduler)
+ ===============================================================================
+ bot.c  (Bot Engine / Action Scheduler)
 
-Aufgabe:
-- Ringbuffer-Queue von bot_action_s (FIFO).
-- Abarbeitung sequenziell:
-    - holt nächste Action
-    - startet Job/Motion (oder schaltet Magnet)
-    - wartet auf completion (job_step/motion_is_done)
-    - setzt g_status.state/last_err
-    - sendet final OK/ERR mit request_id
+ Aufgabe:
+ - Ringbuffer-Queue von bot_action_s (FIFO).
+ - Abarbeitung sequenziell:
+ - holt nächste Action
+ - startet Job/Motion (oder schaltet Magnet)
+ - wartet auf completion (job_step/motion_is_done)
+ - setzt g_status.state/last_err
+ - sendet final OK/ERR mit request_id
 
-Design-Regeln:
-- Reihenfolge ist garantiert (Queue).
-- Keine direkte Bewegung aus cmd.c heraus.
-- ESTOP: Queue wird verworfen, Status in EMERGENCY_STOP.
-===============================================================================
-*/
+ Design-Regeln:
+ - Reihenfolge ist garantiert (Queue).
+ - Keine direkte Bewegung aus cmd.c heraus.
+ - ESTOP: Queue wird verworfen, Status in EMERGENCY_STOP.
+ ===============================================================================
+ */
 
 
 #include <stdint.h>
 #include <stdbool.h>
 
-
-
+#include "job.h"
 #include "io.h"
-#include "bot.h"
+#include "bot_engine.h"
 #include "protocol.h"     // g_status, err_to_str(), state/error enums
 #include "proto_io.h"
-#include "job.h"          // job_start_move(), job_step(), job_init()
 #include "robot_config.h"
 // -----------------------------------------------------------------------------
 // Reply helper
 // -----------------------------------------------------------------------------
 static const char *EOL = "\n";
 
-
-
-
 static const char* act_name(bot_action_e t)
 {
     switch (t) {
-        case ACT_MOVE:   return "MOVE";
-        case ACT_HOME:   return "HOME";
-        case ACT_PICK:   return "PICK";
-        case ACT_PLACE:  return "PLACE";
-        case ACT_MAGNET: return "MAGNET";
-        default:         return "CMD";
+    case ACT_MOVE:
+        return "MOVE";
+    case ACT_HOME:
+        return "HOME";
+    case ACT_PICK:
+        return "PICK";
+    case ACT_PLACE:
+        return "PLACE";
+    case ACT_MAGNET:
+        return "MAGNET";
+    default:
+        return "CMD";
     }
 }
 
 static void reply_ok_action(const bot_action_s *a)
 {
-    proto_reply_printf("OK %s id=%u%s", act_name(a->type), (unsigned)a->request_id, EOL);
+    proto_reply_printf("OK %s id=%u%s", act_name(a->type),
+                       (unsigned)a->request_id, EOL);
 }
 
 static void reply_err_action(const bot_action_s *a, err_e e)
 {
-    proto_reply_printf("ERR %s id=%u%s", err_to_str(e), (unsigned)a->request_id, EOL);
-}
-
-// -----------------------------------------------------------------------------
-// Helpers: Positionsübernahme (Fixed-Point)
-// -----------------------------------------------------------------------------
-static inline void apply_target_to_internal_pos(const bot_action_s *a)
-{
-    g_status.pos_internal.x_mm_scaled    = a->target_pos.x_mm_scaled;
-    g_status.pos_internal.y_mm_scaled    = a->target_pos.y_mm_scaled;
-    g_status.pos_internal.z_mm_scaled    = a->target_pos.z_mm_scaled;
-    g_status.pos_internal.phi_deg_scaled = a->target_pos.phi_deg_scaled;
+    proto_reply_printf("ERR %s id=%u%s", err_to_str(e),
+                       (unsigned)a->request_id, EOL);
 }
 
 // -----------------------------------------------------------------------------
@@ -94,6 +86,7 @@ static uint8_t q_head = 0, q_tail = 0, q_count = 0;
 static bool bot_dequeue(bot_action_s *out)
 {
     if (q_count == 0) return false;
+
     *out = q[q_tail];
     q_tail = (uint8_t)((q_tail + 1u) % BOT_Q_LEN);
     q_count--;
@@ -103,6 +96,7 @@ static bool bot_dequeue(bot_action_s *out)
 bool bot_enqueue(const bot_action_s *a)
 {
     if (q_count >= BOT_Q_LEN) return false;
+
     q[q_head] = *a;
     q_head = (uint8_t)((q_head + 1u) % BOT_Q_LEN);
     q_count++;
@@ -111,12 +105,35 @@ bool bot_enqueue(const bot_action_s *a)
 
 static void bot_queue_clear(void)
 {
-    q_head = q_tail = q_count = 0;
+    q_head = 0;
+    q_tail = 0;
+    q_count = 0;
 }
+
 void bot_clear_queue(void)
 {
     bot_queue_clear();
 }
+
+// -----------------------------------------------------------------------------
+// Small helper
+// -----------------------------------------------------------------------------
+static bot_state_e busy_state_from_action(bot_action_e t)
+{
+    switch (t) {
+    case ACT_MOVE:
+        return STATE_MOVING;
+    case ACT_HOME:
+        return STATE_HOMING;
+    case ACT_PICK:
+        return STATE_PICKING;
+    case ACT_PLACE:
+        return STATE_PLACING;
+    default:
+        return STATE_ERROR;
+    }
+}
+
 // -----------------------------------------------------------------------------
 // Bot Engine
 // -----------------------------------------------------------------------------
@@ -126,94 +143,39 @@ void bot_step(void)
     static bool busy = false;
     static bot_action_s cur;
 
-    // Wenn ESTOP aktiv: keine neuen Actions starten, Queue verwerfen.
+    // Wenn ESTOP aktiv: keine neuen Actions starten, Queue verwerfen
     if (g_status.estop) {
         bot_queue_clear();
         g_status.state = STATE_EMERGENCY_STOP;
         g_status.last_err = ERR_ESTOP;
 
-        if (!busy) return;
+        if (!busy) {
+            return;
+        }
     }
 
     // -------------------------------------------------------------------------
     // 1) IDLE: nächste Action holen + starten
     // -------------------------------------------------------------------------
     if (!busy) {
-        if (!bot_dequeue(&cur)) return;
+        if (!bot_dequeue(&cur)) {
+            return;
+        }
 
         // Instant Action: MAGNET
         if (cur.type == ACT_MAGNET) {
             magnet_on_off(cur.magnet_on);
+            g_status.last_err = ERR_NONE;
             reply_ok_action(&cur);
             return;
         }
 
-        switch (cur.type) {
+        // Busy-State für Anzeige setzen
+        g_status.state = busy_state_from_action(cur.type);
 
-            case ACT_MOVE: {
-                g_status.state = STATE_MOVING;
-
-                err_e e = job_start_move(&cur);
-                if (e != ERR_NONE) {
-                    // E-Stop Spezialfall: sauber in ESTOP-State bleiben
-                    if (e == ERR_ESTOP) {
-                        g_status.state = STATE_EMERGENCY_STOP;
-                        g_status.estop = true;
-                        bot_queue_clear();
-                    } else {
-                        g_status.state = STATE_ERROR;
-                    }
-
-                    g_status.last_err = e;
-                    reply_err_action(&cur, e);
-                    return; // busy bleibt false
-                }
-
-                busy = true;
-                return;
-            }
-
-            // Später implementieren
-            case ACT_HOME:
-                g_status.state = STATE_ERROR;
-                g_status.last_err = ERR_NOT_IMPLEMENTED;
-                reply_err_action(&cur, ERR_NOT_IMPLEMENTED);
-                return;
-
-            case ACT_PICK:
-                g_status.state = STATE_ERROR;
-                g_status.last_err = ERR_NOT_IMPLEMENTED;
-                reply_err_action(&cur, ERR_NOT_IMPLEMENTED);
-                return;
-
-            case ACT_PLACE:
-                g_status.state = STATE_ERROR;
-                g_status.last_err = ERR_NOT_IMPLEMENTED;
-                reply_err_action(&cur, ERR_NOT_IMPLEMENTED);
-                return;
-            default: {
-                g_status.state = STATE_ERROR;
-                g_status.last_err = ERR_INTERNAL;
-                reply_err_action(&cur, ERR_INTERNAL);
-                return;
-            }
-        }
-    }
-
-    // -------------------------------------------------------------------------
-    // 2) BUSY: Job/Motion weiterführen und ggf. final antworten
-    // -------------------------------------------------------------------------
-    if (cur.type == ACT_MOVE) {
-        err_e je;
-
-        // job_step() -> false: läuft noch
-        if (!job_step(&je)) {
-            return;
-        }
-
-        // Job ist fertig (OK oder ERR)
-        if (je != ERR_NONE) {
-            if (je == ERR_ESTOP) {
+        err_e e = job_start(&cur);
+        if (e != ERR_NONE) {
+            if (e == ERR_ESTOP) {
                 g_status.state = STATE_EMERGENCY_STOP;
                 g_status.estop = true;
                 bot_queue_clear();
@@ -221,33 +183,58 @@ void bot_step(void)
                 g_status.state = STATE_ERROR;
             }
 
-            g_status.last_err = je;
-            reply_err_action(&cur, je);
-            busy = false;
+            g_status.last_err = e;
+            reply_err_action(&cur, e);
             return;
         }
 
-        // Erfolg
-        g_status.state = STATE_IDLE;
-        g_status.last_err = ERR_NONE;
-        reply_ok_action(&cur);
+        busy = true;
+        return;
+    }
 
+    // -------------------------------------------------------------------------
+    // 2) BUSY: aktiven Job weiterführen und ggf. final antworten
+    // -------------------------------------------------------------------------
+    err_e je = ERR_NONE;
+
+    // job_step() -> false: läuft noch
+    if (!job_step(&je)) {
+        return;
+    }
+
+    // Job ist fertig (OK oder ERR)
+    if (je != ERR_NONE) {
+        if (je == ERR_ESTOP) {
+            g_status.state = STATE_EMERGENCY_STOP;
+            g_status.estop = true;
+            bot_queue_clear();
+        } else {
+            g_status.state = STATE_ERROR;
+        }
+
+        g_status.last_err = je;
+        reply_err_action(&cur, je);
         busy = false;
         return;
     }
 
-    // Safety fallback: busy=true, aber kein unterstützter Typ
-    g_status.state = STATE_ERROR;
-    g_status.last_err = ERR_INTERNAL;
-    reply_err_action(&cur, ERR_INTERNAL);
+    // Erfolg
+    g_status.state = STATE_IDLE;
+    g_status.last_err = ERR_NONE;
+    reply_ok_action(&cur);
+
     busy = false;
 }
-
-
-
 #endif
-
 #if UART_DEMO
+static inline void apply_target_to_internal_pos(const bot_action_s *a)
+{
+    g_status.pos_internal.x_mm_scaled    = a->target_pos.x_mm_scaled;
+    g_status.pos_internal.y_mm_scaled    = a->target_pos.y_mm_scaled;
+    g_status.pos_internal.z_mm_scaled    = a->target_pos.z_mm_scaled;
+    g_status.pos_internal.phi_deg_scaled = a->target_pos.phi_deg_scaled;
+}
+
 // Optional: alles verwerfen (z.B. bei ESTOP)
 // void bot_queue_clear(void) { q_head=q_tail=q_count=0; }
 
@@ -265,7 +252,6 @@ void bot_step(void)
 // - OK/ERR wird erst geschickt, wenn die Action wirklich fertig ist.
 // - Während busy wird g_status.state auf den passenden Busy-State gesetzt,
 //   damit STATUS-Abfragen am Pi Sinn machen.
-
 
 void bot_step(void)
 {
@@ -316,9 +302,8 @@ void bot_step(void)
 
     if (!done) return;
 
-
-    //das hier brauchts nur solange keine richtige bewegung implementiert:
-    //die Bewegungsfunktionen aktualisieren status/pos selber.
+    // das hier brauchts nur solange keine richtige bewegung implementiert:
+    // die Bewegungsfunktionen aktualisieren status/pos selber.
     // 3) Abschluss: Status/Position updaten je nach Action
     switch (cur.type) {
         case ACT_HOME:

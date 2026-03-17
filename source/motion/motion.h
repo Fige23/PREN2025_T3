@@ -16,18 +16,23 @@ motion.h	Created on: 24.11.2025	   Author: Fige23	Team 3
 #include <stdint.h>
 #include <stdbool.h>
 #include "protocol.h"
-#include "bot.h"
+#include "bot_engine.h"
+#include "limit_switch.h"
 
-//nicht fix
-err_e motion_start(const bot_action_s *cur);
-//err_e home_start(bot_action_s *cur);
+typedef struct {
+    uint32_t start_step_rate_sps;
+    uint32_t max_step_rate_sps;
+    uint32_t accel_sps2;
+} motion_profile_s;
 
-//err_e job_start_pick(bot_action_s *cur);
-//err_e job_start_place(bot_action_s *cur);
+
+err_e motion_start(const bot_action_s *cur, limit_switch_e stop_on_limits, const motion_profile_s *profile_override);
+
 void motion_init(void);
 bool motion_is_done(void);
 err_e motion_last_err(void);
 
-
+bool motion_stopped_by_limit(void);
+limit_switch_e motion_limit_hit(void);
 
 #endif /* MOTION_MOTION_H_ */

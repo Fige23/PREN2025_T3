@@ -18,11 +18,13 @@ motion_start(...) startet eine Bewegung.
 #include "MK22F51212.h"
 #include "platform.h"
 
+#include "motion.h"
 #include "io.h"
 #include "protocol.h"
-#include "bot.h"
+#include "bot_engine.h"
 #include "robot_config.h"
 #include "ftm3.h"
+#include "limit_switch.h"
 
 // ---------- motion tick / pulse ----------
 #define PULSE_WIDTH_TICKS      STEP_PULSE_WIDTH_TICKS
@@ -194,6 +196,10 @@ typedef struct {
     volatile bool done;
     volatile err_e err;
 
+    volatile bool stopped_by_limit;
+    volatile limit_switch_e stop_on_limits;
+    volatile limit_switch_e hit_limits;
+
     uint32_t tick_div;
     uint32_t step_period_ticks;
     uint32_t step_period_target_ticks;
@@ -232,6 +238,16 @@ err_e motion_last_err(void)
     return m.err;
 }
 
+bool motion_stopped_by_limit(void){
+	return m.stopped_by_limit;
+}
+
+limit_switch_e motion_limit_hit(void){
+	return m.hit_limits;
+}
+
+
+
 static void motion_finish(err_e e)
 {
     m.active = false;
@@ -257,11 +273,20 @@ void motion_init(void)
     ftm3_tick_set_callback(motion_tick_dispatch);
 }
 
-err_e motion_start(const bot_action_s *cur)
-{
-    if (m.active) {
+err_e motion_start(const bot_action_s *cur, limit_switch_e stop_on_limits, const motion_profile_s *profile_override){
+
+	if (m.active) {
         return ERR_INTERNAL;
     }
+    m.done = false;
+    m.err = ERR_NONE;
+    m.stopped_by_limit = false;
+    m.stop_on_limits = stop_on_limits;
+    m.hit_limits = limit_none;
+
+    reset_limit_switch(stop_on_limits);
+
+
 
     const int32_t spx   = STEPS_PER_MM_X_Q1000;
     const int32_t spy   = STEPS_PER_MM_Y_Q1000;
@@ -313,6 +338,8 @@ err_e motion_start(const bot_action_s *cur)
         m.active = false;
         m.done = true;
         m.err = ERR_NONE;
+        m.stopped_by_limit = false;
+        m.hit_limits = limit_none;
         return ERR_NONE;
     }
 
@@ -352,9 +379,9 @@ err_e motion_start(const bot_action_s *cur)
     m.major_left  = major;
 
     // --- profile caps for major axis ---
-    uint32_t vmax_sps   = 1000u;
-    uint32_t vstart_sps = 200u;
-    uint32_t acc_sps2   = 5000u;
+    uint32_t vmax_sps   = 0;
+    uint32_t vstart_sps = 0;
+    uint32_t acc_sps2   = 0;
 
     switch (major_ax) {
     case AX_X:
@@ -383,6 +410,11 @@ err_e motion_start(const bot_action_s *cur)
 
     default:
         break;
+    }
+    if (profile_override != NULL) {
+    	vstart_sps  = profile_override->start_step_rate_sps;
+        vmax_sps    = profile_override->max_step_rate_sps;
+        acc_sps2    = profile_override->accel_sps2;
     }
 
     if (vmax_sps < 1u) {
@@ -430,6 +462,28 @@ static void motion_tick_isr(void)
 
     if (g_status.estop) {
         motion_finish(ERR_ESTOP);
+        return;
+    }
+
+    //prüfen ob endschalter getroffen
+    poll_limit_switch();
+
+    limit_switch_e hit = limit_none;
+
+    if ((m.stop_on_limits & limit_x) && g_status.limits.x_latched) {
+        hit = (limit_switch_e)(hit | limit_x);
+    }
+    if ((m.stop_on_limits & limit_y) && g_status.limits.y_latched) {
+        hit = (limit_switch_e)(hit | limit_y);
+    }
+    if ((m.stop_on_limits & limit_z) && g_status.limits.z_latched) {
+        hit = (limit_switch_e)(hit | limit_z);
+    }
+
+    if (hit != limit_none) {
+        m.hit_limits = hit;
+        m.stopped_by_limit = true;
+        motion_finish(ERR_NONE);
         return;
     }
 

@@ -45,8 +45,8 @@ Config file: Hier können alle zentralen Parameter des Roboters angepasst werden
 #define CALIBRATION_MODE                0
 
 // Position feedback / closed loop
-#define POSITION_ENABLE                 1   // 0=kein Encoder, 1=Encoder aktiv
-#define POSITION_CLOSED_LOOP_ENABLE     1   // 0=nur messen, 1=MOVE korrigiert nach
+#define POSITION_ENABLE                 0   // 0=kein Encoder, 1=Encoder aktiv
+#define POSITION_CLOSED_LOOP_ENABLE     0  // 0=nur messen, 1=MOVE korrigiert nach
 
 /* ============================================================================
  * 2) COMMUNICATION / DEBUG / TEST
@@ -70,6 +70,11 @@ Config file: Hier können alle zentralen Parameter des Roboters angepasst werden
 // 0 = nur normales cmd_poll()
 #define ENABLE_CONSOLE_UART_SIM         1
 
+#if ENABLE_CONSOLE_UART_SIM
+#define USE_SEMIHOST_CONSOLE            1
+#else
+#define USE_SEMIHOST_CONSOLE            0
+#endif
 /* ============================================================================
  * 3) CALIBRATION
  * ========================================================================== */
@@ -224,7 +229,153 @@ Config file: Hier können alle zentralen Parameter des Roboters angepasst werden
 #define VMAX_PHI_DEG_S  ((float)PHI_MAX_STEP_RATE_SPS  / ((float)STEPS_PER_DEG_PHI_Q1000 / 1000.0f))
 
 /* ============================================================================
- * 9) CONFIG CHECKS
+ * 9) HOMING
+ * ========================================================================== */
+
+#define HOME_ENABLE_X                    1
+#define HOME_ENABLE_Y                    0
+#define HOME_ENABLE_Z                    0
+
+// X-Achse
+#define HOME_X_RELEASE_MM_SCALED         (SCALE_MM*5)
+#define HOME_X_SEEK_MM_SCALED            (SCALE_MM*400)
+#define HOME_X_BACKOFF_MM_SCALED         (SCALE_MM*2)
+#define HOME_X_ZERO_OFFSET_MM_SCALED     (SCALE_MM*0)
+
+// Y-Achse
+#define HOME_Y_RELEASE_MM_SCALED         (SCALE_MM*5)
+#define HOME_Y_SEEK_MM_SCALED            (SCALE_MM*400)
+#define HOME_Y_BACKOFF_MM_SCALED         (SCALE_MM*2)
+#define HOME_Y_ZERO_OFFSET_MM_SCALED     (SCALE_MM*0)
+
+// Z-Achse
+#define HOME_Z_RELEASE_MM_SCALED         (SCALE_MM*5)
+#define HOME_Z_SEEK_MM_SCALED            (SCALE_MM*200)
+#define HOME_Z_BACKOFF_MM_SCALED         (SCALE_MM*2)
+#define HOME_Z_ZERO_OFFSET_MM_SCALED     (SCALE_MM*0)
+
+/* ============================================================================
+ * 9a) MOTION PROFILES
+ * ========================================================================== */
+
+// Helper-Makro für motion_profile_s Initializer
+#define MOTION_PROFILE_INIT(start_sps, max_sps, accel_sps2) \
+    { (start_sps), (max_sps), (accel_sps2) }
+
+// X axis homing profiles
+#define HOME_X_RELEASE_START_STEP_RATE_SPS    300u
+#define HOME_X_RELEASE_MAX_STEP_RATE_SPS     1200u
+#define HOME_X_RELEASE_ACCEL_SPS2            6000u
+
+#define HOME_X_FAST_START_STEP_RATE_SPS       400u
+#define HOME_X_FAST_MAX_STEP_RATE_SPS        4000u
+#define HOME_X_FAST_ACCEL_SPS2              12000u
+
+#define HOME_X_BACKOFF_START_STEP_RATE_SPS    250u
+#define HOME_X_BACKOFF_MAX_STEP_RATE_SPS     1000u
+#define HOME_X_BACKOFF_ACCEL_SPS2            5000u
+
+#define HOME_X_SLOW_START_STEP_RATE_SPS       120u
+#define HOME_X_SLOW_MAX_STEP_RATE_SPS         500u
+#define HOME_X_SLOW_ACCEL_SPS2               1500u
+
+// Y axis homing profiles
+#define HOME_Y_RELEASE_START_STEP_RATE_SPS    300u
+#define HOME_Y_RELEASE_MAX_STEP_RATE_SPS     1200u
+#define HOME_Y_RELEASE_ACCEL_SPS2            6000u
+
+#define HOME_Y_FAST_START_STEP_RATE_SPS       400u
+#define HOME_Y_FAST_MAX_STEP_RATE_SPS        4000u
+#define HOME_Y_FAST_ACCEL_SPS2              12000u
+
+#define HOME_Y_BACKOFF_START_STEP_RATE_SPS    250u
+#define HOME_Y_BACKOFF_MAX_STEP_RATE_SPS     1000u
+#define HOME_Y_BACKOFF_ACCEL_SPS2            5000u
+
+#define HOME_Y_SLOW_START_STEP_RATE_SPS       120u
+#define HOME_Y_SLOW_MAX_STEP_RATE_SPS         500u
+#define HOME_Y_SLOW_ACCEL_SPS2               1500u
+
+// Z axis homing profiles
+#define HOME_Z_RELEASE_START_STEP_RATE_SPS    200u
+#define HOME_Z_RELEASE_MAX_STEP_RATE_SPS      700u
+#define HOME_Z_RELEASE_ACCEL_SPS2            3000u
+
+#define HOME_Z_FAST_START_STEP_RATE_SPS       250u
+#define HOME_Z_FAST_MAX_STEP_RATE_SPS        1000u
+#define HOME_Z_FAST_ACCEL_SPS2               4000u
+
+#define HOME_Z_BACKOFF_START_STEP_RATE_SPS    180u
+#define HOME_Z_BACKOFF_MAX_STEP_RATE_SPS      500u
+#define HOME_Z_BACKOFF_ACCEL_SPS2            2000u
+
+#define HOME_Z_SLOW_START_STEP_RATE_SPS       100u
+#define HOME_Z_SLOW_MAX_STEP_RATE_SPS         250u
+#define HOME_Z_SLOW_ACCEL_SPS2               1000u
+
+// Struct-Initializer-Makros
+#define HOME_X_RELEASE_PROFILE \
+    MOTION_PROFILE_INIT(HOME_X_RELEASE_START_STEP_RATE_SPS, \
+                        HOME_X_RELEASE_MAX_STEP_RATE_SPS, \
+                        HOME_X_RELEASE_ACCEL_SPS2)
+
+#define HOME_X_FAST_PROFILE \
+    MOTION_PROFILE_INIT(HOME_X_FAST_START_STEP_RATE_SPS, \
+                        HOME_X_FAST_MAX_STEP_RATE_SPS, \
+                        HOME_X_FAST_ACCEL_SPS2)
+
+#define HOME_X_BACKOFF_PROFILE \
+    MOTION_PROFILE_INIT(HOME_X_BACKOFF_START_STEP_RATE_SPS, \
+                        HOME_X_BACKOFF_MAX_STEP_RATE_SPS, \
+                        HOME_X_BACKOFF_ACCEL_SPS2)
+
+#define HOME_X_SLOW_PROFILE \
+    MOTION_PROFILE_INIT(HOME_X_SLOW_START_STEP_RATE_SPS, \
+                        HOME_X_SLOW_MAX_STEP_RATE_SPS, \
+                        HOME_X_SLOW_ACCEL_SPS2)
+
+#define HOME_Y_RELEASE_PROFILE \
+    MOTION_PROFILE_INIT(HOME_Y_RELEASE_START_STEP_RATE_SPS, \
+                        HOME_Y_RELEASE_MAX_STEP_RATE_SPS, \
+                        HOME_Y_RELEASE_ACCEL_SPS2)
+
+#define HOME_Y_FAST_PROFILE \
+    MOTION_PROFILE_INIT(HOME_Y_FAST_START_STEP_RATE_SPS, \
+                        HOME_Y_FAST_MAX_STEP_RATE_SPS, \
+                        HOME_Y_FAST_ACCEL_SPS2)
+
+#define HOME_Y_BACKOFF_PROFILE \
+    MOTION_PROFILE_INIT(HOME_Y_BACKOFF_START_STEP_RATE_SPS, \
+                        HOME_Y_BACKOFF_MAX_STEP_RATE_SPS, \
+                        HOME_Y_BACKOFF_ACCEL_SPS2)
+
+#define HOME_Y_SLOW_PROFILE \
+    MOTION_PROFILE_INIT(HOME_Y_SLOW_START_STEP_RATE_SPS, \
+                        HOME_Y_SLOW_MAX_STEP_RATE_SPS, \
+                        HOME_Y_SLOW_ACCEL_SPS2)
+
+#define HOME_Z_RELEASE_PROFILE \
+    MOTION_PROFILE_INIT(HOME_Z_RELEASE_START_STEP_RATE_SPS, \
+                        HOME_Z_RELEASE_MAX_STEP_RATE_SPS, \
+                        HOME_Z_RELEASE_ACCEL_SPS2)
+
+#define HOME_Z_FAST_PROFILE \
+    MOTION_PROFILE_INIT(HOME_Z_FAST_START_STEP_RATE_SPS, \
+                        HOME_Z_FAST_MAX_STEP_RATE_SPS, \
+                        HOME_Z_FAST_ACCEL_SPS2)
+
+#define HOME_Z_BACKOFF_PROFILE \
+    MOTION_PROFILE_INIT(HOME_Z_BACKOFF_START_STEP_RATE_SPS, \
+                        HOME_Z_BACKOFF_MAX_STEP_RATE_SPS, \
+                        HOME_Z_BACKOFF_ACCEL_SPS2)
+
+#define HOME_Z_SLOW_PROFILE \
+    MOTION_PROFILE_INIT(HOME_Z_SLOW_START_STEP_RATE_SPS, \
+                        HOME_Z_SLOW_MAX_STEP_RATE_SPS, \
+                        HOME_Z_SLOW_ACCEL_SPS2)
+
+/* ============================================================================
+ * 10) CONFIG CHECKS
  * ========================================================================== */
 
 #if (MOTION_PROFILE_ENABLE != 0) && (MOTION_PROFILE_ENABLE != 1)
