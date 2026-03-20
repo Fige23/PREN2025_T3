@@ -10,15 +10,6 @@
 position.c	Created on: 25.02.2026	   Author: Fige23	Team 3                                                                
 */
 
-/*
- *
- * MAGNET UMKONFIGURIEREN VON PTA1 auf PTA13
- *
- *
- */
-
-
-
 
 
 

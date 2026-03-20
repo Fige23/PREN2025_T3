@@ -13,13 +13,17 @@
  Team 3
  */
 
+/*
+ *
+ * MAGNET UMKONFIGURIEREN VON PTA1 auf PTA13
+ *
+ *
+ */
+
 #include "debug.h"
 #include "fsl_common.h"
 #include "fsl_ftm.h"
 #include "position.h"
-
-
-
 
 #include "platform.h"
 #include "board.h"
