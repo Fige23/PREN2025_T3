@@ -15,6 +15,8 @@ motion_start(...) startet eine Bewegung.
 #include <stdint.h>
 #include <stdbool.h>
 
+
+
 #include "MK22F51212.h"
 #include "platform.h"
 
@@ -25,6 +27,9 @@ motion_start(...) startet eine Bewegung.
 #include "robot_config.h"
 #include "ftm3.h"
 #include "limit_switch.h"
+#if ENABLE_CONSOLE_UART_SIM
+#include "position.h"
+#endif
 
 // ---------- motion tick / pulse ----------
 #define PULSE_WIDTH_TICKS      STEP_PULSE_WIDTH_TICKS
@@ -444,8 +449,10 @@ err_e motion_start(const bot_action_s *cur, limit_switch_e stop_on_limits, const
     return ERR_NONE;
 }
 
-static void motion_tick_isr(void)
-{
+static void motion_tick_isr(void){
+#if ENABLE_CONSOLE_UART_SIM
+	position_poll();
+#endif
     // STEP low wenn Pulsbreite vorbei
     for (int i = 0; i < AX_N; i++) {
         if (m.pulse_left[i]) {

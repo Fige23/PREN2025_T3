@@ -33,11 +33,21 @@ extern "C" {
 #define FTM3_IRQ_PRIORITY 0
 /* FTM3 interrupt handler identifier. */
 #define FTM3_IRQHANDLER FTM3_IRQHandler
+/* Definition of peripheral ID */
+#define FTM1_PERIPHERAL FTM1
+/* Definition of the clock source frequency */
+#define FTM1_CLOCK_SOURCE CLOCK_GetFreq(kCLOCK_BusClk)
+/* Definition of peripheral ID */
+#define FTM2_PERIPHERAL FTM2
+/* Definition of the clock source frequency */
+#define FTM2_CLOCK_SOURCE CLOCK_GetFreq(kCLOCK_BusClk)
 
 /***********************************************************************************************************************
  * Global variables
  **********************************************************************************************************************/
 extern const ftm_config_t FTM3_config;
+extern const ftm_config_t FTM1_config;
+extern const ftm_config_t FTM2_config;
 
 /***********************************************************************************************************************
  * Initialization functions

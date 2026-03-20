@@ -181,12 +181,236 @@ static void FTM3_init(void) {
 }
 
 /***********************************************************************************************************************
+ * FTM1 initialization code
+ **********************************************************************************************************************/
+/* clang-format off */
+/* TEXT BELOW IS USED AS SETTING FOR TOOLS *************************************
+instance:
+- name: 'FTM1'
+- type: 'ftm'
+- mode: 'QuadratureDecoder'
+- custom_name_enabled: 'false'
+- type_id: 'ftm_2.6.0'
+- functional_group: 'BOARD_InitPeripherals'
+- peripheral: 'FTM1'
+- config_sets:
+  - ftm_main_config:
+    - ftm_config:
+      - clockSource: 'kFTM_SystemClock'
+      - clockSourceFreq: 'GetFreq'
+      - timerPrescaler: '1'
+      - systemClockSource: 'BusInterfaceClock'
+      - systemClockSourceFreq: 'mirrored_value'
+      - faultMode: 'kFTM_Fault_Disable'
+      - inputFilterPeriod: '1'
+      - faultInputs:
+        - 0:
+          - enableFaultInput: 'false'
+          - faultLevelVal: 'low'
+          - useFaultFilter: 'false'
+        - 1:
+          - enableFaultInput: 'false'
+          - faultLevelVal: 'low'
+          - useFaultFilter: 'false'
+        - 2:
+          - enableFaultInput: 'false'
+          - faultLevelVal: 'low'
+          - useFaultFilter: 'false'
+        - 3:
+          - enableFaultInput: 'false'
+          - faultLevelVal: 'low'
+          - useFaultFilter: 'false'
+      - deadTimePrescale: 'kFTM_Deadtime_Prescale_1'
+      - deadTimePeriod: '0'
+      - pwmSyncMode: 'kFTM_SoftwareTrigger'
+      - swTriggerResetCount: 'true'
+      - hwTriggerResetCount: 'false'
+      - reloadPoints: ''
+      - extTriggers: ''
+      - chnlInitState: ''
+      - chnlPolarity: ''
+      - bdmMode: 'kFTM_BdmMode_0'
+      - useGlobalTimeBase: 'false'
+    - timer_interrupts: ''
+    - enable_irq: 'false'
+    - ftm_interrupt:
+      - IRQn: 'FTM1_IRQn'
+      - enable_interrrupt: 'enabled'
+      - enable_priority: 'false'
+      - priority: '0'
+      - enable_custom_name: 'false'
+    - EnableTimerInInit: 'true'
+    - quick_selection: 'QuickSelectionDefault'
+  - ftm_quadrature_decoder_mode:
+    - timerModuloVal: '0xFFFF'
+    - timerInitVal: '0'
+    - ftm_quad_decoder_mode: 'kFTM_QuadPhaseEncode'
+    - ftm_phase_a_params:
+      - enablePhaseFilter: 'false'
+      - phaseFilterPeriod: '1'
+      - phasePolarity: 'kFTM_QuadPhaseNormal'
+    - ftm_phase_b_params:
+      - enablePhaseFilter: 'false'
+      - phaseFilterPeriod: '1'
+      - phasePolarity: 'kFTM_QuadPhaseNormal'
+    - quick_selection: 'default'
+ * BE CAREFUL MODIFYING THIS COMMENT - IT IS YAML SETTINGS FOR TOOLS **********/
+/* clang-format on */
+const ftm_config_t FTM1_config = {
+  .prescale = kFTM_Prescale_Divide_1,
+  .faultMode = kFTM_Fault_Disable,
+  .faultFilterValue = 0,
+  .deadTimePrescale = kFTM_Deadtime_Prescale_1,
+  .deadTimeValue = 0,
+  .pwmSyncMode = kFTM_SoftwareTrigger,
+  .swTriggerResetCount = true,
+  .hwTriggerResetCount = false,
+  .reloadPoints = 0,
+  .extTriggers = 0,
+  .chnlInitState = 0,
+  .chnlPolarity = 0,
+  .bdmMode = kFTM_BdmMode_0,
+  .useGlobalTimeBase = false
+};
+const ftm_phase_params_t FTM1_phaseAParams = { 
+  .enablePhaseFilter = false,
+  .phasePolarity = kFTM_QuadPhaseNormal
+
+};
+const ftm_phase_params_t FTM1_phaseBParams = { 
+  .enablePhaseFilter = false,
+  .phasePolarity = kFTM_QuadPhaseNormal
+
+};
+
+static void FTM1_init(void) {
+  FTM_Init(FTM1_PERIPHERAL, &FTM1_config);
+/* Initialization of the timer initial value and modulo value */
+  FTM_SetQuadDecoderModuloValue(FTM1_PERIPHERAL, 0,65535);
+  FTM_SetupQuadDecode(FTM1_PERIPHERAL, &FTM1_phaseAParams, &FTM1_phaseBParams, kFTM_QuadPhaseEncode);
+  FTM_StartTimer(FTM1_PERIPHERAL, kFTM_SystemClock);
+}
+
+/***********************************************************************************************************************
+ * FTM2 initialization code
+ **********************************************************************************************************************/
+/* clang-format off */
+/* TEXT BELOW IS USED AS SETTING FOR TOOLS *************************************
+instance:
+- name: 'FTM2'
+- type: 'ftm'
+- mode: 'QuadratureDecoder'
+- custom_name_enabled: 'false'
+- type_id: 'ftm_2.6.0'
+- functional_group: 'BOARD_InitPeripherals'
+- peripheral: 'FTM2'
+- config_sets:
+  - ftm_main_config:
+    - ftm_config:
+      - clockSource: 'kFTM_SystemClock'
+      - clockSourceFreq: 'GetFreq'
+      - timerPrescaler: '1'
+      - systemClockSource: 'BusInterfaceClock'
+      - systemClockSourceFreq: 'mirrored_value'
+      - faultMode: 'kFTM_Fault_Disable'
+      - inputFilterPeriod: '1'
+      - faultInputs:
+        - 0:
+          - enableFaultInput: 'false'
+          - faultLevelVal: 'low'
+          - useFaultFilter: 'false'
+        - 1:
+          - enableFaultInput: 'false'
+          - faultLevelVal: 'low'
+          - useFaultFilter: 'false'
+        - 2:
+          - enableFaultInput: 'false'
+          - faultLevelVal: 'low'
+          - useFaultFilter: 'false'
+        - 3:
+          - enableFaultInput: 'false'
+          - faultLevelVal: 'low'
+          - useFaultFilter: 'false'
+      - deadTimePrescale: 'kFTM_Deadtime_Prescale_1'
+      - deadTimePeriod: '0'
+      - pwmSyncMode: 'kFTM_SoftwareTrigger'
+      - swTriggerResetCount: 'true'
+      - hwTriggerResetCount: 'false'
+      - reloadPoints: ''
+      - extTriggers: ''
+      - chnlInitState: ''
+      - chnlPolarity: ''
+      - bdmMode: 'kFTM_BdmMode_0'
+      - useGlobalTimeBase: 'false'
+    - timer_interrupts: ''
+    - enable_irq: 'false'
+    - ftm_interrupt:
+      - IRQn: 'FTM2_IRQn'
+      - enable_interrrupt: 'enabled'
+      - enable_priority: 'false'
+      - priority: '0'
+      - enable_custom_name: 'false'
+    - EnableTimerInInit: 'true'
+    - quick_selection: 'QuickSelectionDefault'
+  - ftm_quadrature_decoder_mode:
+    - timerModuloVal: '0xFFFF'
+    - timerInitVal: '0'
+    - ftm_quad_decoder_mode: 'kFTM_QuadPhaseEncode'
+    - ftm_phase_a_params:
+      - enablePhaseFilter: 'false'
+      - phaseFilterPeriod: '1'
+      - phasePolarity: 'kFTM_QuadPhaseNormal'
+    - ftm_phase_b_params:
+      - enablePhaseFilter: 'false'
+      - phaseFilterPeriod: '1'
+      - phasePolarity: 'kFTM_QuadPhaseNormal'
+    - quick_selection: 'default'
+ * BE CAREFUL MODIFYING THIS COMMENT - IT IS YAML SETTINGS FOR TOOLS **********/
+/* clang-format on */
+const ftm_config_t FTM2_config = {
+  .prescale = kFTM_Prescale_Divide_1,
+  .faultMode = kFTM_Fault_Disable,
+  .faultFilterValue = 0,
+  .deadTimePrescale = kFTM_Deadtime_Prescale_1,
+  .deadTimeValue = 0,
+  .pwmSyncMode = kFTM_SoftwareTrigger,
+  .swTriggerResetCount = true,
+  .hwTriggerResetCount = false,
+  .reloadPoints = 0,
+  .extTriggers = 0,
+  .chnlInitState = 0,
+  .chnlPolarity = 0,
+  .bdmMode = kFTM_BdmMode_0,
+  .useGlobalTimeBase = false
+};
+const ftm_phase_params_t FTM2_phaseAParams = { 
+  .enablePhaseFilter = false,
+  .phasePolarity = kFTM_QuadPhaseNormal
+
+};
+const ftm_phase_params_t FTM2_phaseBParams = { 
+  .enablePhaseFilter = false,
+  .phasePolarity = kFTM_QuadPhaseNormal
+
+};
+
+static void FTM2_init(void) {
+  FTM_Init(FTM2_PERIPHERAL, &FTM2_config);
+/* Initialization of the timer initial value and modulo value */
+  FTM_SetQuadDecoderModuloValue(FTM2_PERIPHERAL, 0,65535);
+  FTM_SetupQuadDecode(FTM2_PERIPHERAL, &FTM2_phaseAParams, &FTM2_phaseBParams, kFTM_QuadPhaseEncode);
+  FTM_StartTimer(FTM2_PERIPHERAL, kFTM_SystemClock);
+}
+
+/***********************************************************************************************************************
  * Initialization functions
  **********************************************************************************************************************/
 void BOARD_InitPeripherals(void)
 {
   /* Initialize components */
   FTM3_init();
+  FTM1_init();
+  FTM2_init();
 }
 
 /***********************************************************************************************************************

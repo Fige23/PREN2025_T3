@@ -10,6 +10,17 @@
 position.c	Created on: 25.02.2026	   Author: Fige23	Team 3                                                                
 */
 
+/*
+ *
+ * MAGNET UMKONFIGURIEREN VON PTA1 auf PTA13
+ *
+ *
+ */
+
+
+
+
+
 
 #include "position.h"
 #include "robot_config.h"
@@ -42,6 +53,7 @@ typedef struct {
     int32_t  acc_counts;      // integrierte Counts (wrap-safe)
     int32_t  offset_counts;   // Koordinaten-Offset (Nullpunkt)
     uint32_t counts_per_mm;
+    uint32_t counter_span;    // echter Hardware-Zählbereich
     bool     invert;
 } enc_axis_s;
 
@@ -75,47 +87,36 @@ static void enc_update(enc_axis_s *e)
 {
     uint16_t now = (uint16_t)FTM_GetQuadDecoderCounterValue(e->ftm);
 
-    // wrap-safe delta solange zwischen polls |delta| < 32768
-    int16_t delta = (int16_t)(now - e->last_cnt);
+    int32_t diff = (int32_t)now - (int32_t)e->last_cnt;
     e->last_cnt = now;
 
-    int32_t d = (int32_t)delta;
-    if (e->invert) d = -d;
+    int32_t span = (int32_t)e->counter_span;
+    int32_t half = span / 2;
 
-    e->acc_counts += d;
+    if (diff > half) {
+        diff -= span;
+    } else if (diff < -half) {
+        diff += span;
+    }
+
+    if (e->invert) {
+        diff = -diff;
+    }
+
+    e->acc_counts += diff;
 }
 
 static void enc_hw_init(enc_axis_s *e, FTM_Type *ftm)
 {
-    // Clock sicher aktivieren (robust, unabhängig vom Treiber-Setting)
-    if (ftm == FTM1) CLOCK_EnableClock(kCLOCK_Ftm1);
-    if (ftm == FTM2) CLOCK_EnableClock(kCLOCK_Ftm2);
-
-    ftm_config_t cfg;
-    FTM_GetDefaultConfig(&cfg);
-    cfg.prescale = kFTM_Prescale_Divide_1;
-    FTM_Init(ftm, &cfg);
-
-    ftm_phase_params_t phA = {
-        .enablePhaseFilter = true,
-        .phaseFilterVal    = 5u,
-        .phasePolarity     = kFTM_QuadPhaseNormal,
-    };
-    ftm_phase_params_t phB = {
-        .enablePhaseFilter = true,
-        .phaseFilterVal    = 5u,
-        .phasePolarity     = kFTM_QuadPhaseNormal,
-    };
-
-    FTM_SetupQuadDecode(ftm, &phA, &phB, kFTM_QuadPhaseEncode);
-    FTM_SetQuadDecoderModuloValue(ftm, 0u, 0xFFFFu);
-    FTM_ClearQuadDecoderCounterValue(ftm);
-    FTM_StartTimer(ftm, kFTM_SystemClock);
-
     e->ftm = ftm;
     e->last_cnt = (uint16_t)FTM_GetQuadDecoderCounterValue(ftm);
     e->acc_counts = 0;
     e->offset_counts = 0;
+
+    e->counter_span = (uint32_t)ftm->MOD - (uint32_t)ftm->CNTIN + 1u;
+    if (e->counter_span == 0u) {
+        e->counter_span = 65536u;
+    }
 }
 
 void position_init(void)
