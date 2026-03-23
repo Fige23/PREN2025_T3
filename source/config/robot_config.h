@@ -43,6 +43,7 @@ Config file: Hier können alle zentralen Parameter des Roboters angepasst werden
 // 1 = beim Start Kalibrier-Routine ausführen
 // 0 = normaler Start ohne Kalibrierung
 #define CALIBRATION_MODE                0
+#define DEMO_DRAW_MODE					1
 
 // Position feedback / closed loop
 #define POSITION_ENABLE                 1   // 0=kein Encoder, 1=Encoder aktiv
@@ -51,6 +52,10 @@ Config file: Hier können alle zentralen Parameter des Roboters angepasst werden
 /* ============================================================================
  * 2) COMMUNICATION / DEBUG / TEST
  * ========================================================================== */
+#define CMD_LINE_MAX					128
+
+#define BOT_Q_LEN						64
+
 
 // Protokoll-Antworten
 #define PROTO_REPLY_BUFFER_LEN          192

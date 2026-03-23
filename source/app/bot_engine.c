@@ -58,7 +58,9 @@ static void reply_err_action(const bot_action_s *a, err_e e)
 // -----------------------------------------------------------------------------
 // Action Queue (Ringbuffer)
 // -----------------------------------------------------------------------------
-#define BOT_Q_LEN 8
+#ifndef BOT_Q_LEN
+#define BOT_Q_LEN 16
+#endif
 
 static bot_action_s q[BOT_Q_LEN];
 static uint8_t q_head = 0, q_tail = 0, q_count = 0;

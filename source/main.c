@@ -42,6 +42,7 @@
 #include "console_uart_sim.h"
 #include "calibration.h"
 #include "job.h"
+#include "demo_draw.h"
 //debug encoder
 #if POSITION_DEBUG
 static void debug_encoder_live_loop(void)
@@ -142,6 +143,14 @@ int main(void)
 #endif
 
     ftm3_tick_start();             // startet periodischen Interrupt
+
+#if DEMO_DRAW_MODE
+    static bool demo_loaded = false;
+
+    if (!demo_loaded) {
+        demo_loaded = demo_enqueue_pattern(DEMO_PATTERN_STAR);
+    }
+#endif
 
     for (;;) {
         frontend_poll();
