@@ -14,7 +14,7 @@ home_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 #define CONFIG_HOME_CONFIG_H_
 
 /* ============================================================================
- * 9) HOMING
+ * HOMING
  * ========================================================================== */
 
 // 1 = MOVE nur erlaubt nach HOME

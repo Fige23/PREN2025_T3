@@ -14,7 +14,7 @@ communication_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 #define CONFIG_COMMUNICATION_CONFIG_H_
 
 /* ============================================================================
- * 2) COMMUNICATION / DEBUG / TEST
+ * COMMUNICATION / DEBUG / TEST
  * ========================================================================== */
 
 #define CMD_LINE_MAX					128

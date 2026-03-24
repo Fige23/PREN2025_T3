@@ -14,7 +14,7 @@ motion_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 #define CONFIG_MOTION_CONFIG_H_
 
 /* ============================================================================
- * 5) MOTION ENGINE / PROFILE
+ * MOTION ENGINE / PROFILE
  * ========================================================================== */
 
 // Motion-Timer / Pulse Engine
@@ -62,7 +62,7 @@ motion_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 #define PERIOD_SMOOTH_MINSTEP            1
 
 /* ============================================================================
- * 8) DERIVED / HELPER MACROS
+ * DERIVED / HELPER MACROS
  * ========================================================================== */
 
 // Skaliertes Arbeitsfenster
@@ -83,7 +83,7 @@ motion_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 
 
 /* ============================================================================
- * 9a) MOTION PROFILES
+ * HOME-MOTION PROFILES
  * ========================================================================== */
 
 // Helper-Makro für motion_profile_s Initializer

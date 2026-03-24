@@ -14,7 +14,7 @@ limits_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 #define CONFIG_HARDWARE_CONFIG_H_
 
 /* ============================================================================
- * 4) SCALING / GEOMETRY / AXIS CONVERSION
+ * SCALING / GEOMETRY / AXIS CONVERSION
  * ========================================================================== */
 
 // Fixed-point Auflösung
@@ -37,7 +37,7 @@ limits_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 
 
 /* ============================================================================
- * 6) WORKSPACE / SAFETY LIMITS
+ * WORKSPACE / SAFETY LIMITS
  * ========================================================================== */
 
 // Physikalische Limits (unskaliert)

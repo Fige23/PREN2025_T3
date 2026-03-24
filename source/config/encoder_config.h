@@ -14,7 +14,7 @@ encoder_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 #define CONFIG_ENCODER_CONFIG_H_
 
 /* ============================================================================
- * 7) POSITION FEEDBACK (AS5311)
+ * POSITION FEEDBACK (AS5311)
  * ========================================================================== */
 
 // AS5311 (Quadratur, x4): 1024 edges pro 2.0 mm => 512 counts/mm

@@ -14,7 +14,7 @@ build_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 #define CONFIG_BUILD_CONFIG_H_
 
 /* ============================================================================
- * 1) BUILD / FEATURE MODES
+ * BUILD / FEATURE MODES
  * ========================================================================== */
 
 // Build mode selection

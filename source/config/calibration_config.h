@@ -14,7 +14,7 @@ calibration_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 #define CONFIG_CALIBRATION_CONFIG_H_
 
 /* ============================================================================
- * 3) CALIBRATION
+ * CALIBRATION
  * ========================================================================== */
 
 // Kalibrierachsen
