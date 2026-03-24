@@ -12,6 +12,7 @@ communication_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 
 #ifndef CONFIG_COMMUNICATION_CONFIG_H_
 #define CONFIG_COMMUNICATION_CONFIG_H_
+#include "build_config.h"
 
 /* ============================================================================
  * COMMUNICATION / DEBUG / TEST
@@ -25,6 +26,7 @@ communication_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 // Protokoll-Antworten
 #define PROTO_REPLY_BUFFER_LEN          192
 
+#if (DEBUG && !RELEASE)
 // Debug-Ausgabe
 #define DEBUG_ENABLE                    1
 #define DEBUG_BUFFER_LEN                192
@@ -34,11 +36,13 @@ communication_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 #define DEBUG_BACKEND_UART              2
 
 #define DEBUG_BACKEND                   DEBUG_BACKEND_SEMIHOST
-
+#endif
 // Test-Frontend: lokale UART-Simulation über Semihost-Konsole
 // 1 = console_uart_sim aktiv
 // 0 = nur normales cmd_poll()
-#define ENABLE_CONSOLE_UART_SIM         1
+
+
+#define ENABLE_CONSOLE_UART_SIM         (1 && !RELEASE)
 
 #if ENABLE_CONSOLE_UART_SIM
 #define USE_SEMIHOST_CONSOLE            1

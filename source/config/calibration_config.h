@@ -14,9 +14,9 @@ calibration_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 #define CONFIG_CALIBRATION_CONFIG_H_
 
 /* ============================================================================
- * CALIBRATION
+ * CALIBRATION, ONLY USED IF CALIBRATION_MODE = 1
  * ========================================================================== */
-
+#if (CALIBRATION_MODE && !RELEASE)
 // Kalibrierachsen
 #define CAL_AXIS_X                      0
 #define CAL_AXIS_Y                      1
@@ -35,6 +35,6 @@ calibration_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 #define CAL_AXIS_X_LENGTH_MM            523.7f
 #define CAL_AXIS_Y_LENGTH_MM            0.0f
 #define CAL_AXIS_Z_LENGTH_MM            0.0f
-
+#endif
 
 #endif /* CONFIG_CALIBRATION_CONFIG_H_ */
