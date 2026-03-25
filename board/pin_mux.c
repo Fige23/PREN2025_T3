@@ -13,7 +13,6 @@ package_id: MK22FN512VLL12
 mcu_data: ksdk2_0
 processor_version: 16.3.0
 pin_labels:
-- {pin_num: '35', pin_signal: PTA1/UART0_RX/FTM0_CH6/JTAG_TDI/EZP_DI, label: Magnet, identifier: Magnet}
 - {pin_num: '94', pin_signal: ADC0_SE5b/PTD1/SPI0_SCK/UART2_CTS_b/FTM3_CH1/FB_CS0_b/LPUART0_CTS_b, label: STEP_Y, identifier: STEP_Y}
 - {pin_num: '95', pin_signal: PTD2/LLWU_P13/SPI0_SOUT/UART2_RX/FTM3_CH2/FB_AD4/LPUART0_RX/I2C0_SCL, label: STEP_Z, identifier: STEP_Z}
 - {pin_num: '96', pin_signal: PTD3/SPI0_SIN/UART2_TX/FTM3_CH3/FB_AD3/LPUART0_TX/I2C0_SDA, label: STEP_PHI, identifier: STEP_PHI}
@@ -32,6 +31,7 @@ pin_labels:
 - {pin_num: '97', pin_signal: PTD4/LLWU_P14/SPI0_PCS1/UART0_RTS_b/FTM0_CH4/FB_AD2/EWM_IN/SPI1_PCS0, label: Limit_X, identifier: Limit_X}
 - {pin_num: '98', pin_signal: ADC0_SE6b/PTD5/SPI0_PCS2/UART0_CTS_b/FTM0_CH5/FB_AD1/EWM_OUT_b/SPI1_SCK, label: Limit_Y, identifier: Limit_Y}
 - {pin_num: '99', pin_signal: ADC0_SE7b/PTD6/LLWU_P15/SPI0_PCS3/UART0_RX/FTM0_CH6/FB_AD0/FTM0_FLT0/SPI1_SOUT, label: Limit_Z, identifier: Limit_Z}
+- {pin_num: '43', pin_signal: PTA13/LLWU_P4/FTM1_CH1/I2S0_TX_FS/FTM1_QD_PHB, label: Magnet, identifier: Magnet}
  * BE CAREFUL MODIFYING THIS COMMENT - IT IS YAML SETTINGS FOR TOOLS ***********
  */
 /* clang-format on */
@@ -58,7 +58,6 @@ void BOARD_InitBootPins(void)
 BOARD_InitPins:
 - options: {callFromInitBoot: 'true', coreID: core0, enableClock: 'true'}
 - pin_list:
-  - {pin_num: '35', peripheral: GPIOA, signal: 'GPIO, 1', pin_signal: PTA1/UART0_RX/FTM0_CH6/JTAG_TDI/EZP_DI, direction: OUTPUT}
   - {pin_num: '93', peripheral: GPIOD, signal: 'GPIO, 0', pin_signal: PTD0/LLWU_P12/SPI0_PCS0/UART2_RTS_b/FTM3_CH0/FB_ALE/FB_CS1_b/FB_TS_b/LPUART0_RTS_b, direction: OUTPUT}
   - {pin_num: '94', peripheral: GPIOD, signal: 'GPIO, 1', pin_signal: ADC0_SE5b/PTD1/SPI0_SCK/UART2_CTS_b/FTM3_CH1/FB_CS0_b/LPUART0_CTS_b, direction: OUTPUT}
   - {pin_num: '95', peripheral: GPIOD, signal: 'GPIO, 2', pin_signal: PTD2/LLWU_P13/SPI0_SOUT/UART2_RX/FTM3_CH2/FB_AD4/LPUART0_RX/I2C0_SCL, direction: OUTPUT}
@@ -80,6 +79,7 @@ BOARD_InitPins:
   - {pin_num: '54', peripheral: FTM1, signal: 'QD_PH, B', pin_signal: ADC0_SE9/ADC1_SE9/PTB1/I2C0_SDA/FTM1_CH1/FTM1_QD_PHB}
   - {pin_num: '64', peripheral: FTM2, signal: 'QD_PH, A', pin_signal: PTB18/FTM2_CH0/I2S0_TX_BCLK/FB_AD15/FTM2_QD_PHA}
   - {pin_num: '65', peripheral: FTM2, signal: 'QD_PH, B', pin_signal: PTB19/FTM2_CH1/I2S0_TX_FS/FB_OE_b/FTM2_QD_PHB}
+  - {pin_num: '43', peripheral: GPIOA, signal: 'GPIO, 13', pin_signal: PTA13/LLWU_P4/FTM1_CH1/I2S0_TX_FS/FTM1_QD_PHB, direction: OUTPUT, pull_enable: disable}
  * BE CAREFUL MODIFYING THIS COMMENT - IT IS YAML SETTINGS FOR TOOLS ***********
  */
 /* clang-format on */
@@ -103,19 +103,19 @@ void BOARD_InitPins(void)
     /* Port E Clock Gate Control: Clock enabled */
     CLOCK_EnableClock(kCLOCK_PortE);
 
-    gpio_pin_config_t Magnet_config = {
-        .pinDirection = kGPIO_DigitalOutput,
-        .outputLogic = 0U
-    };
-    /* Initialize GPIO functionality on pin PTA1 (pin 35)  */
-    GPIO_PinInit(BOARD_INITPINS_Magnet_GPIO, BOARD_INITPINS_Magnet_PIN, &Magnet_config);
-
     gpio_pin_config_t ESTOP_config = {
         .pinDirection = kGPIO_DigitalInput,
         .outputLogic = 0U
     };
     /* Initialize GPIO functionality on pin PTA12 (pin 42)  */
     GPIO_PinInit(BOARD_INITPINS_ESTOP_GPIO, BOARD_INITPINS_ESTOP_PIN, &ESTOP_config);
+
+    gpio_pin_config_t Magnet_config = {
+        .pinDirection = kGPIO_DigitalOutput,
+        .outputLogic = 0U
+    };
+    /* Initialize GPIO functionality on pin PTA13 (pin 43)  */
+    GPIO_PinInit(BOARD_INITPINS_Magnet_GPIO, BOARD_INITPINS_Magnet_PIN, &Magnet_config);
 
     gpio_pin_config_t DIR_X_config = {
         .pinDirection = kGPIO_DigitalOutput,
@@ -194,9 +194,6 @@ void BOARD_InitPins(void)
     /* Initialize GPIO functionality on pin PTD6 (pin 99)  */
     GPIO_PinInit(BOARD_INITPINS_Limit_Z_GPIO, BOARD_INITPINS_Limit_Z_PIN, &Limit_Z_config);
 
-    /* PORTA1 (pin 35) is configured as PTA1 */
-    PORT_SetPinMux(BOARD_INITPINS_Magnet_PORT, BOARD_INITPINS_Magnet_PIN, kPORT_MuxAsGpio);
-
     /* PORTA12 (pin 42) is configured as PTA12 */
     PORT_SetPinMux(BOARD_INITPINS_ESTOP_PORT, BOARD_INITPINS_ESTOP_PIN, kPORT_MuxAsGpio);
 
@@ -207,6 +204,17 @@ void BOARD_InitPins(void)
                       /* Pull Select: Internal pullup resistor is enabled on the corresponding pin, if the
                        * corresponding PE field is set. */
                       | (uint32_t)(kPORT_PullUp));
+
+    /* PORTA13 (pin 43) is configured as PTA13 */
+    PORT_SetPinMux(BOARD_INITPINS_Magnet_PORT, BOARD_INITPINS_Magnet_PIN, kPORT_MuxAsGpio);
+
+    PORTA->PCR[13] = ((PORTA->PCR[13] &
+                       /* Mask bits to zero which are setting */
+                       (~(PORT_PCR_PE_MASK | PORT_PCR_ISF_MASK)))
+
+                      /* Pull Enable: Internal pullup or pulldown resistor is not enabled on the corresponding
+                       * pin. */
+                      | PORT_PCR_PE(kPORT_PullDisable));
 
     /* PORTB0 (pin 53) is configured as FTM1_QD_PHA */
     PORT_SetPinMux(BOARD_INITPINS_PHA_1_PORT, BOARD_INITPINS_PHA_1_PIN, kPORT_MuxAlt6);

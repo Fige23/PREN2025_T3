@@ -28,19 +28,6 @@ void BOARD_InitBootPins(void);
 #define PORT_DFER_DFE_4_MASK 0x10u     /*!<@brief Digital Filter Enable Mask for item 4. */
 #define SOPT5_UART1TXSRC_UART_TX 0x00u /*!<@brief UART 1 transmit data source select: UART1_TX pin */
 
-/*! @name PORTA1 (number 35), Magnet
-  @{ */
-
-/* Symbols to be used with GPIO driver */
-#define BOARD_INITPINS_Magnet_GPIO GPIOA               /*!<@brief GPIO peripheral base pointer */
-#define BOARD_INITPINS_Magnet_GPIO_PIN_MASK (1U << 1U) /*!<@brief GPIO pin mask */
-
-/* Symbols to be used with PORT driver */
-#define BOARD_INITPINS_Magnet_PORT PORTA               /*!<@brief PORT peripheral base pointer */
-#define BOARD_INITPINS_Magnet_PIN 1U                   /*!<@brief PORT pin number */
-#define BOARD_INITPINS_Magnet_PIN_MASK (1U << 1U)      /*!<@brief PORT pin mask */
-                                                       /* @} */
-
 /*! @name PORTD0 (number 93), STEP_X
   @{ */
 
@@ -250,6 +237,19 @@ void BOARD_InitBootPins(void);
 #define BOARD_INITPINS_PHB_2_PIN 19U                   /*!<@brief PORT pin number */
 #define BOARD_INITPINS_PHB_2_PIN_MASK (1U << 19U)      /*!<@brief PORT pin mask */
                                                        /* @} */
+
+/*! @name PORTA13 (number 43), Magnet
+  @{ */
+
+/* Symbols to be used with GPIO driver */
+#define BOARD_INITPINS_Magnet_GPIO GPIOA                /*!<@brief GPIO peripheral base pointer */
+#define BOARD_INITPINS_Magnet_GPIO_PIN_MASK (1U << 13U) /*!<@brief GPIO pin mask */
+
+/* Symbols to be used with PORT driver */
+#define BOARD_INITPINS_Magnet_PORT PORTA                /*!<@brief PORT peripheral base pointer */
+#define BOARD_INITPINS_Magnet_PIN 13U                   /*!<@brief PORT pin number */
+#define BOARD_INITPINS_Magnet_PIN_MASK (1U << 13U)      /*!<@brief PORT pin mask */
+                                                        /* @} */
 
 /*!
  * @brief 
