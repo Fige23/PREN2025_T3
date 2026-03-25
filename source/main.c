@@ -30,19 +30,17 @@
 
 int main(void)
 {
-    /*
-     * Grundinitialisierung
-     */
-	init_all();
-    ftm3_tick_start();             // startet periodischen Interrupt
 
-    test_tools_run();
+	init_all();						//initialisiert alles
+    ftm3_tick_start();              // startet periodischen Interrupt
+
+    test_tools_run();				//führt alle aktivierten Testfunktionen aus
 
     for (;;) {
 
-    	poll_all();
+    	poll_all();					//pollt alle schalter und sensoren
 
-        bot_step();                // führt Bot-/Bewegungslogik aus
+        bot_step();                	// führt Bot-/Bewegungslogik aus
 
         __asm volatile("nop");
     }

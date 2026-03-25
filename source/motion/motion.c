@@ -272,12 +272,13 @@ static void motion_tick_dispatch(void)
     }
     motion_tick_isr();
 }
-
+//setzt callback Funktion für FTM3 Tick
 void motion_init(void)
 {
     ftm3_tick_set_callback(motion_tick_dispatch);
 }
 
+//startet eine Bewegung
 err_e motion_start(const bot_action_s *cur, limit_switch_e stop_on_limits, const motion_profile_s *profile_override){
 
 	if (m.active) {
@@ -448,7 +449,7 @@ err_e motion_start(const bot_action_s *cur, limit_switch_e stop_on_limits, const
     m.active = true;
     return ERR_NONE;
 }
-
+//wird in ISR aufgerufen
 static void motion_tick_isr(void){
 #if ENABLE_CONSOLE_UART_SIM
 	position_poll();

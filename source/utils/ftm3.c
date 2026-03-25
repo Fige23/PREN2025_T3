@@ -98,7 +98,7 @@ void FTM3_IRQHandler(void)
     FTM_ClearStatusFlags(FTM3, flags);
 
     if (flags & kFTM_TimeOverflowFlag) {
-        if (s_cb) s_cb();
+        if (s_cb) s_cb();						//ruft callback auf (motion_tick_dispatch)
     }
 }
 

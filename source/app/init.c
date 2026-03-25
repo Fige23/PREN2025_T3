@@ -41,20 +41,20 @@ void init_all(void){
 
     BOARD_InitBootPins();
     BOARD_InitBootClocks();
-    BOARD_InitBootPeripherals();   // FTM3 etc.
+    BOARD_InitBootPeripherals();    //FTM3 etc.
 
-    serial_init(115200);
+    serial_init(115200);			//UART
 
 
-    ftm3_tick_init(STEP_TICK_HZ);  // konfiguriert periodischen Interrupt
-    position_init();
+    ftm3_tick_init(STEP_TICK_HZ);   //konfiguriert periodischen Interrupt
+    position_init();				//nötige Initialisierungen für Encoder
 
 
 
 #if !POSITION_DEBUG
-    motion_init();                 // setzt Callback-Funktion für ISR
-    job_init();                    // reset j.active / j.last_err / j.corr_iter
+    motion_init();                  //setzt Callback-Funktion für ISR
+    job_init();                     //reset j.active / j.last_err / j.corr_iter
 
-    frontend_init();
+    frontend_init();				//initialisiert aktiviertes Frontend
 #endif
 }
