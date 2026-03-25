@@ -33,7 +33,7 @@ typedef enum {
     DEMO_PATTERN_INFINITY,
     DEMO_PATTERN_SNOWFLAKE
 } demo_pattern_e;
-
 bool demo_enqueue_pattern(demo_pattern_e pattern);
+
 
 #endif

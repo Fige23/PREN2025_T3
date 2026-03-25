@@ -10,15 +10,16 @@
 demo_draw.c	Created on: 23.03.2026	   Author: Fige23	Team 3                                                                
 */
 
+#include "robot_config.h"
+
+#include "bot_engine.h"
+#include "protocol.h"
+#include "demo_draw.h"
 
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "bot_engine.h"
-#include "robot_config.h"
-#include "protocol.h"   // falls g_status dort deklariert ist
 
-#include "demo_draw.h"
 
 
 static uint16_t s_demo_req_id = 60000;
@@ -350,3 +351,9 @@ bool demo_enqueue_pattern(demo_pattern_e pattern)
             return false;
     }
 }
+
+
+
+
+
+

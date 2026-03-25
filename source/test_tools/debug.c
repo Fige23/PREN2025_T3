@@ -10,14 +10,16 @@
 debug.c	Created on: 15.03.2026	   Author: Fige23	Team 3                                                                
 */
 
+#include "robot_config.h"
 
 #include "debug.h"
+#include "serial_port.h"
 
 #include <stdarg.h>
 #include <stdio.h>
 
-#include "robot_config.h"
-#include "serial_port.h"
+
+
 
 void debug_printf(const char *fmt, ...)
 {

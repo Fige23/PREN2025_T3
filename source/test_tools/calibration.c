@@ -13,10 +13,9 @@ Created on: 10.03.2026
 Author: Fige23
 Team 3
 */
+#include "robot_config.h"
 
 #include "calibration.h"
-
-#include "robot_config.h"
 #include "io.h"
 #include "util.h"
 
