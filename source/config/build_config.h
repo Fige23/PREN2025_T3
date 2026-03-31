@@ -58,4 +58,15 @@ build_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 #define POSITION_DEBUG					0	//1=blocking loop printing encoder values
 #endif
 
+
+/* ============================================================================
+ * UART PIN CONFIGURATION
+ * ========================================================================== */
+// UART1 Pin-Auswahl:
+// 0 = USB-C Debug (PTC3/PTC4) - für Entwicklung mit Programmer
+// 1 = Hardware Pins (PTE0/PTE1) - für finales Produkt
+// WICHTIG: Dieses Makro steuert das Pin-Muxing in pin_mux.c UND uart1.c!
+#define UART1_USE_HARDWARE_PINS         0
+
+
 #endif /* CONFIG_BUILD_CONFIG_H_ */

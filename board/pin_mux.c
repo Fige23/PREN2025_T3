@@ -40,6 +40,7 @@ pin_labels:
 #include "fsl_port.h"
 #include "fsl_gpio.h"
 #include "pin_mux.h"
+#include "build_config.h"
 
 /* FUNCTION ************************************************************************************************************
  *
@@ -293,11 +294,16 @@ void BOARD_InitPins(void)
                       * corresponding PE field is set. */
                      | (uint32_t)(kPORT_PullUp));
 
+#if UART1_USE_HARDWARE_PINS
     /* PORTE0 (pin 1) is configured as UART1_TX */
     PORT_SetPinMux(BOARD_INITPINS_UART1TX_PORT, BOARD_INITPINS_UART1TX_PIN, kPORT_MuxAlt3);
 
     /* PORTE1 (pin 2) is configured as UART1_RX */
     PORT_SetPinMux(BOARD_INITPINS_UART1RX_PORT, BOARD_INITPINS_UART1RX_PIN, kPORT_MuxAlt3);
+#else
+    /* USB-C Debug: PTE0/PTE1 werden NICHT auf UART1 gemuxed */
+    /* UART1 wird in uart1.c manuell auf PTC3/PTC4 konfiguriert */
+#endif
 
     SIM->SOPT5 = ((SIM->SOPT5 &
                    /* Mask bits to zero which are setting */
