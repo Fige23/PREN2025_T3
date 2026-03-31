@@ -59,6 +59,10 @@ Config file: Dieses File inkludiert alle kleineren Config Files!
 #error "DEBUG_ENABLE must be 0 or 1"
 #endif
 
+#if (UART_USBC_ENABLE != 0) && (UART_USBC_ENABLE != 1)
+#error "UART_USBC_ENABLE must be 0 or 1"
+#endif
+
 #if (ENABLE_CONSOLE_UART_SIM != 0) && (ENABLE_CONSOLE_UART_SIM != 1)
 #error "ENABLE_CONSOLE_UART_SIM must be 0 or 1"
 #endif

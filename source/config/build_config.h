@@ -24,6 +24,11 @@ build_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 #define IMPLEMENTATION_STEPPER          1	//
 #define UART_DEMO                       0	//UART Responds to all Commands, Hardware does nothing
 
+// UART_USBC_ENABLE: Controls whether UART pins are configured as hardware UART.
+// 1 = UART pins configured (UART active, USB-C unavailable)
+// 0 = UART pins NOT configured (USB-C available, no hardware UART)
+#define UART_USBC_ENABLE                1
+
 #if (IMPLEMENTATION_STEPPER + UART_DEMO) != 1
 #error "Select exactly one mode: IMPLEMENTATION_STEPPER or UART_DEMO"
 #endif
@@ -46,6 +51,7 @@ build_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 #define DEBUG_MODE						0
 #define IMPLEMENTATION_STEPPER          1
 #define UART_DEMO                       0
+#define UART_USBC_ENABLE                1	// 1 = UART pins configured (USB-C unavailable), 0 = UART pins not configured (USB-C available)
 
 // 1 = beim Start Kalibrier-Routine ausführen
 // 0 = normaler Start ohne Kalibrierung

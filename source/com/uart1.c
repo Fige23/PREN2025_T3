@@ -286,8 +286,10 @@ void uart1_init(uint32_t baudrate)
 
   // configure port multiplexing, enable Pull-Ups and enable OpenDrain (ODE)!
   // OpenDrain is needed to ensure that no current flows from Target-uC to the Debugger-uC
+#if UART_USBC_ENABLE
   PORTC->PCR[3] = PORT_PCR_MUX(3) | PORT_PCR_PE(1) | PORT_PCR_PS(1) | PORT_PCR_ODE_MASK;
   PORTC->PCR[4] = PORT_PCR_MUX(3) | PORT_PCR_PE(1) | PORT_PCR_PS(1) | PORT_PCR_ODE_MASK;
+#endif /* UART_USBC_ENABLE */
 
   // set the baudrate into the BDH (first) and BDL (second) register. KRM1215ff
   uint32_t bd = (CORECLOCK / (16 * baudrate));

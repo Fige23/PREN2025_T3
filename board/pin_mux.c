@@ -40,6 +40,7 @@ pin_labels:
 #include "fsl_port.h"
 #include "fsl_gpio.h"
 #include "pin_mux.h"
+#include "robot_config.h"
 
 /* FUNCTION ************************************************************************************************************
  *
@@ -293,6 +294,7 @@ void BOARD_InitPins(void)
                       * corresponding PE field is set. */
                      | (uint32_t)(kPORT_PullUp));
 
+#if UART_USBC_ENABLE
     /* PORTE0 (pin 1) is configured as UART1_TX */
     PORT_SetPinMux(BOARD_INITPINS_UART1TX_PORT, BOARD_INITPINS_UART1TX_PIN, kPORT_MuxAlt3);
 
@@ -305,6 +307,7 @@ void BOARD_InitPins(void)
 
                   /* UART 1 transmit data source select: UART1_TX pin. */
                   | SIM_SOPT5_UART1TXSRC(SOPT5_UART1TXSRC_UART_TX));
+#endif /* UART_USBC_ENABLE */
 }
 /***********************************************************************************************************************
  * EOF

@@ -13,7 +13,6 @@
  Team 3
  */
 
-//Neues makro machen, welches UART pin konfiguration ausschaötet
 #include "robot_config.h"
 
 #include "debug.h"
