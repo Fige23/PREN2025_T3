@@ -10,7 +10,7 @@ product: Peripherals v15.0
 processor: MK22FN512xxx12
 package_id: MK22FN512VLL12
 mcu_data: ksdk2_0
-processor_version: 16.3.0
+processor_version: 25.12.10
 functionalGroups:
 - name: BOARD_InitPeripherals
   UUID: 980df443-929c-4e0d-98b2-9be81de68665

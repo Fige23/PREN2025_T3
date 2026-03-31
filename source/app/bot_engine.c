@@ -154,7 +154,7 @@ void bot_step(void)
 
         // Busy-State für Anzeige setzen
         g_status.state = busy_state_from_action(cur.type);
-
+        
         err_e e = job_start(&cur);
         if (e != ERR_NONE) {
             if (e == ERR_ESTOP) {

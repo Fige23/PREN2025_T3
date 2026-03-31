@@ -13,12 +13,7 @@
  Team 3
  */
 
-/*
- *
- * MAGNET UMKONFIGURIEREN VON PTA1 auf PTA13
- *
- *
- */
+//Neues makro machen, welches UART pin konfiguration ausschaötet
 #include "robot_config.h"
 
 #include "debug.h"

@@ -33,11 +33,11 @@
 /* clang-format off */
 /* TEXT BELOW IS USED AS SETTING FOR TOOLS *************************************
 !!GlobalInfo
-product: Clocks v14.0
+product: Clocks v19.0
 processor: MK22FN512xxx12
 package_id: MK22FN512VLL12
 mcu_data: ksdk2_0
-processor_version: 16.3.0
+processor_version: 25.12.10
  * BE CAREFUL MODIFYING THIS COMMENT - IT IS YAML SETTINGS FOR TOOLS **********/
 /* clang-format on */
 
