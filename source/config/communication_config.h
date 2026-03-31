@@ -42,7 +42,7 @@ communication_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 // 0 = nur normales cmd_poll()
 
 
-#define ENABLE_CONSOLE_UART_SIM         (1 && !RELEASE)
+#define ENABLE_CONSOLE_UART_SIM         (0 && !RELEASE)
 
 #if ENABLE_CONSOLE_UART_SIM
 #define USE_SEMIHOST_CONSOLE            1

@@ -18,7 +18,7 @@ poll.c	Created on: 25.03.2026	   Author: Fige23	Team 3
 #include "console_uart_sim.h"
 
 // polling ESTOP
-static void estop_poll(void)
+void estop_poll(void)
 {
     static bool last = false;
     bool now = estop_button_pressed();
@@ -45,8 +45,9 @@ void poll_all(void){
 
     frontend_poll();
 
-    estop_poll();              // pollt Not-Aus
+
 #if !ENABLE_CONSOLE_UART_SIM
+    estop_poll();              // pollt Not-Aus
     position_poll();
 #endif
 

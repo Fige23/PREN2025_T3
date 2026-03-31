@@ -29,6 +29,7 @@ motion_start(...) startet eine Bewegung.
 #include "limit_switch.h"
 #if ENABLE_CONSOLE_UART_SIM
 #include "position.h"
+#include "poll.h"
 #endif
 
 // ---------- motion tick / pulse ----------
@@ -453,6 +454,7 @@ err_e motion_start(const bot_action_s *cur, limit_switch_e stop_on_limits, const
 static void motion_tick_isr(void){
 #if ENABLE_CONSOLE_UART_SIM
 	position_poll();
+	estop_poll();
 #endif
     // STEP low wenn Pulsbreite vorbei
     for (int i = 0; i < AX_N; i++) {

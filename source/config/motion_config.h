@@ -31,12 +31,12 @@ motion_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 // X axis
 #define X_MAX_STEP_RATE_SPS             12000u
 #define X_START_STEP_RATE_SPS             400u
-#define X_ACCEL_SPS2                     30000u
+#define X_ACCEL_SPS2                     20000u
 
 // Y axis
 #define Y_MAX_STEP_RATE_SPS             12000u
 #define Y_START_STEP_RATE_SPS             400u
-#define Y_ACCEL_SPS2                     30000u
+#define Y_ACCEL_SPS2                     20000u
 
 // Z axis
 #define Z_MAX_STEP_RATE_SPS              2500u
@@ -92,37 +92,37 @@ motion_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 
 // X axis homing profiles
 #define HOME_X_RELEASE_START_STEP_RATE_SPS    300u
-#define HOME_X_RELEASE_MAX_STEP_RATE_SPS     1200u
-#define HOME_X_RELEASE_ACCEL_SPS2            6000u
+#define HOME_X_RELEASE_MAX_STEP_RATE_SPS     1000u
+#define HOME_X_RELEASE_ACCEL_SPS2            3000u
 
 #define HOME_X_FAST_START_STEP_RATE_SPS       400u
-#define HOME_X_FAST_MAX_STEP_RATE_SPS        4000u
-#define HOME_X_FAST_ACCEL_SPS2              12000u
+#define HOME_X_FAST_MAX_STEP_RATE_SPS        1500u
+#define HOME_X_FAST_ACCEL_SPS2               3000u
 
 #define HOME_X_BACKOFF_START_STEP_RATE_SPS    250u
-#define HOME_X_BACKOFF_MAX_STEP_RATE_SPS     1000u
-#define HOME_X_BACKOFF_ACCEL_SPS2            5000u
+#define HOME_X_BACKOFF_MAX_STEP_RATE_SPS      800u
+#define HOME_X_BACKOFF_ACCEL_SPS2            2000u
 
 #define HOME_X_SLOW_START_STEP_RATE_SPS       120u
-#define HOME_X_SLOW_MAX_STEP_RATE_SPS         500u
-#define HOME_X_SLOW_ACCEL_SPS2               1500u
+#define HOME_X_SLOW_MAX_STEP_RATE_SPS         300u
+#define HOME_X_SLOW_ACCEL_SPS2               1000u
 
 // Y axis homing profiles
 #define HOME_Y_RELEASE_START_STEP_RATE_SPS    300u
-#define HOME_Y_RELEASE_MAX_STEP_RATE_SPS     1200u
-#define HOME_Y_RELEASE_ACCEL_SPS2            6000u
+#define HOME_Y_RELEASE_MAX_STEP_RATE_SPS     1000u
+#define HOME_Y_RELEASE_ACCEL_SPS2            3000u
 
 #define HOME_Y_FAST_START_STEP_RATE_SPS       400u
-#define HOME_Y_FAST_MAX_STEP_RATE_SPS        4000u
-#define HOME_Y_FAST_ACCEL_SPS2              12000u
+#define HOME_Y_FAST_MAX_STEP_RATE_SPS        1500u
+#define HOME_Y_FAST_ACCEL_SPS2               3000u
 
 #define HOME_Y_BACKOFF_START_STEP_RATE_SPS    250u
-#define HOME_Y_BACKOFF_MAX_STEP_RATE_SPS     1000u
-#define HOME_Y_BACKOFF_ACCEL_SPS2            5000u
+#define HOME_Y_BACKOFF_MAX_STEP_RATE_SPS      800u
+#define HOME_Y_BACKOFF_ACCEL_SPS2            3000u
 
 #define HOME_Y_SLOW_START_STEP_RATE_SPS       120u
-#define HOME_Y_SLOW_MAX_STEP_RATE_SPS         500u
-#define HOME_Y_SLOW_ACCEL_SPS2               1500u
+#define HOME_Y_SLOW_MAX_STEP_RATE_SPS         300u
+#define HOME_Y_SLOW_ACCEL_SPS2               1000u
 
 // Z axis homing profiles
 #define HOME_Z_RELEASE_START_STEP_RATE_SPS    200u

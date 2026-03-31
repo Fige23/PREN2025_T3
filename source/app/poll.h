@@ -14,5 +14,6 @@ poll.h	Created on: 25.03.2026	   Author: Fige23	Team 3
 #define APP_POLL_H_
 
 void poll_all(void);
+void estop_poll(void);
 
 #endif /* APP_POLL_H_ */

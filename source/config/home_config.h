@@ -31,7 +31,7 @@ home_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 
 
 #define HOME_ENABLE_X                   1
-#define HOME_ENABLE_Y                   0
+#define HOME_ENABLE_Y                   1
 #define HOME_ENABLE_Z                   0
 #endif
 

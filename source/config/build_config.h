@@ -33,7 +33,7 @@ build_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 // 1 = beim Start Kalibrier-Routine ausführen
 // 0 = normaler Start ohne Kalibrierung
 #define CALIBRATION_MODE                0
-#define DEMO_DRAW_MODE					1	// zeichnet aus test_tools_run() etwas auf die Arbeitsfläche
+#define DEMO_DRAW_MODE					0	// zeichnet aus test_tools_run() etwas auf die Arbeitsfläche
 
 // Position feedback / closed loop
 #define POSITION_ENABLE                 1   // 0=kein Encoder, 1=Encoder aktiv
@@ -54,7 +54,7 @@ build_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 
 // Position feedback / closed loop
 #define POSITION_ENABLE                 1   // 0=kein Encoder, 1=Encoder aktiv
-#define POSITION_CLOSED_LOOP_ENABLE     1   // 0=nur messen, 1=MOVE korrigiert nach
+#define POSITION_CLOSED_LOOP_ENABLE     0   // 0=nur messen, 1=MOVE korrigiert nach
 #define POSITION_DEBUG					0	//1=blocking loop printing encoder values
 #endif
 
