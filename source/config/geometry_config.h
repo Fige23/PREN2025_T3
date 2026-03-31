@@ -7,11 +7,11 @@
 | _ \ _ \ __| \| | | _ \ | | |_  /_  /| |  | __| _ )/ _ \|_   _|  
 |  _/   / _|| .` | |  _/ |_| |/ / / / | |__| _|| _ \ (_) | | |    
 |_| |_|_\___|_|\_| |_|  \___//___/___||____|___|___/\___/  |_|    
-limits_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3                                                                
+geometry_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3                                                                
 */
 
-#ifndef CONFIG_HARDWARE_CONFIG_H_
-#define CONFIG_HARDWARE_CONFIG_H_
+#ifndef CONFIG_GEOMETRY_CONFIG_H_
+#define CONFIG_GEOMETRY_CONFIG_H_
 
 /* ============================================================================
  * SCALING / GEOMETRY / AXIS CONVERSION
@@ -55,5 +55,19 @@ limits_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 #define SAFE_Z_MAX_DURING_XY             (50 * SCALE_MM)
 
 
+/* ============================================================================
+ * DERIVED / HELPER MACROS
+ * ========================================================================== */
 
-#endif /* CONFIG_HARDWARE_CONFIG_H_ */
+// Skaliertes Arbeitsfenster
+#define LIM_X_MIN_S   ((int32_t)(LIMIT_X_MIN   * SCALE_MM))
+#define LIM_X_MAX_S   ((int32_t)(LIMIT_X_MAX   * SCALE_MM))
+#define LIM_Y_MIN_S   ((int32_t)(LIMIT_Y_MIN   * SCALE_MM))
+#define LIM_Y_MAX_S   ((int32_t)(LIMIT_Y_MAX   * SCALE_MM))
+#define LIM_Z_MIN_S   ((int32_t)(LIMIT_Z_MIN   * SCALE_MM))
+#define LIM_Z_MAX_S   ((int32_t)(LIMIT_Z_MAX   * SCALE_MM))
+#define LIM_P_MIN_S   ((int32_t)(LIMIT_PHI_MIN * SCALE_DEG))
+#define LIM_P_MAX_S   ((int32_t)(LIMIT_PHI_MAX * SCALE_DEG))
+
+
+#endif /* CONFIG_GEOMETRY_CONFIG_H_ */

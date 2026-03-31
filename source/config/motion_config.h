@@ -14,7 +14,7 @@ motion_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 #define CONFIG_MOTION_CONFIG_H_
 
 /* ============================================================================
- * MOTION ENGINE / PROFILE
+ * MOTION ENGINE / STEPPER CONTROL
  * ========================================================================== */
 
 // Motion-Timer / Pulse Engine
@@ -27,6 +27,11 @@ motion_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 // lange Wege -> durch VMAX gedeckelt
 #define MOTION_PROFILE_ENABLE           1
 #define MOTION_PROFILE_SYMMETRIC        1
+
+
+/* ============================================================================
+ * AXIS MOTION PROFILES (MOVE Commands)
+ * ========================================================================== */
 
 // X axis
 #define X_MAX_STEP_RATE_SPS             12000u
@@ -48,6 +53,11 @@ motion_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 #define PHI_START_STEP_RATE_SPS           300u
 #define PHI_ACCEL_SPS2                    7000u
 
+
+/* ============================================================================
+ * PERIOD SMOOTHING (optional)
+ * ========================================================================== */
+
 // Optionales weiches Nachführen der Periodendauer
 #define ENABLE_PERIOD_SMOOTHING          0
 
@@ -61,146 +71,16 @@ motion_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 // minimale Tick-Änderung bei aktivem Smoothing
 #define PERIOD_SMOOTH_MINSTEP            1
 
-/* ============================================================================
- * DERIVED / HELPER MACROS
- * ========================================================================== */
 
-// Skaliertes Arbeitsfenster
-#define LIM_X_MIN_S   ((int32_t)(LIMIT_X_MIN   * SCALE_MM))
-#define LIM_X_MAX_S   ((int32_t)(LIMIT_X_MAX   * SCALE_MM))
-#define LIM_Y_MIN_S   ((int32_t)(LIMIT_Y_MIN   * SCALE_MM))
-#define LIM_Y_MAX_S   ((int32_t)(LIMIT_Y_MAX   * SCALE_MM))
-#define LIM_Z_MIN_S   ((int32_t)(LIMIT_Z_MIN   * SCALE_MM))
-#define LIM_Z_MAX_S   ((int32_t)(LIMIT_Z_MAX   * SCALE_MM))
-#define LIM_P_MIN_S   ((int32_t)(LIMIT_PHI_MIN * SCALE_DEG))
-#define LIM_P_MAX_S   ((int32_t)(LIMIT_PHI_MAX * SCALE_DEG))
+/* ============================================================================
+ * DERIVED VALUES (physical units)
+ * ========================================================================== */
 
 // Abgeleitete Maximalgeschwindigkeiten in physikalischen Einheiten
 #define VMAX_X_MM_S     ((float)X_MAX_STEP_RATE_SPS    / ((float)STEPS_PER_MM_X_Q1000    / 1000.0f))
 #define VMAX_Y_MM_S     ((float)Y_MAX_STEP_RATE_SPS    / ((float)STEPS_PER_MM_Y_Q1000    / 1000.0f))
 #define VMAX_Z_MM_S     ((float)Z_MAX_STEP_RATE_SPS    / ((float)STEPS_PER_MM_Z_Q1000    / 1000.0f))
 #define VMAX_PHI_DEG_S  ((float)PHI_MAX_STEP_RATE_SPS  / ((float)STEPS_PER_DEG_PHI_Q1000 / 1000.0f))
-
-
-/* ============================================================================
- * HOME-MOTION PROFILES
- * ========================================================================== */
-
-// Helper-Makro für motion_profile_s Initializer
-#define MOTION_PROFILE_INIT(start_sps, max_sps, accel_sps2) \
-    { (start_sps), (max_sps), (accel_sps2) }
-
-// X axis homing profiles
-#define HOME_X_RELEASE_START_STEP_RATE_SPS    300u
-#define HOME_X_RELEASE_MAX_STEP_RATE_SPS     1000u
-#define HOME_X_RELEASE_ACCEL_SPS2            3000u
-
-#define HOME_X_FAST_START_STEP_RATE_SPS       400u
-#define HOME_X_FAST_MAX_STEP_RATE_SPS        1500u
-#define HOME_X_FAST_ACCEL_SPS2               3000u
-
-#define HOME_X_BACKOFF_START_STEP_RATE_SPS    250u
-#define HOME_X_BACKOFF_MAX_STEP_RATE_SPS      800u
-#define HOME_X_BACKOFF_ACCEL_SPS2            2000u
-
-#define HOME_X_SLOW_START_STEP_RATE_SPS       120u
-#define HOME_X_SLOW_MAX_STEP_RATE_SPS         300u
-#define HOME_X_SLOW_ACCEL_SPS2               1000u
-
-// Y axis homing profiles
-#define HOME_Y_RELEASE_START_STEP_RATE_SPS    300u
-#define HOME_Y_RELEASE_MAX_STEP_RATE_SPS     1000u
-#define HOME_Y_RELEASE_ACCEL_SPS2            3000u
-
-#define HOME_Y_FAST_START_STEP_RATE_SPS       400u
-#define HOME_Y_FAST_MAX_STEP_RATE_SPS        1500u
-#define HOME_Y_FAST_ACCEL_SPS2               3000u
-
-#define HOME_Y_BACKOFF_START_STEP_RATE_SPS    250u
-#define HOME_Y_BACKOFF_MAX_STEP_RATE_SPS      800u
-#define HOME_Y_BACKOFF_ACCEL_SPS2            3000u
-
-#define HOME_Y_SLOW_START_STEP_RATE_SPS       120u
-#define HOME_Y_SLOW_MAX_STEP_RATE_SPS         300u
-#define HOME_Y_SLOW_ACCEL_SPS2               1000u
-
-// Z axis homing profiles
-#define HOME_Z_RELEASE_START_STEP_RATE_SPS    200u
-#define HOME_Z_RELEASE_MAX_STEP_RATE_SPS      700u
-#define HOME_Z_RELEASE_ACCEL_SPS2            3000u
-
-#define HOME_Z_FAST_START_STEP_RATE_SPS       250u
-#define HOME_Z_FAST_MAX_STEP_RATE_SPS        1000u
-#define HOME_Z_FAST_ACCEL_SPS2               4000u
-
-#define HOME_Z_BACKOFF_START_STEP_RATE_SPS    180u
-#define HOME_Z_BACKOFF_MAX_STEP_RATE_SPS      500u
-#define HOME_Z_BACKOFF_ACCEL_SPS2            2000u
-
-#define HOME_Z_SLOW_START_STEP_RATE_SPS       100u
-#define HOME_Z_SLOW_MAX_STEP_RATE_SPS         250u
-#define HOME_Z_SLOW_ACCEL_SPS2               1000u
-
-// Struct-Initializer-Makros
-#define HOME_X_RELEASE_PROFILE \
-    MOTION_PROFILE_INIT(HOME_X_RELEASE_START_STEP_RATE_SPS, \
-                        HOME_X_RELEASE_MAX_STEP_RATE_SPS, \
-                        HOME_X_RELEASE_ACCEL_SPS2)
-
-#define HOME_X_FAST_PROFILE \
-    MOTION_PROFILE_INIT(HOME_X_FAST_START_STEP_RATE_SPS, \
-                        HOME_X_FAST_MAX_STEP_RATE_SPS, \
-                        HOME_X_FAST_ACCEL_SPS2)
-
-#define HOME_X_BACKOFF_PROFILE \
-    MOTION_PROFILE_INIT(HOME_X_BACKOFF_START_STEP_RATE_SPS, \
-                        HOME_X_BACKOFF_MAX_STEP_RATE_SPS, \
-                        HOME_X_BACKOFF_ACCEL_SPS2)
-
-#define HOME_X_SLOW_PROFILE \
-    MOTION_PROFILE_INIT(HOME_X_SLOW_START_STEP_RATE_SPS, \
-                        HOME_X_SLOW_MAX_STEP_RATE_SPS, \
-                        HOME_X_SLOW_ACCEL_SPS2)
-
-#define HOME_Y_RELEASE_PROFILE \
-    MOTION_PROFILE_INIT(HOME_Y_RELEASE_START_STEP_RATE_SPS, \
-                        HOME_Y_RELEASE_MAX_STEP_RATE_SPS, \
-                        HOME_Y_RELEASE_ACCEL_SPS2)
-
-#define HOME_Y_FAST_PROFILE \
-    MOTION_PROFILE_INIT(HOME_Y_FAST_START_STEP_RATE_SPS, \
-                        HOME_Y_FAST_MAX_STEP_RATE_SPS, \
-                        HOME_Y_FAST_ACCEL_SPS2)
-
-#define HOME_Y_BACKOFF_PROFILE \
-    MOTION_PROFILE_INIT(HOME_Y_BACKOFF_START_STEP_RATE_SPS, \
-                        HOME_Y_BACKOFF_MAX_STEP_RATE_SPS, \
-                        HOME_Y_BACKOFF_ACCEL_SPS2)
-
-#define HOME_Y_SLOW_PROFILE \
-    MOTION_PROFILE_INIT(HOME_Y_SLOW_START_STEP_RATE_SPS, \
-                        HOME_Y_SLOW_MAX_STEP_RATE_SPS, \
-                        HOME_Y_SLOW_ACCEL_SPS2)
-
-#define HOME_Z_RELEASE_PROFILE \
-    MOTION_PROFILE_INIT(HOME_Z_RELEASE_START_STEP_RATE_SPS, \
-                        HOME_Z_RELEASE_MAX_STEP_RATE_SPS, \
-                        HOME_Z_RELEASE_ACCEL_SPS2)
-
-#define HOME_Z_FAST_PROFILE \
-    MOTION_PROFILE_INIT(HOME_Z_FAST_START_STEP_RATE_SPS, \
-                        HOME_Z_FAST_MAX_STEP_RATE_SPS, \
-                        HOME_Z_FAST_ACCEL_SPS2)
-
-#define HOME_Z_BACKOFF_PROFILE \
-    MOTION_PROFILE_INIT(HOME_Z_BACKOFF_START_STEP_RATE_SPS, \
-                        HOME_Z_BACKOFF_MAX_STEP_RATE_SPS, \
-                        HOME_Z_BACKOFF_ACCEL_SPS2)
-
-#define HOME_Z_SLOW_PROFILE \
-    MOTION_PROFILE_INIT(HOME_Z_SLOW_START_STEP_RATE_SPS, \
-                        HOME_Z_SLOW_MAX_STEP_RATE_SPS, \
-                        HOME_Z_SLOW_ACCEL_SPS2)
 
 
 #endif /* CONFIG_MOTION_CONFIG_H_ */

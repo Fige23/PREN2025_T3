@@ -24,10 +24,10 @@ Config file: Dieses File inkludiert alle kleineren Config Files!
 #include <stdint.h>
 
 #include "build_config.h"
+#include "geometry_config.h"
 #include "calibration_config.h"
 #include "communication_config.h"
 #include "encoder_config.h"
-#include "hardware_config.h"
 #include "home_config.h"
 #include "motion_config.h"
 

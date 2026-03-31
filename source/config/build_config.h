@@ -17,6 +17,7 @@ build_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
  * BUILD / FEATURE MODES
  * ========================================================================== */
 #define RELEASE							0	//automatically disables all debug functionality
+
 // Build mode selection
 // Genau EIN Mode soll 1 sein.
 #if !RELEASE
@@ -27,8 +28,6 @@ build_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 #if (IMPLEMENTATION_STEPPER + UART_DEMO) != 1
 #error "Select exactly one mode: IMPLEMENTATION_STEPPER or UART_DEMO"
 #endif
-
-
 
 // 1 = beim Start Kalibrier-Routine ausführen
 // 0 = normaler Start ohne Kalibrierung
@@ -57,16 +56,6 @@ build_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 #define POSITION_CLOSED_LOOP_ENABLE     0   // 0=nur messen, 1=MOVE korrigiert nach
 #define POSITION_DEBUG					0	//1=blocking loop printing encoder values
 #endif
-
-
-/* ============================================================================
- * UART PIN CONFIGURATION
- * ========================================================================== */
-// UART1 Pin-Auswahl:
-// 0 = USB-C Debug (PTC3/PTC4) - für Entwicklung mit Programmer
-// 1 = Hardware Pins (PTE0/PTE1) - für finales Produkt
-// WICHTIG: Dieses Makro steuert das Pin-Muxing in pin_mux.c UND uart1.c!
-#define UART1_USE_HARDWARE_PINS         0
 
 
 #endif /* CONFIG_BUILD_CONFIG_H_ */
