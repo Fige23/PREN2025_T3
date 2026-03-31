@@ -155,6 +155,11 @@ static bool cmd_pos(int argc, char **argv)
     print_mm3("y", g_status.pos_internal.y_mm_scaled);
     print_mm3("z", g_status.pos_internal.z_mm_scaled);
     print_deg2("phi", g_status.pos_internal.phi_deg_scaled);
+#if POSITION_ENABLE
+    proto_reply_printf(" POS_MEASURED ");
+    print_mm3("x", g_status.pos_measured.x_mm_scaled);
+    print_mm3("y", g_status.pos_measured.y_mm_scaled);
+#endif
     proto_reply_printf("%s", EOL);
 
     return true;
