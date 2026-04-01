@@ -43,11 +43,10 @@ static job_pick_s jp;
 static const motion_profile_s g_pick_z_down_profile = PICK_Z_DOWN_PROFILE;
 static const motion_profile_s g_pick_z_up_profile = PICK_Z_UP_PROFILE;
 
-// Number of step() calls to wait for various phases (assuming ~10ms per call)
-// Adjust based on actual step frequency in your main loop
-#define WAIT_CYCLES_XY_SETTLE       5    // ~50ms
-#define WAIT_CYCLES_Z_SETTLE        5    // ~50ms
-#define WAIT_CYCLES_MAGNET_GRAB     20   // ~200ms (matches PICK_MAGNET_WAIT_MS)
+// Wait cycles derived from config (see pick_config.h)
+#define WAIT_CYCLES_XY_SETTLE       PICK_WAIT_CYCLES_XY_SETTLE
+#define WAIT_CYCLES_Z_SETTLE        PICK_WAIT_CYCLES_Z_SETTLE
+#define WAIT_CYCLES_MAGNET_GRAB     PICK_WAIT_CYCLES_MAGNET_GRAB
 
 
 // ============================================================================

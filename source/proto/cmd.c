@@ -299,12 +299,12 @@ static bool cmd_pick(int argc, char **argv)
 
     int32_t x_s=0, y_s=0, z_s=0, ph_s=0;
 
-    // PICK: x,y Pflicht / phi optional / z verboten (Whitelist!)
+    // PICK: x,y Pflicht / z,phi verboten (Whitelist!)
     err_e e = parse_pos_tokens_mask(
         argc, argv, 1,
         &x_s, &y_s, &z_s, &ph_s,
         /*require_mask=*/KV_X | KV_Y,
-        /*allowed_mask=*/KV_X | KV_Y | KV_PHI,
+        /*allowed_mask=*/KV_X | KV_Y,
         /*seen_out=*/NULL
     );
     if (e != ERR_NONE) { send_err("PICK", err_to_str(e)); return false; }

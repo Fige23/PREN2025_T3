@@ -200,7 +200,13 @@ void bot_step(void)
         return;
     }
 
-    // Erfolg
+    // Erfolg: Status finalisieren je nach Action
+    if (cur.type == ACT_PICK) {
+        g_status.has_part = true;
+    } else if (cur.type == ACT_PLACE) {
+        g_status.has_part = false;
+    }
+
     g_status.state = STATE_IDLE;
     g_status.last_err = ERR_NONE;
     reply_ok_action(&cur);

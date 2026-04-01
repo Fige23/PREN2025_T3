@@ -15,6 +15,12 @@ place_config.h	Created on: 01.04.2026	   Author: Fige23	Team 3
 #include "geometry_config.h"
 
 /* ============================================================================
+ * SYSTEM TIMING CONSTANT
+ * ========================================================================== */
+// Assumed cycle interval for state machine waits (in milliseconds)
+#define SYSTEM_STEP_INTERVAL_MS         10u
+
+/* ============================================================================
  * Z POSITIONS FOR PLACE OPERATION
  * ========================================================================== */
 
@@ -40,6 +46,20 @@ place_config.h	Created on: 01.04.2026	   Author: Fige23	Team 3
 
 // Time to wait for Z motor to move from place back to safe
 #define PLACE_Z_UP_TIMEOUT_MS             5000u
+
+
+/* ============================================================================
+ * WAIT CYCLES (derived from timings above)
+ * ========================================================================== */
+
+// Helper: Convert milliseconds to step cycles
+#define CYCLES_FROM_MS(ms) \
+    ((ms) / SYSTEM_STEP_INTERVAL_MS)
+
+// Wait cycles for various place phases (assuming SYSTEM_STEP_INTERVAL_MS per call)
+#define PLACE_WAIT_CYCLES_XY_PHI_SETTLE   CYCLES_FROM_MS(50u)     // 50ms settle time
+#define PLACE_WAIT_CYCLES_Z_SETTLE        CYCLES_FROM_MS(50u)     // 50ms settle time
+#define PLACE_WAIT_CYCLES_MAGNET_RELEASE  CYCLES_FROM_MS(PLACE_MAGNET_RELEASE_WAIT_MS)
 
 
 /* ============================================================================

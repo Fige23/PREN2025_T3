@@ -43,10 +43,10 @@ static job_place_s jp;
 static const motion_profile_s g_place_z_down_profile = PLACE_Z_DOWN_PROFILE;
 static const motion_profile_s g_place_z_up_profile = PLACE_Z_UP_PROFILE;
 
-// Number of step() calls to wait for various phases (assuming ~10ms per call)
-#define WAIT_CYCLES_XY_PHI_SETTLE       5    // ~50ms
-#define WAIT_CYCLES_Z_SETTLE            5    // ~50ms
-#define WAIT_CYCLES_MAGNET_RELEASE     20   // ~200ms (matches PLACE_MAGNET_RELEASE_WAIT_MS)
+// Wait cycles derived from config (see place_config.h)
+#define WAIT_CYCLES_XY_PHI_SETTLE       PLACE_WAIT_CYCLES_XY_PHI_SETTLE
+#define WAIT_CYCLES_Z_SETTLE            PLACE_WAIT_CYCLES_Z_SETTLE
+#define WAIT_CYCLES_MAGNET_RELEASE     PLACE_WAIT_CYCLES_MAGNET_RELEASE
 
 
 // ============================================================================

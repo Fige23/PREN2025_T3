@@ -14,6 +14,13 @@ pick_config.h	Created on: 01.04.2026	   Author: Fige23	Team 3
 #define CONFIG_PICK_CONFIG_H_
 #include "build_config.h"
 #include "geometry_config.h"
+
+/* ============================================================================
+ * SYSTEM TIMING CONSTANT
+ * ========================================================================== */
+// Assumed cycle interval for state machine waits (in milliseconds)
+#define SYSTEM_STEP_INTERVAL_MS         10u
+
 /* ============================================================================
  * Z POSITIONS FOR PICK OPERATION
  * ========================================================================== */
@@ -45,6 +52,20 @@ pick_config.h	Created on: 01.04.2026	   Author: Fige23	Team 3
 
 // Time to wait for Z motor to move from pick back to safe
 #define PICK_Z_UP_TIMEOUT_MS             5000u
+
+
+/* ============================================================================
+ * WAIT CYCLES (derived from timings above)
+ * ========================================================================== */
+
+// Helper: Convert milliseconds to step cycles
+#define CYCLES_FROM_MS(ms) \
+    ((ms) / SYSTEM_STEP_INTERVAL_MS)
+
+// Wait cycles for various pick phases (assuming SYSTEM_STEP_INTERVAL_MS per call)
+#define PICK_WAIT_CYCLES_XY_SETTLE       CYCLES_FROM_MS(50u)     // 50ms settle time
+#define PICK_WAIT_CYCLES_Z_SETTLE        CYCLES_FROM_MS(50u)     // 50ms settle time
+#define PICK_WAIT_CYCLES_MAGNET_GRAB     CYCLES_FROM_MS(PICK_MAGNET_WAIT_MS)
 
 
 /* ============================================================================
