@@ -13,12 +13,15 @@ place_config.h	Created on: 01.04.2026	   Author: Fige23	Team 3
 #ifndef CONFIG_PLACE_CONFIG_H_
 #define CONFIG_PLACE_CONFIG_H_
 #include "geometry_config.h"
+#include "motion_config.h"
 
 /* ============================================================================
- * SYSTEM TIMING CONSTANT
+ * ISR TIMING (based on actual motion timer frequency)
  * ========================================================================== */
-// Assumed cycle interval for state machine waits (in milliseconds)
-#define SYSTEM_STEP_INTERVAL_MS         10u
+
+// Convert milliseconds to ISR ticks (based on STEP_TICK_HZ from motion_config.h)
+#define ISR_TICKS_FROM_MS(ms) \
+    (((uint32_t)(ms) * (STEP_TICK_HZ) + 500u) / 1000u)
 
 /* ============================================================================
  * Z POSITIONS FOR PLACE OPERATION
@@ -38,28 +41,15 @@ place_config.h	Created on: 01.04.2026	   Author: Fige23	Team 3
 // Time to wait after magnet deactivates for release
 #define PLACE_MAGNET_RELEASE_WAIT_MS      200u
 
-// Time to wait for Z motor to move from safe to place position
-#define PLACE_Z_DOWN_TIMEOUT_MS           5000u
-
-// Time to wait for XY+phi motors to reach target
-#define PLACE_XY_MOVE_TIMEOUT_MS          10000u
-
-// Time to wait for Z motor to move from place back to safe
-#define PLACE_Z_UP_TIMEOUT_MS             5000u
-
 
 /* ============================================================================
- * WAIT CYCLES (derived from timings above)
+ * WAIT TICKS (derived from timings using ISR frequency)
  * ========================================================================== */
 
-// Helper: Convert milliseconds to step cycles
-#define CYCLES_FROM_MS(ms) \
-    ((ms) / SYSTEM_STEP_INTERVAL_MS)
-
-// Wait cycles for various place phases (assuming SYSTEM_STEP_INTERVAL_MS per call)
-#define PLACE_WAIT_CYCLES_XY_PHI_SETTLE   CYCLES_FROM_MS(50u)     // 50ms settle time
-#define PLACE_WAIT_CYCLES_Z_SETTLE        CYCLES_FROM_MS(50u)     // 50ms settle time
-#define PLACE_WAIT_CYCLES_MAGNET_RELEASE  CYCLES_FROM_MS(PLACE_MAGNET_RELEASE_WAIT_MS)
+// Wait ticks for various place phases (based on ISR ticks, not loop cycles!)
+#define PLACE_WAIT_TICKS_XY_PHI_SETTLE    ISR_TICKS_FROM_MS(50u)      // 50ms settle time
+#define PLACE_WAIT_TICKS_Z_SETTLE         ISR_TICKS_FROM_MS(50u)      // 50ms settle time
+#define PLACE_WAIT_TICKS_MAGNET_RELEASE   ISR_TICKS_FROM_MS(PLACE_MAGNET_RELEASE_WAIT_MS)
 
 
 /* ============================================================================

@@ -149,6 +149,14 @@ static uint32_t profile_speed_sps(uint32_t steps_done,
 #endif
 }
 
+// ---------- ISR tick counter ----------
+static volatile uint32_t isr_tick_count = 0u;
+
+uint32_t motion_get_isr_tick_count(void)
+{
+    return isr_tick_count;
+}
+
 // --- pin wrappers ---
 static void step_set(axis_e ax, bool level)
 {
@@ -452,6 +460,8 @@ err_e motion_start(const bot_action_s *cur, limit_switch_e stop_on_limits, const
 }
 //wird in ISR aufgerufen
 static void motion_tick_isr(void){
+    isr_tick_count++;
+
 #if ENABLE_CONSOLE_UART_SIM
 	position_poll();
 	estop_poll();

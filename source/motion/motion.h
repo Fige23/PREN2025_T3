@@ -35,4 +35,7 @@ err_e motion_last_err(void);
 bool motion_stopped_by_limit(void);
 limit_switch_e motion_limit_hit(void);
 
+// Get current ISR tick count for timing synchronization
+uint32_t motion_get_isr_tick_count(void);
+
 #endif /* MOTION_MOTION_H_ */

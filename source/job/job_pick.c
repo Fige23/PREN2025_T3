@@ -34,7 +34,7 @@ typedef enum {
 typedef struct {
 	pick_state_e state;
 	robot_pos_s target_xy;      // XY target from the action
-	uint16_t wait_counter;      // Cycle counter for timing-free waits
+	uint32_t wait_start_tick;   // ISR tick timestamp when wait started
 } job_pick_s;
 
 static job_pick_s jp;
@@ -44,9 +44,9 @@ static const motion_profile_s g_pick_z_down_profile = PICK_Z_DOWN_PROFILE;
 static const motion_profile_s g_pick_z_up_profile = PICK_Z_UP_PROFILE;
 
 // Wait cycles derived from config (see pick_config.h)
-#define WAIT_CYCLES_XY_SETTLE       PICK_WAIT_CYCLES_XY_SETTLE
-#define WAIT_CYCLES_Z_SETTLE        PICK_WAIT_CYCLES_Z_SETTLE
-#define WAIT_CYCLES_MAGNET_GRAB     PICK_WAIT_CYCLES_MAGNET_GRAB
+#define WAIT_TICKS_XY_SETTLE       PICK_WAIT_TICKS_XY_SETTLE
+#define WAIT_TICKS_Z_SETTLE        PICK_WAIT_TICKS_Z_SETTLE
+#define WAIT_TICKS_MAGNET_GRAB     PICK_WAIT_TICKS_MAGNET_GRAB
 
 
 // ============================================================================
@@ -102,7 +102,7 @@ err_e job_pick_start(const bot_action_s *a)
 
 	jp.state = PICK_STATE_IDLE;
 	jp.target_xy = a->target_pos;
-	jp.wait_counter = 0;
+	jp.wait_start_tick = 0;
 
 	// Start XY movement to target at SAFE_Z height
 	err_e me = pick_start_xy_move(&a->target_pos);
@@ -119,6 +119,7 @@ err_e job_pick_start(const bot_action_s *a)
 bool job_pick_step(err_e *out_err)
 {
 	err_e me;
+	uint32_t elapsed;
 
 	switch (jp.state) {
 
@@ -140,14 +141,20 @@ bool job_pick_step(err_e *out_err)
 
 		// XY reached, now wait for motion system to stabilize
 		jp.state = PICK_STATE_WAITING_XY;
-		jp.wait_counter = 0;
+		jp.wait_start_tick = 0;  // Will be initialized when entering WAITING_XY
 		return false;
 
 
 	case PICK_STATE_WAITING_XY:
-		jp.wait_counter++;
-		if (jp.wait_counter < WAIT_CYCLES_XY_SETTLE) {
-			return false;
+		// Initialize timestamp on first call to this state
+		if (jp.wait_start_tick == 0) {
+			jp.wait_start_tick = motion_get_isr_tick_count();
+		}
+
+		// Check if enough ISR ticks have elapsed
+		elapsed = motion_get_isr_tick_count() - jp.wait_start_tick;
+		if (elapsed < WAIT_TICKS_XY_SETTLE) {
+			return false;  // Still waiting
 		}
 
 		// XY is stable, start Z down movement
@@ -159,6 +166,7 @@ bool job_pick_step(err_e *out_err)
 		}
 
 		jp.state = PICK_STATE_Z_DOWN;
+		jp.wait_start_tick = 0;  // Reset for next wait
 		return false;
 
 
@@ -179,18 +187,25 @@ bool job_pick_step(err_e *out_err)
 		}
 
 		jp.state = PICK_STATE_WAITING_Z_DOWN;
-		jp.wait_counter = 0;
+		jp.wait_start_tick = 0;  // Will be initialized when entering WAITING_Z_DOWN
 		return false;
 
 
 	case PICK_STATE_WAITING_Z_DOWN:
-		jp.wait_counter++;
-		if (jp.wait_counter < WAIT_CYCLES_Z_SETTLE) {
-			return false;
+		// Initialize timestamp on first call to this state
+		if (jp.wait_start_tick == 0) {
+			jp.wait_start_tick = motion_get_isr_tick_count();
+		}
+
+		// Check if enough ISR ticks have elapsed
+		elapsed = motion_get_isr_tick_count() - jp.wait_start_tick;
+		if (elapsed < WAIT_TICKS_Z_SETTLE) {
+			return false;  // Still waiting
 		}
 
 		// Z is at pick position, activate magnet
 		jp.state = PICK_STATE_MAGNET_ON;
+		jp.wait_start_tick = 0;  // Reset for next wait
 		magnet_on_off(true);
 		return false;
 
@@ -200,14 +215,20 @@ bool job_pick_step(err_e *out_err)
 	// --------
 	case PICK_STATE_MAGNET_ON:
 		jp.state = PICK_STATE_MAGNET_WAIT;
-		jp.wait_counter = 0;
+		jp.wait_start_tick = 0;  // Will be initialized when entering MAGNET_WAIT
 		return false;
 
 
 	case PICK_STATE_MAGNET_WAIT:
-		jp.wait_counter++;
-		if (jp.wait_counter < WAIT_CYCLES_MAGNET_GRAB) {
-			return false;  // Still waiting
+		// Initialize timestamp on first call to this state
+		if (jp.wait_start_tick == 0) {
+			jp.wait_start_tick = motion_get_isr_tick_count();
+		}
+
+		// Check if enough ISR ticks have elapsed
+		elapsed = motion_get_isr_tick_count() - jp.wait_start_tick;
+		if (elapsed < WAIT_TICKS_MAGNET_GRAB) {
+			return false;  // Still waiting for magnet to grab
 		}
 
 		// Magnet grabbed, start Z up movement
@@ -220,6 +241,7 @@ bool job_pick_step(err_e *out_err)
 		}
 
 		jp.state = PICK_STATE_Z_UP;
+		jp.wait_start_tick = 0;  // Reset for next wait
 		return false;
 
 
@@ -241,18 +263,25 @@ bool job_pick_step(err_e *out_err)
 		}
 
 		jp.state = PICK_STATE_WAITING_Z_UP;
-		jp.wait_counter = 0;
+		jp.wait_start_tick = 0;  // Will be initialized when entering WAITING_Z_UP
 		return false;
 
 
 	case PICK_STATE_WAITING_Z_UP:
-		jp.wait_counter++;
-		if (jp.wait_counter < WAIT_CYCLES_Z_SETTLE) {
-			return false;
+		// Initialize timestamp on first call to this state
+		if (jp.wait_start_tick == 0) {
+			jp.wait_start_tick = motion_get_isr_tick_count();
+		}
+
+		// Check if enough ISR ticks have elapsed
+		elapsed = motion_get_isr_tick_count() - jp.wait_start_tick;
+		if (elapsed < WAIT_TICKS_Z_SETTLE) {
+			return false;  // Still waiting
 		}
 
 		// Pick complete!
 		jp.state = PICK_STATE_DONE;
+		jp.wait_start_tick = 0;  // Reset for cleanliness
 		if (out_err) *out_err = ERR_NONE;
 		return true;
 

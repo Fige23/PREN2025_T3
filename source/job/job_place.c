@@ -33,8 +33,8 @@ typedef enum {
 
 typedef struct {
 	place_state_e state;
-	robot_pos_s target_pos;     // Full target pose (XY+phi) from the action
-	uint16_t wait_counter;      // Cycle counter for timing-free waits
+	robot_pos_s target_pos;           // Full target pose (XY+phi) from the action
+	uint32_t wait_start_tick;         // ISR tick timestamp when wait started
 } job_place_s;
 
 static job_place_s jp;
@@ -44,9 +44,9 @@ static const motion_profile_s g_place_z_down_profile = PLACE_Z_DOWN_PROFILE;
 static const motion_profile_s g_place_z_up_profile = PLACE_Z_UP_PROFILE;
 
 // Wait cycles derived from config (see place_config.h)
-#define WAIT_CYCLES_XY_PHI_SETTLE       PLACE_WAIT_CYCLES_XY_PHI_SETTLE
-#define WAIT_CYCLES_Z_SETTLE            PLACE_WAIT_CYCLES_Z_SETTLE
-#define WAIT_CYCLES_MAGNET_RELEASE     PLACE_WAIT_CYCLES_MAGNET_RELEASE
+#define WAIT_TICKS_XY_PHI_SETTLE       PLACE_WAIT_TICKS_XY_PHI_SETTLE
+#define WAIT_TICKS_Z_SETTLE            PLACE_WAIT_TICKS_Z_SETTLE
+#define WAIT_TICKS_MAGNET_RELEASE      PLACE_WAIT_TICKS_MAGNET_RELEASE
 
 
 // ============================================================================
@@ -102,7 +102,7 @@ err_e job_place_start(const bot_action_s *a)
 
 	jp.state = PLACE_STATE_IDLE;
 	jp.target_pos = a->target_pos;
-	jp.wait_counter = 0;
+	jp.wait_start_tick = 0;
 
 	// Start XY+phi movement to target at SAFE_Z height
 	err_e me = place_start_xy_phi_move(&a->target_pos);
@@ -119,6 +119,7 @@ err_e job_place_start(const bot_action_s *a)
 bool job_place_step(err_e *out_err)
 {
 	err_e me;
+	uint32_t elapsed;
 
 	switch (jp.state) {
 
@@ -140,14 +141,20 @@ bool job_place_step(err_e *out_err)
 
 		// XY+phi reached, now wait for motion system to stabilize
 		jp.state = PLACE_STATE_WAITING_XY_PHI;
-		jp.wait_counter = 0;
+		jp.wait_start_tick = 0;  // Will be initialized when entering WAITING_XY_PHI
 		return false;
 
 
 	case PLACE_STATE_WAITING_XY_PHI:
-		jp.wait_counter++;
-		if (jp.wait_counter < WAIT_CYCLES_XY_PHI_SETTLE) {
-			return false;
+		// Initialize timestamp on first call to this state
+		if (jp.wait_start_tick == 0) {
+			jp.wait_start_tick = motion_get_isr_tick_count();
+		}
+
+		// Check if enough ISR ticks have elapsed
+		elapsed = motion_get_isr_tick_count() - jp.wait_start_tick;
+		if (elapsed < WAIT_TICKS_XY_PHI_SETTLE) {
+			return false;  // Still waiting
 		}
 
 		// XY+phi is stable, start Z down movement
@@ -159,6 +166,7 @@ bool job_place_step(err_e *out_err)
 		}
 
 		jp.state = PLACE_STATE_Z_DOWN;
+		jp.wait_start_tick = 0;  // Reset for next wait
 		return false;
 
 
@@ -179,18 +187,25 @@ bool job_place_step(err_e *out_err)
 		}
 
 		jp.state = PLACE_STATE_WAITING_Z_DOWN;
-		jp.wait_counter = 0;
+		jp.wait_start_tick = 0;  // Will be initialized when entering WAITING_Z_DOWN
 		return false;
 
 
 	case PLACE_STATE_WAITING_Z_DOWN:
-		jp.wait_counter++;
-		if (jp.wait_counter < WAIT_CYCLES_Z_SETTLE) {
-			return false;
+		// Initialize timestamp on first call to this state
+		if (jp.wait_start_tick == 0) {
+			jp.wait_start_tick = motion_get_isr_tick_count();
+		}
+
+		// Check if enough ISR ticks have elapsed
+		elapsed = motion_get_isr_tick_count() - jp.wait_start_tick;
+		if (elapsed < WAIT_TICKS_Z_SETTLE) {
+			return false;  // Still waiting
 		}
 
 		// Z is at place position, deactivate magnet
 		jp.state = PLACE_STATE_MAGNET_OFF;
+		jp.wait_start_tick = 0;  // Reset for next wait
 		magnet_on_off(false);
 		return false;
 
@@ -200,13 +215,19 @@ bool job_place_step(err_e *out_err)
 	// --------
 	case PLACE_STATE_MAGNET_OFF:
 		jp.state = PLACE_STATE_MAGNET_RELEASE;
-		jp.wait_counter = 0;
+		jp.wait_start_tick = 0;  // Will be initialized when entering MAGNET_RELEASE
 		return false;
 
 
 	case PLACE_STATE_MAGNET_RELEASE:
-		jp.wait_counter++;
-		if (jp.wait_counter < WAIT_CYCLES_MAGNET_RELEASE) {
+		// Initialize timestamp on first call to this state
+		if (jp.wait_start_tick == 0) {
+			jp.wait_start_tick = motion_get_isr_tick_count();
+		}
+
+		// Check if enough ISR ticks have elapsed
+		elapsed = motion_get_isr_tick_count() - jp.wait_start_tick;
+		if (elapsed < WAIT_TICKS_MAGNET_RELEASE) {
 			return false;  // Still waiting for magnet to release
 		}
 
@@ -219,6 +240,7 @@ bool job_place_step(err_e *out_err)
 		}
 
 		jp.state = PLACE_STATE_Z_UP;
+		jp.wait_start_tick = 0;  // Reset for next wait
 		return false;
 
 
@@ -239,18 +261,25 @@ bool job_place_step(err_e *out_err)
 		}
 
 		jp.state = PLACE_STATE_WAITING_Z_UP;
-		jp.wait_counter = 0;
+		jp.wait_start_tick = 0;  // Will be initialized when entering WAITING_Z_UP
 		return false;
 
 
 	case PLACE_STATE_WAITING_Z_UP:
-		jp.wait_counter++;
-		if (jp.wait_counter < WAIT_CYCLES_Z_SETTLE) {
-			return false;
+		// Initialize timestamp on first call to this state
+		if (jp.wait_start_tick == 0) {
+			jp.wait_start_tick = motion_get_isr_tick_count();
+		}
+
+		// Check if enough ISR ticks have elapsed
+		elapsed = motion_get_isr_tick_count() - jp.wait_start_tick;
+		if (elapsed < WAIT_TICKS_Z_SETTLE) {
+			return false;  // Still waiting
 		}
 
 		// Place complete!
 		jp.state = PLACE_STATE_DONE;
+		jp.wait_start_tick = 0;  // Reset for cleanliness
 		if (out_err) *out_err = ERR_NONE;
 		return true;
 
