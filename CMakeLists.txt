@@ -47,6 +47,12 @@ set(MCUX_SDK_PROJECT_NAME PREN_Puzzleroboter.elf)
 
 include(${ProjDirPath}/flags.cmake)
 
+# Auto-collect all project files under source/ so new files are picked up
+# without manually editing add_executable each time.
+file(GLOB_RECURSE project_source_files CONFIGURE_DEPENDS
+"${ProjDirPath}/source/*.c"
+"${ProjDirPath}/source/*.h")
+
 add_executable(${MCUX_SDK_PROJECT_NAME} "${ProjDirPath}/CMSIS/mpu_armv7.h"
 "${ProjDirPath}/CMSIS/core_cm4.h"
 "${ProjDirPath}/CMSIS/cmsis_version.h"
@@ -88,65 +94,7 @@ add_executable(${MCUX_SDK_PROJECT_NAME} "${ProjDirPath}/CMSIS/mpu_armv7.h"
 "${ProjDirPath}/drivers/fsl_clock.c"
 "${ProjDirPath}/drivers/fsl_adc16.h"
 "${ProjDirPath}/drivers/fsl_adc16.c"
-"${ProjDirPath}/source/platform.h"
-"${ProjDirPath}/source/main.c"
-"${ProjDirPath}/source/proto/serial_port_tinyk22.c"
-"${ProjDirPath}/source/proto/serial_port.h"
-"${ProjDirPath}/source/proto/proto_io.h"
-"${ProjDirPath}/source/proto/proto_io.c"
-"${ProjDirPath}/source/proto/protocol.h"
-"${ProjDirPath}/source/proto/protocol.c"
-"${ProjDirPath}/source/proto/console_uart_sim.h"
-"${ProjDirPath}/source/proto/console_uart_sim.c"
-"${ProjDirPath}/source/proto/cmd.h"
-"${ProjDirPath}/source/proto/cmd.c"
-"${ProjDirPath}/source/utils/util.h"
-"${ProjDirPath}/source/utils/util.c"
-"${ProjDirPath}/source/utils/parse_kv.h"
-"${ProjDirPath}/source/utils/parse_kv.c"
-"${ProjDirPath}/source/utils/ftm3.h"
-"${ProjDirPath}/source/utils/ftm3.c"
-"${ProjDirPath}/source/test_tools/test_tools.h"
-"${ProjDirPath}/source/test_tools/test_tools.c"
-"${ProjDirPath}/source/test_tools/demo_draw.h"
-"${ProjDirPath}/source/test_tools/demo_draw.c"
-"${ProjDirPath}/source/test_tools/debug.h"
-"${ProjDirPath}/source/test_tools/debug.c"
-"${ProjDirPath}/source/test_tools/calibration.h"
-"${ProjDirPath}/source/test_tools/calibration.c"
-"${ProjDirPath}/source/motion/motion.h"
-"${ProjDirPath}/source/motion/motion.c"
-"${ProjDirPath}/source/motion/limit_switch.h"
-"${ProjDirPath}/source/motion/limit_switch.c"
-"${ProjDirPath}/source/position/position.h"
-"${ProjDirPath}/source/position/position.c"
-"${ProjDirPath}/source/io/io.h"
-"${ProjDirPath}/source/io/io.c"
-"${ProjDirPath}/source/job/job_move.h"
-"${ProjDirPath}/source/job/job_move.c"
-"${ProjDirPath}/source/job/job_motion_finish.h"
-"${ProjDirPath}/source/job/job_motion_finish.c"
-"${ProjDirPath}/source/job/job_home.h"
-"${ProjDirPath}/source/job/job_home.c"
-"${ProjDirPath}/source/job/job.h"
-"${ProjDirPath}/source/job/job.c"
-"${ProjDirPath}/source/config/robot_config.h"
-"${ProjDirPath}/source/config/motion_config.h"
-"${ProjDirPath}/source/config/home_config.h"
-"${ProjDirPath}/source/config/geometry_config.h"
-"${ProjDirPath}/source/config/encoder_config.h"
-"${ProjDirPath}/source/config/communication_config.h"
-"${ProjDirPath}/source/config/calibration_config.h"
-"${ProjDirPath}/source/config/build_config.h"
-"${ProjDirPath}/source/com/uart1.c"
-"${ProjDirPath}/source/com/uart0.c"
-"${ProjDirPath}/source/com/uart.h"
-"${ProjDirPath}/source/app/poll.h"
-"${ProjDirPath}/source/app/poll.c"
-"${ProjDirPath}/source/app/init.h"
-"${ProjDirPath}/source/app/init.c"
-"${ProjDirPath}/source/app/bot_engine.h"
-"${ProjDirPath}/source/app/bot_engine.c"
+${project_source_files}
 "${ProjDirPath}/startup/system.h"
 "${ProjDirPath}/startup/system.c"
 "${ProjDirPath}/startup/startup_mk22f51212.c"
@@ -159,23 +107,24 @@ if(${LIBRARY_TYPE} STREQUAL "REDLIB")
     target_include_directories(${MCUX_SDK_PROJECT_NAME} PRIVATE $ENV{ARMGCC_DIR}/redlib/include)
 endif()
 
-set(c_include_directories "${ProjDirPath}/source/app"
-"${ProjDirPath}/source/test_tools"
-"${ProjDirPath}/source/job"
-"${ProjDirPath}/drivers"
-"${ProjDirPath}/source/position"
+set(c_include_directories "${ProjDirPath}/drivers"
 "${ProjDirPath}/device"
 "${ProjDirPath}/CMSIS"
-"${ProjDirPath}/source/config"
-"${ProjDirPath}/source/motion"
-"${ProjDirPath}/source/proto"
-"${ProjDirPath}/source/io"
-"${ProjDirPath}/source/com"
-"${ProjDirPath}/source/utils"
 "${ProjDirPath}/startup"
 "${ProjDirPath}/source"
 "${ProjDirPath}/board"
 )
+
+# Auto-include all current and future source subfolders so new headers can be
+# included without manually editing CMake include paths.
+file(GLOB_RECURSE source_include_candidates LIST_DIRECTORIES true CONFIGURE_DEPENDS
+"${ProjDirPath}/source/*")
+foreach(candidate IN LISTS source_include_candidates)
+	if(IS_DIRECTORY "${candidate}")
+		list(APPEND c_include_directories "${candidate}")
+	endif()
+endforeach()
+list(REMOVE_DUPLICATES c_include_directories)
 
 
 target_include_directories(${MCUX_SDK_PROJECT_NAME} PRIVATE $<$<COMPILE_LANGUAGE:C>:${c_include_directories}>)
