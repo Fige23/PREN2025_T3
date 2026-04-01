@@ -13,6 +13,8 @@ job.c	Created on: 18.12.2025	   Author: Fige23	Team 3
 
 #include "job_move.h"
 #include "job_home.h"
+#include "job_pick.h"
+#include "job_place.h"
 
 typedef enum {
 	JOB_TYPE_NONE = 0,
@@ -68,9 +70,21 @@ err_e job_start(const bot_action_s *a){
 		}
 		return e;
 	case ACT_PICK:
-		return ERR_NOT_IMPLEMENTED;
+		e = job_pick_start(a);
+		if(e == ERR_NONE){
+			j.active = true;
+			j.last_err = ERR_NONE;
+			j.type = JOB_TYPE_PICK;
+		}
+		return e;
 	case ACT_PLACE:
-		return ERR_NOT_IMPLEMENTED;
+		e = job_place_start(a);
+		if(e == ERR_NONE){
+			j.active = true;
+			j.last_err = ERR_NONE;
+			j.type = JOB_TYPE_PLACE;
+		}
+		return e;
 	default:
 		return ERR_INTERNAL;
 	}
@@ -93,12 +107,10 @@ bool job_step(err_e *out_err){
 		done = job_home_step(&e);
 		break;
 	case JOB_TYPE_PICK:
-		done = true;
-		e = ERR_INTERNAL;
+		done = job_pick_step(&e);
 		break;
 	case JOB_TYPE_PLACE:
-		done = true;
-		e = ERR_INTERNAL;
+		done = job_place_step(&e);
 		break;
 
 	case JOB_TYPE_NONE:
