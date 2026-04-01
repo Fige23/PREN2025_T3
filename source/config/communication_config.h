@@ -32,24 +32,35 @@ communication_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 // WICHTIG: Dieses Makro steuert das Pin-Muxing in pin_mux.c UND uart1.c!
 #define UART1_USE_HARDWARE_PINS         0
 
+// -------------------------------------------------------------------------
+// DEBUG OUTPUT CONFIGURATION
+// -------------------------------------------------------------------------
+// Debug-Ausgabe (nur im Debug-Build)
 #if (DEBUG && !RELEASE)
-// Debug-Ausgabe
 #define DEBUG_ENABLE                    1
 #define DEBUG_BUFFER_LEN                192
 
+// Debug Backend: Wohin gehen debug_printf() Ausgaben?
 #define DEBUG_BACKEND_NONE              0
-#define DEBUG_BACKEND_SEMIHOST          1
-#define DEBUG_BACKEND_UART              2
+#define DEBUG_BACKEND_SEMIHOST          1   // printf() → Debugger-Konsole
+#define DEBUG_BACKEND_UART              2   // → UART (serial_puts)
 
 #define DEBUG_BACKEND                   DEBUG_BACKEND_SEMIHOST
+#else
+#define DEBUG_ENABLE                    0
 #endif
+
+// -------------------------------------------------------------------------
+// CONSOLE UART SIMULATION
+// -------------------------------------------------------------------------
 // Test-Frontend: lokale UART-Simulation über Semihost-Konsole
-// 1 = console_uart_sim aktiv
-// 0 = nur normales cmd_poll()
-
-
+// 1 = console_uart_sim aktiv (Entwicklung ohne echte UART)
+// 0 = normales cmd_poll() über UART1
 #define ENABLE_CONSOLE_UART_SIM         (0 && !RELEASE)
 
+// USE_SEMIHOST_CONSOLE: Steuert wohin proto_reply_printf() ausgibt
+// - Wenn Console-Sim aktiv: Ausgabe über printf() (Semihost)
+// - Sonst: Ausgabe über UART (serial_puts)
 #if ENABLE_CONSOLE_UART_SIM
 #define USE_SEMIHOST_CONSOLE            1
 #else

@@ -117,9 +117,9 @@ static bot_state_e busy_state_from_action(bot_action_e t)
 }
 
 // -----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Bot Engine
 // -----------------------------------------------------------------------------
-#if IMPLEMENTATION_STEPPER
 void bot_step(void)
 {
     static bool busy = false;
@@ -213,124 +213,3 @@ void bot_step(void)
 
     busy = false;
 }
-#endif
-#if UART_DEMO
-static inline void apply_target_to_internal_pos(const bot_action_s *a)
-{
-    g_status.pos_internal.x_mm_scaled    = a->target_pos.x_mm_scaled;
-    g_status.pos_internal.y_mm_scaled    = a->target_pos.y_mm_scaled;
-    g_status.pos_internal.z_mm_scaled    = a->target_pos.z_mm_scaled;
-    g_status.pos_internal.phi_deg_scaled = a->target_pos.phi_deg_scaled;
-}
-
-// Optional: alles verwerfen (z.B. bei ESTOP)
-// void bot_queue_clear(void) { q_head=q_tail=q_count=0; }
-
-// -----------------------------------------------------------------------------
-// Bot-Engine Stub: arbeitet jeweils 1 Action; Updates + OK id=… senden
-// -----------------------------------------------------------------------------
-// Ablauf:
-// 1) Idle-Phase: nächste Action holen.
-//    - ACT_MAGNET ist instant -> sofort schalten und OK senden.
-//    - Alle anderen Actions sind "zeitkritisch" -> busy=true setzen.
-// 2) Busy-Phase: später auf done warten (Motion/Job).
-// 3) Done-Phase: Status finalisieren (pos/homed/has_part) und OK senden.
-//
-// Wichtige Designregel:
-// - OK/ERR wird erst geschickt, wenn die Action wirklich fertig ist.
-// - Während busy wird g_status.state auf den passenden Busy-State gesetzt,
-//   damit STATUS-Abfragen am Pi Sinn machen.
-
-void bot_step(void)
-{
-    static bool busy = false;
-    static bot_action_s cur;
-
-    // 1) Wenn idle: nächste Action holen
-    if (!busy) {
-        if (!bot_dequeue(&cur)) return;  // nichts zu tun
-
-        // ---- Instant Action: MAGNET ----
-        // Magnet schaltet nur den Greifer. Keine Achsenbewegung -> kein busy/statewechsel.
-        if (cur.type == ACT_MAGNET) {
-            //magnet_set(cur.on);
-            proto_reply_printf("OK MAGNET id=%u%s", (unsigned)cur.request_id, EOL);
-            return;
-        }
-
-        // ---- Bewegungs-/Job-Action startet async ----
-        busy = true;
-
-        // Busy-State setzen (nur Anzeige/Debug).
-        switch (cur.type) {
-            case ACT_HOME:  g_status.state = STATE_HOMING;  break;
-            case ACT_MOVE:  g_status.state = STATE_MOVING;  break;
-            case ACT_PICK:  g_status.state = STATE_PICKING; break;
-            case ACT_PLACE: g_status.state = STATE_PLACING; break;
-
-            default:
-                // Unbekannter Typ -> sofort Fehler melden.
-                g_status.state = STATE_ERROR;
-                g_status.last_err = ERR_SYNTAX;
-                proto_reply_printf("ERR UNKNOWN_ACTION id=%u%s",
-                       (unsigned)cur.request_id, EOL);
-                busy = false;
-                return;
-        }
-
-        // >>> HIER STARTET SPÄTER ECHTE ASYNC-ENGINE <<<
-        // MOVE/HOME: motion_start_move/home(...)
-        // PICK/PLACE: job_start_pick/place(...) (interne Sequenzen)
-    }
-
-    // 2) Wenn busy: auf Ende warten (stub)
-    // Später ersetzt durch:
-    //   done = motion_is_done() oder job_done() inkl. error handling.
-    bool done = true;  // STUB: im Moment sofort fertig
-
-    if (!done) return;
-
-    // das hier brauchts nur solange keine richtige bewegung implementiert:
-    // die Bewegungsfunktionen aktualisieren status/pos selber.
-    // 3) Abschluss: Status/Position updaten je nach Action
-    switch (cur.type) {
-        case ACT_HOME:
-            g_status.homed = true;
-            g_status.pos_internal.x_mm_scaled    = 0;
-            g_status.pos_internal.y_mm_scaled    = 0;
-            g_status.pos_internal.z_mm_scaled    = 0;
-            g_status.pos_internal.phi_deg_scaled = 0;
-            break;
-
-        case ACT_MOVE:
-            apply_target_to_internal_pos(&cur);
-            break;
-
-        case ACT_PICK:
-            apply_target_to_internal_pos(&cur);
-            g_status.has_part = true;
-            break;
-
-        case ACT_PLACE:
-            apply_target_to_internal_pos(&cur);
-            g_status.has_part = false;
-            break;
-
-        default:
-            // Sollte nicht passieren, weil oben abgefangen.
-            g_status.state = STATE_ERROR;
-            g_status.last_err = ERR_INTERNAL;
-            proto_reply_printf("ERR INTERNAL id=%u%s",
-                   (unsigned)cur.request_id, EOL);
-            busy = false;
-            return;
-    }
-
-    // 4) Final OK
-    g_status.state = STATE_IDLE;
-    proto_reply_printf("OK %s id=%u%s", act_name(cur.type),
-           (unsigned)cur.request_id, EOL);
-
-    busy = false;
-}
-#endif

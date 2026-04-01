@@ -7,28 +7,25 @@
 | _ \ _ \ __| \| | | _ \ | | |_  /_  /| |  | __| _ )/ _ \|_   _|  
 |  _/   / _|| .` | |  _/ |_| |/ / / / | |__| _|| _ \ (_) | | |    
 |_| |_|_\___|_|\_| |_|  \___//___/___||____|___|___/\___/  |_|    
-test_tools.c	Created on: 25.03.2026	   Author: Fige23	Team 3                                                                
+position_debug.c	Created on: 01.04.2026	   Author: Fige23	Team 3                                                                
 */
-
-#ifndef APP_TEST_TOOLS_C_
-#define APP_TEST_TOOLS_C_
 
 #include "robot_config.h"
 
-#include "calibration.h"
-#include "demo_draw.h"
+#if POSITION_DEBUG
+
+#include "position_debug.h"
 #include "clock_config.h"
 #include "debug.h"
 #include "fsl_ftm.h"
 #include "position.h"
 
-//debug encoder
-#if POSITION_DEBUG
-static void debug_encoder_live_loop(void)
+void position_debug_live_loop(void)
 {
-    debug_printf("\r\n=== DEBUG ENCODER LIVE LOOP ===\r\n");
+    debug_printf("\r\n=== POSITION DEBUG: ENCODER LIVE LOOP ===\r\n");
     debug_printf("Move encoder by hand.\r\n");
-    debug_printf("Showing raw FTM counts, accumulated counts and measured mm.\r\n\r\n");
+    debug_printf("Showing raw FTM counts, accumulated counts and measured mm.\r\n");
+    debug_printf("WARNING: This is a blocking loop - application will not respond!\r\n\r\n");
 
     for (;;) {
         position_poll();
@@ -58,24 +55,8 @@ static void debug_encoder_live_loop(void)
     }
 }
 
-#endif
-void test_tools_run(void) {
+#else
 
-#if POSITION_DEBUG
-    debug_encoder_live_loop();
-#endif
+void position_debug_live_loop(void) {}
 
-#if CALIBRATION_MODE
-    calibrate_n_iterations(CAL_AXIS_X, 5);   // blocking
-#endif
-
-#if DEMO_DRAW_MODE
-    static bool demo_loaded = false;
-
-    if (!demo_loaded) {
-        demo_loaded = demo_enqueue_pattern(DEMO_PATTERN_STAR);
-        }
-#endif
-
-}
-#endif /* APP_TEST_TOOLS_C_ */
+#endif /* POSITION_DEBUG */

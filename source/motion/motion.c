@@ -463,9 +463,12 @@ static void motion_tick_isr(void){
     isr_tick_count++;
 
 #if ENABLE_CONSOLE_UART_SIM
-	position_poll();
-	estop_poll();
+    // CRITICAL: Console-Sim kann blockieren (fgets in main loop)
+    // Daher ESTOP und Position hier in ISR pollen wenn Console aktiv
+    position_poll();
+    estop_poll();
 #endif
+
     // STEP low wenn Pulsbreite vorbei
     for (int i = 0; i < AX_N; i++) {
         if (m.pulse_left[i]) {

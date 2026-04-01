@@ -45,11 +45,14 @@ void poll_all(void){
 
     frontend_poll();
 
-
 #if !ENABLE_CONSOLE_UART_SIM
-    estop_poll();              // pollt Not-Aus
+    // ESTOP und Position werden in main loop gepollt
+    // Bei Console-Sim werden sie in motion_tick_isr() gepollt (wegen blockierendem fgets)
+    estop_poll();
+
+#if POSITION_ENABLE
     position_poll();
 #endif
-
+#endif
 
 }

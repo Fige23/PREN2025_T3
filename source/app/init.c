@@ -23,7 +23,6 @@ init.c	Created on: 25.03.2026	   Author: Fige23	Team 3
 #include "motion.h"
 #include "job.h"
 
-#if !POSITION_DEBUG
 static void frontend_init(void)
 {
     cmd_init();
@@ -32,7 +31,6 @@ static void frontend_init(void)
     console_uart_sim_init();
 #endif
 }
-#endif
 
 
 
@@ -45,16 +43,13 @@ void init_all(void){
 
     serial_init(115200);			//UART
 
-
     ftm3_tick_init(STEP_TICK_HZ);   //konfiguriert periodischen Interrupt
     position_init();				//nötige Initialisierungen für Encoder
 
-
-
-#if !POSITION_DEBUG
+    // Initialize core systems
+    // NOTE: In POSITION_DEBUG mode, position_debug_live_loop() will block
+    // before these are used, so it's safe to initialize them.
     motion_init();                  //setzt Callback-Funktion für ISR
     job_init();                     //reset j.active / j.last_err / j.corr_iter
-
     frontend_init();				//initialisiert aktiviertes Frontend
-#endif
 }
