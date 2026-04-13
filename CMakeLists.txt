@@ -38,7 +38,7 @@ SET(LIBRARY_OUTPUT_PATH ${ProjDirPath}/${CMAKE_BUILD_TYPE})
 
 set(CMAKE_USER_MAKE_RULES_OVERRIDE "user_override.cmake")
 
-project(PREN_Puzzleroboter)
+project(PREN_Puzzleroboter C ASM)
 
 # ENABLE ASM
 ENABLE_LANGUAGE(ASM)
@@ -51,6 +51,8 @@ include(${ProjDirPath}/flags.cmake)
 # without manually editing add_executable each time.
 file(GLOB_RECURSE project_source_files CONFIGURE_DEPENDS
 "${ProjDirPath}/source/*.c"
+"${ProjDirPath}/source/*.s"
+"${ProjDirPath}/source/*.S"
 "${ProjDirPath}/source/*.h")
 
 add_executable(${MCUX_SDK_PROJECT_NAME} "${ProjDirPath}/CMSIS/mpu_armv7.h"
@@ -127,7 +129,7 @@ endforeach()
 list(REMOVE_DUPLICATES c_include_directories)
 
 
-target_include_directories(${MCUX_SDK_PROJECT_NAME} PRIVATE $<$<COMPILE_LANGUAGE:C>:${c_include_directories}>)
+target_include_directories(${MCUX_SDK_PROJECT_NAME} PRIVATE ${c_include_directories})
 
 set(cpp_include_directories "")
 

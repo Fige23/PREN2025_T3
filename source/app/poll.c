@@ -20,15 +20,22 @@ poll.c	Created on: 25.03.2026	   Author: Fige23	Team 3
 // polling ESTOP
 void estop_poll(void)
 {
+#if ESTOP_POLL_MODE == ESTOP_POLL_MODE_EDGE
     static bool last = false;
     bool now = estop_button_pressed();
 
-    // Flankenerkennung: nur beim Drücken latchen
+    // Original behavior: latch only on press edge.
     if (now && !last) {
         g_status.estop = true;
     }
 
     last = now;
+#else
+    // Robust behavior: latch on active level.
+    if (estop_button_pressed()) {
+        g_status.estop = true;
+    }
+#endif
 }
 
 

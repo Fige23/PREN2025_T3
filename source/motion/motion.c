@@ -27,9 +27,9 @@ motion_start(...) startet eine Bewegung.
 #include "robot_config.h"
 #include "ftm3.h"
 #include "limit_switch.h"
-#if ENABLE_CONSOLE_UART_SIM
-#include "position.h"
 #include "poll.h"
+#if !ENABLE_CONSOLE_UART_SIM
+#include "position.h"
 #endif
 
 // ---------- motion tick / pulse ----------
@@ -276,6 +276,15 @@ static void motion_finish(err_e e)
 
 static void motion_tick_dispatch(void)
 {
+#if ESTOP_POLL_IN_MOTION_ISR
+    static uint32_t estop_poll_div = 0u;
+    estop_poll_div++;
+    if (estop_poll_div >= ESTOP_POLL_ISR_DIVIDER) {
+        estop_poll_div = 0u;
+        estop_poll();
+    }
+#endif
+
     if (!m.active) {
         return;
     }
@@ -462,11 +471,10 @@ err_e motion_start(const bot_action_s *cur, limit_switch_e stop_on_limits, const
 static void motion_tick_isr(void){
     isr_tick_count++;
 
-#if ENABLE_CONSOLE_UART_SIM
+#if !ENABLE_CONSOLE_UART_SIM
     // CRITICAL: Console-Sim kann blockieren (fgets in main loop)
-    // Daher ESTOP und Position hier in ISR pollen wenn Console aktiv
+    // Daher Position hier in ISR pollen wenn Console aktiv
     position_poll();
-    estop_poll();
 #endif
 
     // STEP low wenn Pulsbreite vorbei

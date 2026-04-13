@@ -276,7 +276,8 @@ int _read(int fd, char *buf, int count)
  *   - PTC3 Mux3:UART1_RX, (MUX7:LPUART1_RX)
  *   - PTC4 Mux3:UART1_TX, (MUX7:LPUART1_TX)
  */
-void uart1_init(uint32_t baudrate)
+#if !UART_NEW
+void uart1Init(uint16_t baudrate)
 {
   txBufReadPos = txBufWritePos = txBufCount = 0;
   rxBufReadPos = rxBufWritePos = rxBufCount = 0;
@@ -284,18 +285,20 @@ void uart1_init(uint32_t baudrate)
   // configure clock gating (Kinetis Reference Manual p277) KRM277
   SIM->SCGC4 |= SIM_SCGC4_UART1_MASK;
 
+  #if UART1_USE_HARDWARE_PINS
+  SIM->SCGC5 |= SIM_SCGC5_PORTE_MASK
+
+  PORTE->PCR[1] = PORT_PCR_MUX(3) | PORT_PCR_PE(1) | PORT_PCR_PS(1);
+  PORTE->PCR[0] = PORT_PCR_MUX(3) | PORT_PCR_PE(1) | PORT_PCR_PS(1);
+  #else
+  
+  SIM->SCGC5 |= SIM_SCGC5_PORTC_MASK;
+
   // configure port multiplexing, enable Pull-Ups and enable OpenDrain (ODE)!
   // OpenDrain is needed to ensure that no current flows from Target-uC to the Debugger-uC
-#if UART1_USE_HARDWARE_PINS
-  // Hardware Pins PTE0/PTE1 (finales Produkt)
-  PORTE->PCR[0] = PORT_PCR_MUX(3) | PORT_PCR_PE(1) | PORT_PCR_PS(1) | PORT_PCR_ODE_MASK;  // UART1_TX
-  PORTE->PCR[1] = PORT_PCR_MUX(3) | PORT_PCR_PE(1) | PORT_PCR_PS(1) | PORT_PCR_ODE_MASK;  // UART1_RX
-#else
-  // USB-C Debug Pins PTC3/PTC4 (Entwicklung mit Programmer)
-  PORTC->PCR[3] = PORT_PCR_MUX(3) | PORT_PCR_PE(1) | PORT_PCR_PS(1) | PORT_PCR_ODE_MASK;  // UART1_RX
-  PORTC->PCR[4] = PORT_PCR_MUX(3) | PORT_PCR_PE(1) | PORT_PCR_PS(1) | PORT_PCR_ODE_MASK;  // UART1_TX
-#endif
-
+  PORTC->PCR[3] = PORT_PCR_MUX(3) | PORT_PCR_PE(1) | PORT_PCR_PS(1) | PORT_PCR_ODE_MASK;
+  PORTC->PCR[4] = PORT_PCR_MUX(3) | PORT_PCR_PE(1) | PORT_PCR_PS(1) | PORT_PCR_ODE_MASK;
+  #endif
   // set the baudrate into the BDH (first) and BDL (second) register. KRM1215ff
   uint32_t bd = (CORECLOCK / (16 * baudrate));
   UART1->BDH = (bd >> 8) & 0x1F;
@@ -312,4 +315,58 @@ void uart1_init(uint32_t baudrate)
   NVIC_SetPriority(UART1_ERR_IRQn, PRIO_UART1);
   NVIC_EnableIRQ(UART1_ERR_IRQn);
 }
+#endif
+#if UART_NEW
+void uart1_init(uint32_t baudrate)
+{
+  txBufReadPos = txBufWritePos = txBufCount = 0;
+  rxBufReadPos = rxBufWritePos = rxBufCount = 0;
+
+  /* Clock gating */
+  SIM->SCGC4 |= SIM_SCGC4_UART1_MASK;
+  SIM->SCGC5 |= SIM_SCGC5_PORTC_MASK | SIM_SCGC5_PORTE_MASK;
+
+  /* UART1 uses normal RX/TX pins */
+  SIM->SOPT5 = (SIM->SOPT5 &
+               ~(SIM_SOPT5_UART1TXSRC_MASK | SIM_SOPT5_UART1RXSRC_MASK))
+             | SIM_SOPT5_UART1TXSRC(0)
+             | SIM_SOPT5_UART1RXSRC(0);
+
+#if UART1_USE_HARDWARE_PINS
+  /* External hardware UART on PTE0/PTE1 */
+  PORTE->PCR[0] = PORT_PCR_MUX(3);   /* PTE0 = UART1_TX */
+  PORTE->PCR[1] = PORT_PCR_MUX(3);   /* PTE1 = UART1_RX */
+
+  /* Programmer UART pins off */
+  PORTC->PCR[3] = PORT_PCR_MUX(0);
+  PORTC->PCR[4] = PORT_PCR_MUX(0);
+
+#else
+  /* USB-C / programmer UART on PTC3/PTC4
+     keep old proven working setup */
+  PORTC->PCR[3] = PORT_PCR_MUX(3) | PORT_PCR_PE(1) | PORT_PCR_PS(1) | PORT_PCR_ODE_MASK;
+  PORTC->PCR[4] = PORT_PCR_MUX(3) | PORT_PCR_PE(1) | PORT_PCR_PS(1) | PORT_PCR_ODE_MASK;
+
+  /* External pins off */
+  PORTE->PCR[0] = PORT_PCR_MUX(0);
+  PORTE->PCR[1] = PORT_PCR_MUX(0);
+#endif
+
+  /* Baudrate */
+  uint32_t bd = (CORECLOCK / (16 * baudrate));
+  UART1->BDH = (bd >> 8) & 0x1F;
+  UART1->BDL = bd & 0xFF;
+
+  /* 8N1 */
+  UART1->C1 = 0;
+  UART1->C2 = UART_C2_RIE_MASK | UART_C2_RE_MASK | UART_C2_TE_MASK;
+
+  NVIC_SetPriority(UART1_RX_TX_IRQn, PRIO_UART1);
+  NVIC_EnableIRQ(UART1_RX_TX_IRQn);
+
+  UART1->C3 = UART_C3_ORIE_MASK | UART_C3_NEIE_MASK | UART_C3_FEIE_MASK;
+  NVIC_SetPriority(UART1_ERR_IRQn, PRIO_UART1);
+  NVIC_EnableIRQ(UART1_ERR_IRQn);
+}
+#endif
 #endif

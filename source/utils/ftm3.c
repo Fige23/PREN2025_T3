@@ -17,6 +17,7 @@ ftm3.c	Created on: 18.12.2025	   Author: Fige23	Team 3
 
 #include "platform.h"
 
+#include "SEGGER_SYSVIEW.h"
 
 static ftm3_tick_cb_t s_cb = 0;
 static uint32_t s_tick_hz = 0;
@@ -92,6 +93,7 @@ void ftm3_tick_stop(void)
 
 void FTM3_IRQHandler(void)
 {
+    SEGGER_SYSVIEW_RecordEnterISR();
     uint32_t flags = FTM_GetStatusFlags(FTM3);
     if (!flags) return;
 
@@ -100,5 +102,6 @@ void FTM3_IRQHandler(void)
     if (flags & kFTM_TimeOverflowFlag) {
         if (s_cb) s_cb();						//ruft callback auf (motion_tick_dispatch)
     }
+    SEGGER_SYSVIEW_RecordExitISR();
 }
 

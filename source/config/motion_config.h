@@ -18,7 +18,7 @@ motion_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
  * ========================================================================== */
 
 // Motion-Timer / Pulse Engine
-#define STEP_TICK_HZ                    240000u
+#define STEP_TICK_HZ                    12000u
 #define STEP_PULSE_WIDTH_TICKS          2u
 #define STEP_MIN_PERIOD_TICKS           2u
 
@@ -27,6 +27,27 @@ motion_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 // lange Wege -> durch VMAX gedeckelt
 #define MOTION_PROFILE_ENABLE           1
 #define MOTION_PROFILE_SYMMETRIC        1
+
+
+/* ============================================================================
+ * E-STOP POLLING BEHAVIOR
+ * ========================================================================== */
+
+// E-STOP polling mode:
+// - EDGE: latch only on rising edge (original behavior)
+// - LEVEL_LATCH: latch whenever pin is active (more robust against missed edges)
+#define ESTOP_POLL_MODE_EDGE            0
+#define ESTOP_POLL_MODE_LEVEL_LATCH     1
+
+#define ESTOP_POLL_MODE                 ESTOP_POLL_MODE_LEVEL_LATCH
+
+// Optional additional E-STOP polling inside motion tick ISR dispatch.
+// Keep disabled by default to minimize ISR work.
+#define ESTOP_POLL_IN_MOTION_ISR        1
+
+// If ISR polling is enabled, sample only every N timer ticks to reduce ISR cost.
+// 240000 Hz / 24 = 10000 polls/s, still very fast for a button.
+#define ESTOP_POLL_ISR_DIVIDER          24u
 
 
 /* ============================================================================

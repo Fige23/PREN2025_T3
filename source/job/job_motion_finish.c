@@ -113,7 +113,7 @@ bool job_motion_finish_step(job_motion_finish_s *ctx, err_e *out_err)
     }
 
     if (ctx->corr_iter >= POS_CORR_MAX_ITERATIONS) {
-        if (out_err) *out_err = ERR_MOTOR;
+        if (out_err) *out_err = ERR_NOT_IMPLEMENTED;
         return true;
     }
 

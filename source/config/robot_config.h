@@ -63,4 +63,16 @@ Config file: Dieses File inkludiert alle kleineren Config Files!
 #error "ENABLE_CONSOLE_UART_SIM must be 0 or 1"
 #endif
 
+#if (ESTOP_POLL_MODE != ESTOP_POLL_MODE_EDGE) && (ESTOP_POLL_MODE != ESTOP_POLL_MODE_LEVEL_LATCH)
+#error "ESTOP_POLL_MODE must be ESTOP_POLL_MODE_EDGE or ESTOP_POLL_MODE_LEVEL_LATCH"
+#endif
+
+#if (ESTOP_POLL_IN_MOTION_ISR != 0) && (ESTOP_POLL_IN_MOTION_ISR != 1)
+#error "ESTOP_POLL_IN_MOTION_ISR must be 0 or 1"
+#endif
+
+#if (ESTOP_POLL_ISR_DIVIDER < 1u)
+#error "ESTOP_POLL_ISR_DIVIDER must be >= 1"
+#endif
+
 #endif /* CONFIG_ROBOT_CONFIG_H_ */
