@@ -259,7 +259,7 @@ int _read(int fd, char *buf, int count)
   *buf = uart1ReadChar();
   return 1;
 }
-
+#endif
 #endif
 /**
  * initializes the uart with the desired baud rate.
@@ -286,7 +286,7 @@ void uart1_init(uint32_t baudrate)
   SIM->SCGC4 |= SIM_SCGC4_UART1_MASK;
 
   #if UART1_USE_HARDWARE_PINS
-  SIM->SCGC5 |= SIM_SCGC5_PORTE_MASK
+  SIM->SCGC5 |= SIM_SCGC5_PORTE_MASK;
 
   PORTE->PCR[1] = PORT_PCR_MUX(3) | PORT_PCR_PE(1) | PORT_PCR_PS(1);
   PORTE->PCR[0] = PORT_PCR_MUX(3) | PORT_PCR_PE(1) | PORT_PCR_PS(1);
@@ -368,5 +368,4 @@ void uart1_init(uint32_t baudrate)
   NVIC_SetPriority(UART1_ERR_IRQn, PRIO_UART1);
   NVIC_EnableIRQ(UART1_ERR_IRQn);
 }
-#endif
 #endif
