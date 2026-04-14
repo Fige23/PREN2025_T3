@@ -68,8 +68,16 @@ const char* err_to_str(err_e e) {
 		return "ESTOP";
 	case ERR_NOT_IMPLEMENTED:
 		return "NOT_IMPLEMENTED";
+	case ERR_ENCODER_MAX_ITERATIONS:
+		return "ENCODER_MAX_CORR_ITERATIONS_REACHED";
 	default:
 		return "INTERNAL";
+	case ERR_UNEXPECTED_LIMIT:
+		return "UNEXPECTED_LIMIT_HIT";
+	case ERR_ENCODER_NO_PROGRESS:
+		return "ENCODER_NO_PROGRESS";
+	case ERR_ENCODER_POSITION_MISMATCH:
+		return "ENCODER_POSITION_MISMATCH";
 	}
 }
 

@@ -471,7 +471,7 @@ err_e motion_start(const bot_action_s *cur, limit_switch_e stop_on_limits, const
 static void motion_tick_isr(void){
     isr_tick_count++;
 
-#if !ENABLE_CONSOLE_UART_SIM
+#if ENABLE_CONSOLE_UART_SIM
     // CRITICAL: Console-Sim kann blockieren (fgets in main loop)
     // Daher Position hier in ISR pollen wenn Console aktiv
     position_poll();
