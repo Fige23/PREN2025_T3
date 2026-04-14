@@ -14,10 +14,12 @@ ftm3.c	Created on: 18.12.2025	   Author: Fige23	Team 3
 #include "fsl_ftm.h"
 #include "fsl_clock.h"
 #include "fsl_common.h"
-
+#include "robot_config.h"
 #include "platform.h"
 
+#if SYSTEMVIEW
 #include "SEGGER_SYSVIEW.h"
+#endif
 
 static ftm3_tick_cb_t s_cb = 0;
 static uint32_t s_tick_hz = 0;
@@ -93,7 +95,9 @@ void ftm3_tick_stop(void)
 
 void FTM3_IRQHandler(void)
 {
-    SEGGER_SYSVIEW_RecordEnterISR();
+    #if SYSTEMVIEW
+    //SEGGER_SYSVIEW_RecordEnterISR();
+    #endif
     uint32_t flags = FTM_GetStatusFlags(FTM3);
     if (!flags) return;
 
@@ -102,6 +106,8 @@ void FTM3_IRQHandler(void)
     if (flags & kFTM_TimeOverflowFlag) {
         if (s_cb) s_cb();						//ruft callback auf (motion_tick_dispatch)
     }
-    SEGGER_SYSVIEW_RecordExitISR();
+    #if SYSTEMVIEW
+    //SEGGER_SYSVIEW_RecordExitISR();
+    #endif
 }
 

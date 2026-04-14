@@ -46,6 +46,8 @@ build_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 #if !RELEASE
 #define DEBUG_MODE						1
 
+#define SYSTEMVIEW                      1
+
 // Position feedback / closed loop
 #define POSITION_ENABLE                 1   // 0=no encoder, 1=encoder active
 #define POSITION_CLOSED_LOOP_ENABLE     1   // 0=measure only, 1=MOVE corrects position

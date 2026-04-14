@@ -91,6 +91,7 @@ Additional information:
 * TODO: Add your defines here.                                       *
 **********************************************************************
 */
+#define SEGGER_SYSVIEW_RTT_BUFFER_SIZE 8192 // Increase to 4096, 8192, or higher
 
 
 #endif  // SEGGER_SYSVIEW_CONF_H
