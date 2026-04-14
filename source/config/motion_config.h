@@ -18,7 +18,7 @@ motion_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
  * ========================================================================== */
 
 // Motion-Timer / Pulse Engine
-#define STEP_TICK_HZ                    12000u
+#define STEP_TICK_HZ                    50000u
 #define STEP_PULSE_WIDTH_TICKS          2u
 #define STEP_MIN_PERIOD_TICKS           2u
 
@@ -53,6 +53,7 @@ motion_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 /* ============================================================================
  * AXIS MOTION PROFILES (MOVE Commands)
  * ========================================================================== */
+
 
 // X axis
 #define X_MAX_STEP_RATE_SPS             12000u

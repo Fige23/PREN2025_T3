@@ -27,11 +27,14 @@ place_config.h	Created on: 01.04.2026	   Author: Fige23	Team 3
  * Z POSITIONS FOR PLACE OPERATION
  * ========================================================================== */
 
-// Z position during XY+phi movement (safe height to avoid collisions)
+/* Z position during XY+phi movement (safe height to avoid collisions) */
 #define PLACE_Z_SAFE_POS_MM_SCALED        (SCALE_MM*100)
 
-// Z position when placing object (down at the destination)
-#define PLACE_Z_PLACE_POS_MM_SCALED       (SCALE_MM*0)
+/* Z position when actually dropping / placing the object */
+#define PLACE_Z_DROP_POS_MM_SCALED        (SCALE_MM*0)
+
+/* Compatibility alias, falls irgendwo noch der alte Name verwendet wird */
+#define PLACE_Z_PLACE_POS_MM_SCALED       PLACE_Z_DROP_POS_MM_SCALED
 
 
 /* ============================================================================

@@ -28,12 +28,14 @@ pick_config.h	Created on: 01.04.2026	   Author: Fige23	Team 3
  * Z POSITIONS FOR PICK OPERATION
  * ========================================================================== */
 
-// Z position during XY movement (safe height to avoid collisions)
+/* Z position during XY movement (safe height to avoid collisions) */
 #define PICK_Z_SAFE_POS_MM_SCALED        (SCALE_MM*100)
 
-// Z position when picking up object (down at the piece)
-#define PICK_Z_PICK_POS_MM_SCALED        (SCALE_MM*0)
+/* Z position when actually gripping the object */
+#define PICK_Z_GRIP_POS_MM_SCALED        (SCALE_MM*0)
 
+/* Optional compatibility alias, falls irgendwo noch der alte Name verwendet wird */
+#define PICK_Z_PICK_POS_MM_SCALED        PICK_Z_GRIP_POS_MM_SCALED
 
 /* ============================================================================
  * PICK OPERATION TIMINGS (in milliseconds)
