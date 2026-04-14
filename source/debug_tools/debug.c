@@ -18,7 +18,9 @@ debug.c	Created on: 15.03.2026	   Author: Fige23	Team 3
 #include <stdarg.h>
 #include <stdio.h>
 
-
+#if SYSTEMVIEW
+volatile tSystemview_s g_systrack = {.isr_cycles=0, .motion_steps=0, .sysview_track=false, .sysview_starts=0};
+#endif
 
 
 void debug_printf(const char *fmt, ...)

@@ -19,6 +19,7 @@ ftm3.c	Created on: 18.12.2025	   Author: Fige23	Team 3
 
 #if SYSTEMVIEW
 #include "SEGGER_SYSVIEW.h"
+#include "debug.h"
 #endif
 
 static ftm3_tick_cb_t s_cb = 0;
@@ -96,7 +97,9 @@ void ftm3_tick_stop(void)
 void FTM3_IRQHandler(void)
 {
     #if SYSTEMVIEW
-    //SEGGER_SYSVIEW_RecordEnterISR();
+    if(g_systrack.sysview_track){
+    SEGGER_SYSVIEW_RecordEnterISR();
+    }
     #endif
     uint32_t flags = FTM_GetStatusFlags(FTM3);
     if (!flags) return;
@@ -107,7 +110,9 @@ void FTM3_IRQHandler(void)
         if (s_cb) s_cb();						//ruft callback auf (motion_tick_dispatch)
     }
     #if SYSTEMVIEW
-    //SEGGER_SYSVIEW_RecordExitISR();
+    if(g_systrack.sysview_track){
+    SEGGER_SYSVIEW_RecordExitISR();
+    }
     #endif
 }
 

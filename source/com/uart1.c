@@ -13,7 +13,10 @@
 #include "platform.h"
 #include "uart.h"
 #include "robot_config.h"
-
+#if SYSTEMVIEW
+#include "debug.h"
+#include "SEGGER_SYSVIEW.h"
+#endif
 
 
 /**
@@ -40,6 +43,11 @@ static uint16_t txBufReadPos;
  */
 void UART1_RX_TX_IRQHandler(void)
 {
+  #if SYSTEMVIEW
+  if(g_systrack.sysview_track){
+    SEGGER_SYSVIEW_RecordEnterISR();
+  }
+  #endif
   OnEnterUart1RxTxISR();
   uint8_t status = UART1->S1;
   uint8_t data = UART1->D;
@@ -69,6 +77,11 @@ void UART1_RX_TX_IRQHandler(void)
     }
   }
   OnExitUart1RxTxISR();
+  #if SYSTEMVIEW
+  if(g_systrack.sysview_track){
+    SEGGER_SYSVIEW_RecordExitISR();
+  }
+  #endif
 }
 
 /**

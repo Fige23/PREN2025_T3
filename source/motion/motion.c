@@ -31,6 +31,12 @@ motion_start(...) startet eine Bewegung.
 #if !ENABLE_CONSOLE_UART_SIM
 #include "position.h"
 #endif
+#if SYSTEMVIEW
+#include "SEGGER_SYSVIEW.h"
+#include "debug.h"
+#endif
+
+
 
 // ---------- motion tick / pulse ----------
 #define PULSE_WIDTH_TICKS      STEP_PULSE_WIDTH_TICKS
@@ -302,6 +308,10 @@ err_e motion_start(const bot_action_s *cur, limit_switch_e stop_on_limits, const
 	if (m.active) {
         return ERR_INTERNAL;
     }
+    #if SYSTEMVIEW
+    g_systrack.sysview_track = true;
+    #endif
+
     m.done = false;
     m.err = ERR_NONE;
     m.stopped_by_limit = false;
@@ -470,6 +480,9 @@ err_e motion_start(const bot_action_s *cur, limit_switch_e stop_on_limits, const
 //wird in ISR aufgerufen
 static void motion_tick_isr(void){
     isr_tick_count++;
+    #if SYSTEMVIEW
+    g_systrack.isr_cycles++;
+    #endif
 
 #if ENABLE_CONSOLE_UART_SIM
     // CRITICAL: Console-Sim kann blockieren (fgets in main loop)
@@ -544,6 +557,9 @@ static void motion_tick_isr(void){
 
             m.pos_num[i] += (int64_t)m.sign[i] * (int64_t)m.scale[i] * 1000LL;
             changed_mask |= (uint8_t)(1u << i);
+            #if SYSTEMVIEW
+            g_systrack.motion_steps++;
+            #endif
         }
     }
 

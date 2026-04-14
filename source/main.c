@@ -31,7 +31,12 @@ int main(void)
 	init_all();						//initialisiert alles
     #if SYSTEMVIEW
     SEGGER_SYSVIEW_Conf();
+    if(g_systrack.sysview_track){
     SEGGER_SYSVIEW_Start();
+    g_systrack.sysview_starts = 1;
+    } else if(g_systrack.sysview_starts == 1){
+        SEGGER_SYSVIEW_Stop();
+    }
     #endif
 
     ftm3_tick_start();              // startet periodischen Interrupt
