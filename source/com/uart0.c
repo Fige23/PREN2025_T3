@@ -41,47 +41,40 @@ static uint16_t txBufReadPos;
  * - Received bytes are stored in the queue rxBuf
  * - Bytes in the queue txBuf are sent
  */
-void UART0_RX_TX_IRQHandler(void)
-{
-  OnEnterUart0RxTxISR();
-  uint8_t status = UART0->S1;
-  uint8_t data = UART0->D;
-  if (status & UART_S1_RDRF_MASK)
-  {
-    // store the received byte into receiver Queue (rxBuf)
-    // but only if the queue isn't full!
-    if (rxBufCount < UART0_RX_BUF_SIZE)
-    {
-      rxBuf[rxBufWritePos++] = data;
-      rxBufCount++;
-      if (rxBufWritePos == UART0_RX_BUF_SIZE) rxBufWritePos = 0;
+void UART0_RX_TX_IRQHandler(void){
+    OnEnterUart0RxTxISR();
+    uint8_t status = UART0->S1;
+    uint8_t data = UART0->D;
+    if(status & UART_S1_RDRF_MASK){
+      // store the received byte into receiver Queue (rxBuf)
+      // but only if the queue isn't full!
+        if(rxBufCount < UART0_RX_BUF_SIZE){
+            rxBuf[rxBufWritePos++] = data;
+            rxBufCount++;
+            if(rxBufWritePos == UART0_RX_BUF_SIZE) rxBufWritePos = 0;
+        }
     }
-  }
 
-  if (status & UART_S1_TDRE_MASK)
-  {
-    if (txBufCount > 0)
-    {
-      UART0->D = txBuf[txBufReadPos++];
-      txBufCount--;
-      if (txBufReadPos == UART0_TX_BUF_SIZE) txBufReadPos = 0;
+    if(status & UART_S1_TDRE_MASK){
+        if(txBufCount > 0){
+            UART0->D = txBuf[txBufReadPos++];
+            txBufCount--;
+            if(txBufReadPos == UART0_TX_BUF_SIZE) txBufReadPos = 0;
+        }
+        else{
+            UART0->C2 &= ~UART_C2_TIE_MASK;
+        }
     }
-    else
-    {
-      UART0->C2 &= ~UART_C2_TIE_MASK;
-    }
-  }
-  OnExitUart0RxTxISR();
+    OnExitUart0RxTxISR();
 }
 
 /**
  * Error Interrupt Service Routine
  * Clears the error flags.
  */
-void UART0_ERR_IRQHandler(void)
-{
-  (void)UART0->S1;
-  (void)UART0->D;
+void UART0_ERR_IRQHandler(void){
+    (void)UART0->S1;
+    (void)UART0->D;
 }
 
 /**
@@ -95,15 +88,14 @@ void UART0_ERR_IRQHandler(void)
  * @param[in] ch
  *   the byte to send
  */
-void uart0WriteChar(char ch)
-{
-  while(txBufCount >= UART0_TX_BUF_SIZE);
-  txBuf[txBufWritePos++] = ch;
-  if (txBufWritePos == UART0_TX_BUF_SIZE) txBufWritePos = 0;
-  DISABLE_UART0_INTERRUPTS();
-  txBufCount++;
-  ENABLE_UART0_INTERRUPTS();
-  UART0->C2 |= UART_C2_TIE_MASK;
+void uart0WriteChar(char ch){
+    while(txBufCount >= UART0_TX_BUF_SIZE);
+    txBuf[txBufWritePos++] = ch;
+    if(txBufWritePos == UART0_TX_BUF_SIZE) txBufWritePos = 0;
+    DISABLE_UART0_INTERRUPTS();
+    txBufCount++;
+    ENABLE_UART0_INTERRUPTS();
+    UART0->C2 |= UART_C2_TIE_MASK;
 }
 
 /**
@@ -113,10 +105,9 @@ void uart0WriteChar(char ch)
  * @param[in] str
  *   the null terminated string to send
  */
-void uart0Write(const char *str)
-{
-  if (str == NULL) return;
-  while (*str != '\0') uart0WriteChar(*str++);
+void uart0Write(const char* str){
+    if(str == NULL) return;
+    while(*str != '\0') uart0WriteChar(*str++);
 }
 
 /**
@@ -126,10 +117,9 @@ void uart0Write(const char *str)
  * @param[in] str
  *   the null terminated string to send
  */
-void uart0WriteLine(const char *str)
-{
-  uart0Write(str);
-  uart0WriteChar(NEW_LINE);
+void uart0WriteLine(const char* str){
+    uart0Write(str);
+    uart0WriteChar(NEW_LINE);
 }
 
 
@@ -140,16 +130,15 @@ void uart0WriteLine(const char *str)
  * @return
  *   the received byte
  */
-char uart0ReadChar(void)
-{
-  char ch;
-  while (rxBufCount == 0);
-  ch = rxBuf[rxBufReadPos++];
-  if (rxBufReadPos == UART0_RX_BUF_SIZE) rxBufReadPos = 0;
-  DISABLE_UART0_INTERRUPTS();
-  rxBufCount--;
-  ENABLE_UART0_INTERRUPTS();
-  return ch;
+char uart0ReadChar(void){
+    char ch;
+    while(rxBufCount == 0);
+    ch = rxBuf[rxBufReadPos++];
+    if(rxBufReadPos == UART0_RX_BUF_SIZE) rxBufReadPos = 0;
+    DISABLE_UART0_INTERRUPTS();
+    rxBufCount--;
+    ENABLE_UART0_INTERRUPTS();
+    return ch;
 }
 
 /**
@@ -168,20 +157,17 @@ char uart0ReadChar(void)
  * @returns
  *   the length of the received string.
  */
-uint16_t uart0ReadLine(char *str, uint16_t length)
-{
-  uint16_t i;
-  for (i=1; i<length; i++)
-  {
-    *str = uart0ReadChar();
-    if (*str == NEW_LINE)
-    {
-      *str = '\0';
-      break;
+uint16_t uart0ReadLine(char* str, uint16_t length){
+    uint16_t i;
+    for(i = 1; i < length; i++){
+        *str = uart0ReadChar();
+        if(*str == NEW_LINE){
+            *str = '\0';
+            break;
+        }
+        str++;
     }
-    str++;
-  }
-  return i;
+    return i;
 }
 
 /**
@@ -191,17 +177,15 @@ uint16_t uart0ReadLine(char *str, uint16_t length)
  * @returns
  *   TRUE, if there is a new line character, otherweise FALSE.
  */
-bool uart0HasLineReceived(void)
-{
-  uint16_t i;
-  uint16_t index = rxBufReadPos;
+bool uart0HasLineReceived(void){
+    uint16_t i;
+    uint16_t index = rxBufReadPos;
 
-  for (i=0; i<rxBufCount; i++)
-  {
-    if (rxBuf[index++] == NEW_LINE) return TRUE;
-    if (index == UART0_RX_BUF_SIZE) index = 0;
-  }
-  return FALSE;
+    for(i = 0; i < rxBufCount; i++){
+        if(rxBuf[index++] == NEW_LINE) return TRUE;
+        if(index == UART0_RX_BUF_SIZE) index = 0;
+    }
+    return FALSE;
 }
 
 /**
@@ -210,9 +194,8 @@ bool uart0HasLineReceived(void)
  * @returns
  *   the number of bytes in the receiver queue.
  */
-uint16_t uart0RxBufCount(void)
-{
-  return rxBufCount;
+uint16_t uart0RxBufCount(void){
+    return rxBufCount;
 }
 
 #if UART0_PRINTF_EN
@@ -230,11 +213,10 @@ uint16_t uart0RxBufCount(void)
  * @returns
  *   the number of bytes sent.
  */
-int _write(int fd, const char *buf, int count)
-{
-  int i = count;
-  while (i--) uart0WriteChar(*(uint8_t*)buf++);
-  return count;
+int _write(int fd, const char* buf, int count){
+    int i = count;
+    while(i--) uart0WriteChar(*(uint8_t*)buf++);
+    return count;
 }
 #endif
 
@@ -253,10 +235,9 @@ int _write(int fd, const char *buf, int count)
  * @returns
  *   the number of bytes sent.
  */
-int _read(int fd, char *buf, int count)
-{
-  *buf = uart0ReadChar();
-  return 1;
+int _read(int fd, char* buf, int count){
+    *buf = uart0ReadChar();
+    return 1;
 }
 #endif
 
@@ -276,33 +257,32 @@ int _read(int fd, char *buf, int count)
  *   - PTC3 Mux3:UART1_RX, (MUX7:LPUART1_RX)
  *   - PTC4 Mux3:UART1_TX, (MUX7:LPUART1_TX)
  */
-void uart0Init(uint32_t baudrate)
-{
-  txBufReadPos = txBufWritePos = txBufCount = 0;
-  rxBufReadPos = rxBufWritePos = rxBufCount = 0;
+void uart0Init(uint32_t baudrate){
+    txBufReadPos = txBufWritePos = txBufCount = 0;
+    rxBufReadPos = rxBufWritePos = rxBufCount = 0;
 
-  // configure clock gating (Kinetis Reference Manual p277) KRM277
-  SIM->SCGC4 |= SIM_SCGC4_UART0_MASK;
+    // configure clock gating (Kinetis Reference Manual p277) KRM277
+    SIM->SCGC4 |= SIM_SCGC4_UART0_MASK;
 
-  // configure port multiplexing, enable Pull-Ups and enable OpenDrain (ODE)!
-  // OpenDrain is needed to ensure that no current flows from Target-uC to the Debugger-uC
-  PORTA->PCR[1] = PORT_PCR_MUX(2) | PORT_PCR_PE(1) | PORT_PCR_PS(1) | PORT_PCR_ODE_MASK;
-  PORTA->PCR[2] = PORT_PCR_MUX(2) | PORT_PCR_PE(1) | PORT_PCR_PS(1) | PORT_PCR_ODE_MASK;
+    // configure port multiplexing, enable Pull-Ups and enable OpenDrain (ODE)!
+    // OpenDrain is needed to ensure that no current flows from Target-uC to the Debugger-uC
+    PORTA->PCR[1] = PORT_PCR_MUX(2) | PORT_PCR_PE(1) | PORT_PCR_PS(1) | PORT_PCR_ODE_MASK;
+    PORTA->PCR[2] = PORT_PCR_MUX(2) | PORT_PCR_PE(1) | PORT_PCR_PS(1) | PORT_PCR_ODE_MASK;
 
-  // set the baudrate into the BDH (first) and BDL (second) register. KRM1215ff
-  uint32_t bd = (CORECLOCK / (16 * baudrate));
-  UART0->BDH = (bd >> 8) & 0x1F;
-  UART0->BDL = bd & 0xFF;
+    // set the baudrate into the BDH (first) and BDL (second) register. KRM1215ff
+    uint32_t bd = (CORECLOCK / (16 * baudrate));
+    UART0->BDH = (bd >> 8) & 0x1F;
+    UART0->BDL = bd & 0xFF;
 
-  // enable uart receiver, receiver interrupt and transmitter as well as
-  // enable and set the rx/tx interrupt in the nested vector interrupt controller (NVIC)
-  UART0->C2 = UART_C2_RIE_MASK | UART_C2_RE_MASK | UART_C2_TE_MASK;
-  NVIC_SetPriority(UART0_RX_TX_IRQn, PRIO_UART0);
-  NVIC_EnableIRQ(UART0_RX_TX_IRQn);
+    // enable uart receiver, receiver interrupt and transmitter as well as
+    // enable and set the rx/tx interrupt in the nested vector interrupt controller (NVIC)
+    UART0->C2 = UART_C2_RIE_MASK | UART_C2_RE_MASK | UART_C2_TE_MASK;
+    NVIC_SetPriority(UART0_RX_TX_IRQn, PRIO_UART0);
+    NVIC_EnableIRQ(UART0_RX_TX_IRQn);
 
-  // enable the error interrupts of the uart and configure the NVIC
-  UART0->C3 = UART_C3_ORIE_MASK | UART_C3_NEIE_MASK | UART_C3_FEIE_MASK;
-  NVIC_SetPriority(UART0_ERR_IRQn, PRIO_UART0);
-  NVIC_EnableIRQ(UART0_ERR_IRQn);
+    // enable the error interrupts of the uart and configure the NVIC
+    UART0->C3 = UART_C3_ORIE_MASK | UART_C3_NEIE_MASK | UART_C3_FEIE_MASK;
+    NVIC_SetPriority(UART0_ERR_IRQn, PRIO_UART0);
+    NVIC_EnableIRQ(UART0_ERR_IRQn);
 }
 #endif

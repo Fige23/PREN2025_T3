@@ -1,13 +1,13 @@
 /*Project: PREN_Puzzleroboter
- (   (          )   (            )   ) (               )          
- )\ ))\ )    ( /(   )\ )      ( /(( /( )\ )      (  ( /(   *   )  
-(()/(()/((   )\()) (()/(   (  )\())\()|()/( (  ( )\ )\())` )  /(  
- /(_))(_))\ ((_)\   /(_))  )\((_)((_)\ /(_)))\ )((_|(_)\  ( )(_)) 
-(_))(_))((_) _((_) (_)) _ ((_)_((_)((_|_)) ((_|(_)_  ((_)(_(_())  
-| _ \ _ \ __| \| | | _ \ | | |_  /_  /| |  | __| _ )/ _ \|_   _|  
-|  _/   / _|| .` | |  _/ |_| |/ / / / | |__| _|| _ \ (_) | | |    
-|_| |_|_\___|_|\_| |_|  \___//___/___||____|___|___/\___/  |_|    
-communication_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3                                                                
+ (   (          )   (            )   ) (               )
+ )\ ))\ )    ( /(   )\ )      ( /(( /( )\ )      (  ( /(   *   )
+(()/(()/((   )\()) (()/(   (  )\())\()|()/( (  ( )\ )\())` )  /(
+ /(_))(_))\ ((_)\   /(_))  )\((_)((_)\ /(_)))\ )((_|(_)\  ( )(_))
+(_))(_))((_) _((_) (_)) _ ((_)_((_)((_|_)) ((_|(_)_  ((_)(_(_())
+| _ \ _ \ __| \| | | _ \ | | |_  /_  /| |  | __| _ )/ _ \|_   _|
+|  _/   / _|| .` | |  _/ |_| |/ / / / | |__| _|| _ \ (_) | | |
+|_| |_|_\___|_|\_| |_|  \___//___/___||____|___|___/\___/  |_|
+communication_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 */
 
 #ifndef CONFIG_COMMUNICATION_CONFIG_H_
@@ -30,8 +30,8 @@ communication_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 // 0 = USB-C Debug (PTC3/PTC4) - für Entwicklung mit Programmer
 // 1 = Hardware Pins (PTE0/PTE1) - für finales Produkt
 // WICHTIG: Dieses Makro steuert das Pin-Muxing in pin_mux.c UND uart1.c!
-#define UART1_USE_HARDWARE_PINS         0
-#define UART_NEW                        0       //if 1: uses new init function, if 0: uses modified MCFUN init!
+#define UART1_USE_HARDWARE_PINS         1
+#define UART_NEW                        1       //if 1: uses new init function, if 0: uses modified MCFUN init!
 // -------------------------------------------------------------------------
 // DEBUG OUTPUT CONFIGURATION
 // -------------------------------------------------------------------------

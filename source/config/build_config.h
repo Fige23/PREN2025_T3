@@ -1,13 +1,13 @@
 /*Project: PREN_Puzzleroboter
- (   (          )   (            )   ) (               )          
- )\ ))\ )    ( /(   )\ )      ( /(( /( )\ )      (  ( /(   *   )  
-(()/(()/((   )\()) (()/(   (  )\())\()|()/( (  ( )\ )\())` )  /(  
- /(_))(_))\ ((_)\   /(_))  )\((_)((_)\ /(_)))\ )((_|(_)\  ( )(_)) 
-(_))(_))((_) _((_) (_)) _ ((_)_((_)((_|_)) ((_|(_)_  ((_)(_(_())  
-| _ \ _ \ __| \| | | _ \ | | |_  /_  /| |  | __| _ )/ _ \|_   _|  
-|  _/   / _|| .` | |  _/ |_| |/ / / / | |__| _|| _ \ (_) | | |    
-|_| |_|_\___|_|\_| |_|  \___//___/___||____|___|___/\___/  |_|    
-build_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3                                                                
+ (   (          )   (            )   ) (               )
+ )\ ))\ )    ( /(   )\ )      ( /(( /( )\ )      (  ( /(   *   )
+(()/(()/((   )\()) (()/(   (  )\())\()|()/( (  ( )\ )\())` )  /(
+ /(_))(_))\ ((_)\   /(_))  )\((_)((_)\ /(_)))\ )((_|(_)\  ( )(_))
+(_))(_))((_) _((_) (_)) _ ((_)_((_)((_|_)) ((_|(_)_  ((_)(_(_())
+| _ \ _ \ __| \| | | _ \ | | |_  /_  /| |  | __| _ )/ _ \|_   _|
+|  _/   / _|| .` | |  _/ |_| |/ / / / | |__| _|| _ \ (_) | | |
+|_| |_|_\___|_|\_| |_|  \___//___/___||____|___|___/\___/  |_|
+build_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 */
 
 #ifndef CONFIG_BUILD_CONFIG_H_
@@ -16,20 +16,20 @@ build_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 /* ============================================================================
  * BUILD CONFIGURATION
  * ============================================================================
- * 
+ *
  * This file controls the build mode and feature flags for the project.
- * 
+ *
  * PRODUCTION BUILD:
  * - RELEASE = 1       → Optimized, all debug features disabled
- * 
+ *
  * DEVELOPMENT BUILD:
  * - RELEASE = 0       → Debug enabled, test features available
- * 
+ *
  * DEBUG/TEST FEATURES (only available when RELEASE=0):
  * - CALIBRATION_MODE  → Auto-calibrate axes on startup
  * - DEMO_DRAW_MODE    → Draw test patterns for hardware diagnostics
  * - POSITION_DEBUG    → Blocking loop showing live encoder values (for debugging only!)
- * 
+ *
  * See source/debug_tools/ for debug feature implementations.
  * ========================================================================== */
 
@@ -50,7 +50,7 @@ build_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 
 // Position feedback / closed loop
 #define POSITION_ENABLE                 1   // 0=no encoder, 1=encoder active
-#define POSITION_CLOSED_LOOP_ENABLE     1   // 0=measure only, 1=MOVE corrects position
+#define POSITION_CLOSED_LOOP_ENABLE     0   // 0=measure only, 1=MOVE corrects position
 
 // -------------------------------------------------------------------------
 // DEBUG/TEST FEATURES (for development/diagnostics)

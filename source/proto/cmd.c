@@ -51,46 +51,44 @@ Wichtig:
 // -----------------------------------------------------------------------------
 // Einheitliche Protokoll-Ausgabe nach oben.
 // EOL ist überall gleich, replyf ist unser printf-Wrapper.
-static const char *EOL = "\n";   // End-of-line for replies
+static const char* EOL = "\n";   // End-of-line for replies
 
 
 // Standard-OK für rein synchrone Befehle (PING, RESET, ...).
-static void send_ok(const char *cmd) {
-	proto_reply_printf("OK %s%s", cmd, EOL);
+static void send_ok(const char* cmd){
+    proto_reply_printf("OK %s%s", cmd, EOL);
 }
 // Standard-ERR mit einfachem Error-String (SYNTAX, ESTOP, NO_HOME, ...).
-static void send_err(const char *cmd, const char *e) {
-	proto_reply_printf("ERR %s %s%s", cmd, e, EOL);
+static void send_err(const char* cmd, const char* e){
+    proto_reply_printf("ERR %s %s%s id=%u%s", cmd, e, EOL);
 }
 
 // Request-IDs laufen monoton hoch und werden mit jeder Action gepusht.
 // Der Pi verwendet id=.. später zum Zuordnen der finalen OK/ERR.
 static uint16_t s_next_req_id = 1;
-static void send_queued(const char *cmd, uint16_t id) {
-	proto_reply_printf("QUEUED %s id=%u%s", cmd, (unsigned) id, EOL);
+static void send_queued(const char* cmd, uint16_t id){
+    proto_reply_printf("QUEUED %s id=%u%s", cmd, (unsigned)id, EOL);
 }
 
 // Kleiner Helper für STATUS-Ausgabe.
-static const char* yesno(bool b) {
-	return b ? "YES" : "NO";
+static const char* yesno(bool b){
+    return b ? "YES" : "NO";
 }
 
 // Formatierung von Fixed-Point Positionen für UART, ohne float printf.
 // um -> "mm.mmm" / cdeg -> "deg.dd".
-static void print_mm3(const char *name, int32_t um)
-{
-    int32_t mm   = um / 1000;
+static void print_mm3(const char* name, int32_t um){
+    int32_t mm = um / 1000;
     int32_t frac = um % 1000;
-    if (frac < 0) frac = -frac;
+    if(frac < 0) frac = -frac;
 
     proto_reply_printf("%s=%ld.%03ld ", name, (long)mm, (long)frac);
 }
 
-static void print_deg2(const char *name, int32_t cdeg)
-{
-    int32_t deg  = cdeg / 100;
+static void print_deg2(const char* name, int32_t cdeg){
+    int32_t deg = cdeg / 100;
     int32_t frac = cdeg % 100;
-    if (frac < 0) frac = -frac;
+    if(frac < 0) frac = -frac;
 
     proto_reply_printf("%s=%ld.%02ld ", name, (long)deg, (long)frac);
 }
@@ -99,36 +97,35 @@ static void print_deg2(const char *name, int32_t cdeg)
 // Command handlers
 // -----------------------------------------------------------------------------
 // Jeder Handler bekommt argc/argv (argv[0] ist der Command-Name).
-typedef bool (*cmd_handler_fp_t)(int argc, char **argv);
+typedef bool (*cmd_handler_fp_t)(int argc, char** argv);
 
 typedef struct {
-	const char *name;  // Befehl in UPPERCASE
-	cmd_handler_fp_t fn;
+    const char* name;  // Befehl in UPPERCASE
+    cmd_handler_fp_t fn;
 } cmd_entry_s;
 
 // --- PING ---
 // Minimaler Sync-Test: antwortet sofort mit OK.
-static bool cmd_ping(int argc, char **argv) {
-	(void) argc;
-	(void) argv;
-	send_ok("PING");
-	return true;
+static bool cmd_ping(int argc, char** argv){
+    (void)argc;
+    (void)argv;
+    send_ok("PING");
+    return true;
 }
 
 // --- STATUS ---
 // Gibt den aktuellen globalen Status inkl. interner Position aus.
 // Position wird human-readable formatiert, intern bleibt alles Fixed-Point.
-static bool cmd_status(int argc, char **argv)
-{
+static bool cmd_status(int argc, char** argv){
     (void)argc; (void)argv;
 
     proto_reply_printf("STATUS state=%s (%d) homed=%s part=%s estop=%s err=%s POS ",
-           state_to_str(g_status.state),
-           (int)g_status.state,
-           yesno(g_status.homed),
-           yesno(g_status.has_part),
-           yesno(g_status.estop),
-           err_to_str(g_status.last_err));
+        state_to_str(g_status.state),
+        (int)g_status.state,
+        yesno(g_status.homed),
+        yesno(g_status.has_part),
+        yesno(g_status.estop),
+        err_to_str(g_status.last_err));
 
     print_mm3("x", g_status.pos_internal.x_mm_scaled);
     print_mm3("y", g_status.pos_internal.y_mm_scaled);
@@ -146,8 +143,7 @@ static bool cmd_status(int argc, char **argv)
 
 // --- POS ---
 // Kurzform von STATUS: nur Position ausgeben.
-static bool cmd_pos(int argc, char **argv)
-{
+static bool cmd_pos(int argc, char** argv){
     (void)argc; (void)argv;
 
     proto_reply_printf("POS ");
@@ -168,94 +164,93 @@ static bool cmd_pos(int argc, char **argv)
 // --- HOME (asynchron) ---
 // Startet Homing über Bot-Queue. Keine Parameter erlaubt.
 // Finales OK/ERR kommt aus bot_step().
-static bool cmd_home(int argc, char **argv) {
-	(void) argv;
-	if (argc != 1) {
-		send_err("HOME", "SYNTAX");
-		return false;
-	}
-	if (g_status.estop) {
-		send_err("HOME", "ESTOP");
-		return false;
-	}
-	//prüfen ob pos 0 reicht oder obs negativ sein muss.
-	bot_action_s a = {
-	    .type = ACT_HOME,
-	    .target_pos = {
-	        .x_mm_scaled = 0,
-	        .y_mm_scaled = 0,
-	        .z_mm_scaled = 0,
-	        .phi_deg_scaled = 0
-	    },
-	    .magnet_on = false,
-	    .request_id = s_next_req_id++
-	};
+static bool cmd_home(int argc, char** argv){
+    (void)argv;
+    if(argc != 1){
+        send_err("HOME", "SYNTAX");
+        return false;
+    }
+    if(g_status.estop){
+        send_err("HOME", "ESTOP");
+        return false;
+    }
+    //prüfen ob pos 0 reicht oder obs negativ sein muss.
+    bot_action_s a = {
+        .type = ACT_HOME,
+        .target_pos = {
+            .x_mm_scaled = 0,
+            .y_mm_scaled = 0,
+            .z_mm_scaled = 0,
+            .phi_deg_scaled = 0
+        },
+        .magnet_on = false,
+        .request_id = s_next_req_id++
+    };
 
 
-	if (!bot_enqueue(&a)) {
-		send_err("HOME", "INTERNAL");
-		return false;
-	}
+    if(!bot_enqueue(&a)){
+        send_err("HOME", "INTERNAL");
+        return false;
+    }
 
-	send_queued("HOME", a.request_id);
-	return true;
+    send_queued("HOME", a.request_id);
+    return true;
 }
 
 // --- MAGNET ON|OFF (asynchron) ---
 // Schaltet Magnet über Bot-Queue. Argument muss ON oder OFF sein.
-static bool cmd_magnet(int argc, char **argv) {
-	if (argc != 2) {
-		send_err("MAGNET", "SYNTAX");
-		return false;
-	}
-	bool on;
-	if (strcmp(argv[1], "ON") == 0)
-		on = true;
-	else if (strcmp(argv[1], "OFF") == 0)
-		on = false;
-	else {
-		send_err("MAGNET", "SYNTAX");
-		return false;
-	}
+static bool cmd_magnet(int argc, char** argv){
+    if(argc != 2){
+        send_err("MAGNET", "SYNTAX");
+        return false;
+    }
+    bool on;
+    if(strcmp(argv[1], "ON") == 0)
+        on = true;
+    else if(strcmp(argv[1], "OFF") == 0)
+        on = false;
+    else{
+        send_err("MAGNET", "SYNTAX");
+        return false;
+    }
 
-	bot_action_s a = {
-	    .type = ACT_MAGNET,
-	    .target_pos = {   // unbenutzt, aber explizit
-	        .x_mm_scaled = 0,
-	        .y_mm_scaled = 0,
-	        .z_mm_scaled = 0,
-	        .phi_deg_scaled = 0
-	    },
-	    .magnet_on = on,
-	    .request_id = s_next_req_id++
-	};
+    bot_action_s a = {
+        .type = ACT_MAGNET,
+        .target_pos = {   // unbenutzt, aber explizit
+            .x_mm_scaled = 0,
+            .y_mm_scaled = 0,
+            .z_mm_scaled = 0,
+            .phi_deg_scaled = 0
+        },
+        .magnet_on = on,
+        .request_id = s_next_req_id++
+    };
 
 
-	if (!bot_enqueue(&a)) {
-		send_err("MAGNET", "INTERNAL");
-		return false;
-	}
+    if(!bot_enqueue(&a)){
+        send_err("MAGNET", "INTERNAL");
+        return false;
+    }
 
-	send_queued("MAGNET", a.request_id);
-	return true;
+    send_queued("MAGNET", a.request_id);
+    return true;
 }
 
 // --- MOVE x= y= z= phi=  (asynchron) ---
 // Erlaubt Float-Text als Input, intern wird direkt auf Fixed-Point geparst.
 // Optional-Parameter: nicht angegebene Achsen bleiben auf aktueller Position.
-static bool cmd_move(int argc, char **argv)
-{
+static bool cmd_move(int argc, char** argv){
 
 
-    if (argc < 2)        { send_err("MOVE","SYNTAX");  return false; }
-    if (g_status.estop)  { send_err("MOVE","ESTOP");   return false; }
+    if(argc < 2){ send_err("MOVE", "SYNTAX");  return false; }
+    if(g_status.estop){ send_err("MOVE", "ESTOP");   return false; }
 
-    if (REQUIRE_HOME_FOR_MOVE && !g_status.homed) { send_err("MOVE","NO_HOME"); return false; }
+    if(REQUIRE_HOME_FOR_MOVE && !g_status.homed){ send_err("MOVE", "NO_HOME"); return false; }
 
     // Defaults = aktuelle Position (Fixed-Point), damit Teil-MOVEs präzise bleiben.
-    int32_t x_s  = g_status.pos_internal.x_mm_scaled;
-    int32_t y_s  = g_status.pos_internal.y_mm_scaled;
-    int32_t z_s  = g_status.pos_internal.z_mm_scaled;
+    int32_t x_s = g_status.pos_internal.x_mm_scaled;
+    int32_t y_s = g_status.pos_internal.y_mm_scaled;
+    int32_t z_s = g_status.pos_internal.z_mm_scaled;
     int32_t ph_s = g_status.pos_internal.phi_deg_scaled;
 
     // MOVE: mindestens 1 Key, erlaubt x/y/z/phi in beliebiger Kombination.
@@ -265,7 +260,7 @@ static bool cmd_move(int argc, char **argv)
         /*allowed_mask=*/KV_X | KV_Y | KV_Z | KV_PHI,
         /*seen_out=*/NULL
     );
-    if (e != ERR_NONE) { send_err("MOVE", err_to_str(e)); return false; }
+    if(e != ERR_NONE){ send_err("MOVE", err_to_str(e)); return false; }
 
     bot_action_s a = {
         .type = ACT_MOVE,
@@ -281,7 +276,7 @@ static bool cmd_move(int argc, char **argv)
 
 
 
-    if (!bot_enqueue(&a)) { send_err("MOVE","QUEUE_FULL"); return false; }
+    if(!bot_enqueue(&a)){ send_err("MOVE", "QUEUE_FULL"); return false; }
 
     send_queued("MOVE", a.request_id);
     return true;
@@ -291,13 +286,12 @@ static bool cmd_move(int argc, char **argv)
 // --- PICK (asynchron) ---
 // Nimmt ein Teil an Ziel XY auf. Protokoll erlaubt kein z= (Z läuft intern).
 // Pflicht: x,y. Optional: phi.
-static bool cmd_pick(int argc, char **argv)
-{
-    if (g_status.estop)     { send_err("PICK","ESTOP");   return false; }
-    if (REQUIRE_HOME_FOR_MOVE && !g_status.homed)    { send_err("PICK","NO_HOME"); return false; }
-    if (g_status.has_part)  { send_err("PICK","HAS_PART");   return false; }
+static bool cmd_pick(int argc, char** argv){
+    if(g_status.estop){ send_err("PICK", "ESTOP");   return false; }
+    if(REQUIRE_HOME_FOR_MOVE && !g_status.homed){ send_err("PICK", "NO_HOME"); return false; }
+    if(g_status.has_part){ send_err("PICK", "HAS_PART");   return false; }
 
-    int32_t x_s=0, y_s=0, z_s=0, ph_s=0;
+    int32_t x_s = 0, y_s = 0, z_s = 0, ph_s = 0;
 
     // PICK: x,y Pflicht / z,phi verboten (Whitelist!)
     err_e e = parse_pos_tokens_mask(
@@ -307,7 +301,7 @@ static bool cmd_pick(int argc, char **argv)
         /*allowed_mask=*/KV_X | KV_Y,
         /*seen_out=*/NULL
     );
-    if (e != ERR_NONE) { send_err("PICK", err_to_str(e)); return false; }
+    if(e != ERR_NONE){ send_err("PICK", err_to_str(e)); return false; }
 
     bot_action_s a = {
         .type = ACT_PICK,
@@ -323,7 +317,7 @@ static bool cmd_pick(int argc, char **argv)
 
 
 
-    if (!bot_enqueue(&a)) { send_err("PICK","QUEUE_FULL"); return false; }
+    if(!bot_enqueue(&a)){ send_err("PICK", "QUEUE_FULL"); return false; }
     send_queued("PICK", a.request_id);
     return true;
 }
@@ -332,13 +326,12 @@ static bool cmd_pick(int argc, char **argv)
 // --- PLACE (asynchron) ---
 // Legt ein Teil an Ziel XY/PHI ab. Protokoll erlaubt kein z=.
 // Pflicht: x,y,phi.
-static bool cmd_place(int argc, char **argv)
-{
-    if (g_status.estop)      { send_err("PLACE","ESTOP");   return false; }
-    if (REQUIRE_HOME_FOR_MOVE && !g_status.homed)     { send_err("PLACE","NO_HOME"); return false; }
-    if (!g_status.has_part)  { send_err("PLACE","NO_PART"); return false; }
+static bool cmd_place(int argc, char** argv){
+    if(g_status.estop){ send_err("PLACE", "ESTOP");   return false; }
+    if(REQUIRE_HOME_FOR_MOVE && !g_status.homed){ send_err("PLACE", "NO_HOME"); return false; }
+    if(!g_status.has_part){ send_err("PLACE", "NO_PART"); return false; }
 
-    int32_t x_s=0, y_s=0, z_s=0, ph_s=0;
+    int32_t x_s = 0, y_s = 0, z_s = 0, ph_s = 0;
 
     // PLACE: x,y,phi Pflicht / z verboten (Whitelist!)
     err_e e = parse_pos_tokens_mask(
@@ -348,7 +341,7 @@ static bool cmd_place(int argc, char **argv)
         /*allowed_mask=*/KV_X | KV_Y | KV_PHI,
         /*seen_out=*/NULL
     );
-    if (e != ERR_NONE) { send_err("PLACE", err_to_str(e)); return false; }
+    if(e != ERR_NONE){ send_err("PLACE", err_to_str(e)); return false; }
 
     // (nach parse_pos_tokens_mask)
     bot_action_s a = {
@@ -365,7 +358,7 @@ static bool cmd_place(int argc, char **argv)
 
 
 
-    if (!bot_enqueue(&a)) { send_err("PLACE","QUEUE_FULL"); return false; }
+    if(!bot_enqueue(&a)){ send_err("PLACE", "QUEUE_FULL"); return false; }
     send_queued("PLACE", a.request_id);
     return true;
 }
@@ -373,8 +366,7 @@ static bool cmd_place(int argc, char **argv)
 
 
 // --- RESET (synchron) ---
-static bool cmd_reset(int argc, char **argv)
-{
+static bool cmd_reset(int argc, char** argv){
     (void)argc;
     (void)argv;
 
@@ -400,12 +392,11 @@ static bool cmd_reset(int argc, char **argv)
     return true;
 }
 
-static bool cmd_clear_estop(int argc, char **argv)
-{
+static bool cmd_clear_estop(int argc, char** argv){
     (void)argc;
     (void)argv;
 
-    if (!g_status.estop) {
+    if(!g_status.estop){
         send_err("CLEAR_ESTOP", "NO_ESTOP");
         return false;
     }
@@ -430,88 +421,90 @@ static bool cmd_clear_estop(int argc, char **argv)
 // -----------------------------------------------------------------------------
 // Alle unterstützten Befehle. argv[0] wird gegen name gematched.
 static const cmd_entry_s s_cmds[] = {
-		{ "PING", cmd_ping },
-		{ "STATUS", cmd_status },
-		{ "POS", cmd_pos },
-		{ "HOME", cmd_home },
-		{ "MAGNET", cmd_magnet },
-		{ "MOVE", cmd_move },
-		{ "PICK", cmd_pick },
-		{ "PLACE", cmd_place },
-		{ "RESET", cmd_reset },
-		{ "CLEAR_ESTOP", cmd_clear_estop },
-		{ "CESTOP", cmd_clear_estop },
-		{ "UNLATCH", cmd_clear_estop }
+        { "PING", cmd_ping },
+        { "STATUS", cmd_status },
+        { "POS", cmd_pos },
+        { "HOME", cmd_home },
+        { "MAGNET", cmd_magnet },
+        { "MOVE", cmd_move },
+        { "PICK", cmd_pick },
+        { "PLACE", cmd_place },
+        { "RESET", cmd_reset },
+        { "CLEAR_ESTOP", cmd_clear_estop },
+        { "CESTOP", cmd_clear_estop },
+        { "UNLATCH", cmd_clear_estop }
 };
 
 // -----------------------------------------------------------------------------
 // Dispatch & line collection
 // -----------------------------------------------------------------------------
 // Macht ein String in-place uppercase (für case-insensitive Parsing).
-static void str_upper(char *s) {
-	while (*s) {
-		*s = (char) toupper((unsigned char )*s);
-		++s;
-	}
+static void str_upper(char* s){
+    while(*s){
+        *s = (char)toupper((unsigned char)*s);
+        ++s;
+    }
 }
 
 // Zerlegt eine komplette Zeile in Tokens und ruft den passenden Handler.
 // Unbekannte Befehle liefern "ERR <cmd> UNKNOWN".
-void cmd_dispatch_line(char *line) {
-	char *argv[12];
-	int argc = 0;
+void cmd_dispatch_line(char* line){
+    char* argv[12];
+    int argc = 0;
 
-	for (char *tok = strtok(line, " \t\r\n");
-			tok && argc < (int) (sizeof(argv) / sizeof(argv[0]));
-			tok = strtok(NULL, " \t\r\n")) {
-		argv[argc++] = tok;
-	}
-	if (argc == 0)
-		return;
+    for(char* tok = strtok(line, " \t\r\n");
+        tok && argc < (int)(sizeof(argv) / sizeof(argv[0]));
+        tok = strtok(NULL, " \t\r\n")){
+        argv[argc++] = tok;
+    }
+    if(argc == 0)
+        return;
 
-	for(int i=0 ; i < argc; i++){
-		str_upper(argv[i]);	//case insensitive
-	}
-	for (size_t i = 0; i < sizeof(s_cmds) / sizeof(s_cmds[0]); ++i) {
-		if (strcmp(argv[0], s_cmds[i].name) == 0) {
-			(void) s_cmds[i].fn(argc, argv);
-			return;
-		}
-	}
-	proto_reply_printf("ERR %s UNKNOWN%s", argv[0], EOL);
+    for(int i = 0; i < argc; i++){
+        str_upper(argv[i]);	//case insensitive
+    }
+    for(size_t i = 0; i < sizeof(s_cmds) / sizeof(s_cmds[0]); ++i){
+        if(strcmp(argv[0], s_cmds[i].name) == 0){
+            (void)s_cmds[i].fn(argc, argv);
+            return;
+        }
+    }
+    proto_reply_printf("ERR %s UNKNOWN%s", argv[0], EOL);
 }
 
 // -----------------------------------------------------------------------------
 // Public API
 // -----------------------------------------------------------------------------
 // Init meldet dem Pi, dass der Parser bereit ist.
-void cmd_init(void) {
-	proto_reply_raw("CMD_READY\n");
+void cmd_init(void){
+    proto_reply_raw("CMD_READY\n");
 }
 
 // Non-blocking Zeilensammler.
 // - Liest Bytes von UART bis \n oder \r.
 // - Bei kompletter Zeile -> dispatch_line().
 // - Bei Overflow -> Zeile verwerfen + ERR LINE OVERFLOW.
-void cmd_poll(void) {
-	static char s_line[CMD_LINE_MAX];
-	static size_t s_len = 0;
+void cmd_poll(void){
+    static char s_line[CMD_LINE_MAX];
+    static size_t s_len = 0;
 
-	int ch;
-	while ((ch = serial_getchar_nonblock()) >= 0) {
-		if (ch == '\n' || ch == '\r') {
-			if (s_len > 0) {
-				s_line[s_len] = '\0';
-				cmd_dispatch_line(s_line);
-				s_len = 0;
-			}
-		} else {
-			if (s_len < (CMD_LINE_MAX - 1)) {
-				s_line[s_len++] = (char) ch;
-			} else {
-				s_len = 0;
-				proto_reply_printf("ERR LINE OVERFLOW%s", EOL);
-			}
-		}
-	}
+    int ch;
+    while((ch = serial_getchar_nonblock()) >= 0){
+        if(ch == '\n' || ch == '\r'){
+            if(s_len > 0){
+                s_line[s_len] = '\0';
+                cmd_dispatch_line(s_line);
+                s_len = 0;
+            }
+        }
+        else{
+            if(s_len < (CMD_LINE_MAX - 1)){
+                s_line[s_len++] = (char)ch;
+            }
+            else{
+                s_len = 0;
+                proto_reply_printf("ERR LINE OVERFLOW%s", EOL);
+            }
+        }
+    }
 }
