@@ -97,7 +97,7 @@ static err_e pick_start_raise_to_safe_z(void)
     cmd.target_pos.z_mm_scaled = PICK_Z_SAFE_POS_MM_SCALED;
 
     /* Reuse Z-up profile for this upward move */
-    return motion_start(&cmd, limit_none, &g_pick_z_up_profile);
+    return motion_start(&cmd, limit_none, &g_pick_z_up_profile, MOTION_PROFILE_KIND_PICK);
 }
 
 static err_e pick_start_xy_move(const robot_pos_s *target_xy)
@@ -116,7 +116,7 @@ static err_e pick_start_xy_move(const robot_pos_s *target_xy)
     jp.xy_safe_target = cmd.target_pos;
     job_motion_finish_init(&jp.xy_finish, &jp.xy_safe_target);
 
-    return motion_start(&cmd, limit_none, 0);
+    return motion_start(&cmd, limit_none, 0, MOTION_PROFILE_KIND_PICK);
 }
 
 static err_e pick_start_z_down(void)
@@ -127,7 +127,7 @@ static err_e pick_start_z_down(void)
     cmd.target_pos = g_status.pos_internal;
     cmd.target_pos.z_mm_scaled = PICK_Z_GRIP_POS_MM_SCALED;
 
-    return motion_start(&cmd, limit_none, &g_pick_z_down_profile);
+    return motion_start(&cmd, limit_none, &g_pick_z_down_profile, MOTION_PROFILE_KIND_PICK);
 }
 
 static err_e pick_start_z_up(void)
@@ -138,7 +138,7 @@ static err_e pick_start_z_up(void)
     cmd.target_pos = g_status.pos_internal;
     cmd.target_pos.z_mm_scaled = PICK_Z_SAFE_POS_MM_SCALED;
 
-    return motion_start(&cmd, limit_none, &g_pick_z_up_profile);
+    return motion_start(&cmd, limit_none, &g_pick_z_up_profile, MOTION_PROFILE_KIND_PICK);
 }
 
 /* -------------------------------------------------------------------------- */

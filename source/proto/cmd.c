@@ -32,15 +32,20 @@ Wichtig:
 #include <stdbool.h>
 #include <string.h>
 #include <ctype.h>
-
-
 #include <stddef.h>
+#include <stdlib.h>
 #include "serial_port.h"
 #include "robot_config.h"
 #include "proto_io.h"
 #include "protocol.h"   // g_status + state/err helper + Limits/Scales
 #include "parse_kv.h"   // parse_pos_tokens_mask() + KV_* masks
 #include "bot_engine.h"        // bot_enqueue() + bot_action_s
+#include "motion_tuning.h"
+#include "motion_config.h"
+#include "home_config.h"
+#include "pick_config.h"
+#include "place_config.h"
+#include "encoder_config.h"
 #if POSITION_ENABLE
 #include "position.h"
 #endif
@@ -96,6 +101,279 @@ static void print_deg2(const char* name, int32_t cdeg){
     proto_reply_printf("%s=%ld.%02ld ", name, (long)deg, (long)frac);
 }
 
+static bool parse_scale_pct(const char* s, uint16_t* out_scale_pct){
+    char* end = NULL;
+    unsigned long value;
+
+    if(s == NULL || out_scale_pct == NULL || *s == '\0'){
+        return false;
+    }
+
+    value = strtoul(s, &end, 10);
+    if(*end != '\0' || value > 0xFFFFu){
+        return false;
+    }
+
+    *out_scale_pct = (uint16_t)value;
+    return true;
+}
+
+static bool tune_token_is_all(const char* token){
+    return (strcmp(token, "ALL") == 0);
+}
+
+static bool tune_token_is_global(const char* token){
+    return (strcmp(token, "GLOBAL") == 0) || (strcmp(token, "MASTER") == 0);
+}
+
+static bool parse_tune_kind(const char* token, motion_profile_kind_e* out_kind){
+    if(strcmp(token, "MOVE") == 0){
+        *out_kind = MOTION_PROFILE_KIND_MOVE;
+        return true;
+    }
+    if(strcmp(token, "HOME") == 0){
+        *out_kind = MOTION_PROFILE_KIND_HOME;
+        return true;
+    }
+    if(strcmp(token, "PICK") == 0){
+        *out_kind = MOTION_PROFILE_KIND_PICK;
+        return true;
+    }
+    if(strcmp(token, "PLACE") == 0){
+        *out_kind = MOTION_PROFILE_KIND_PLACE;
+        return true;
+    }
+    if(strcmp(token, "CORR") == 0 || strcmp(token, "POSCORR") == 0){
+        *out_kind = MOTION_PROFILE_KIND_CORR;
+        return true;
+    }
+
+    return false;
+}
+
+static uint32_t tune_effective_scale_pct(motion_profile_kind_e kind){
+    uint32_t global_pct = motion_tuning_get_global_scale_pct();
+    uint32_t local_pct = motion_tuning_get_profile_scale_pct(kind);
+
+    return (global_pct * local_pct + 50u) / 100u;
+}
+
+static void tune_print_scales(void){
+    proto_reply_printf("TUNE SCALES global=%u move=%u home=%u pick=%u place=%u corr=%u%s",
+        (unsigned)motion_tuning_get_global_scale_pct(),
+        (unsigned)motion_tuning_get_profile_scale_pct(MOTION_PROFILE_KIND_MOVE),
+        (unsigned)motion_tuning_get_profile_scale_pct(MOTION_PROFILE_KIND_HOME),
+        (unsigned)motion_tuning_get_profile_scale_pct(MOTION_PROFILE_KIND_PICK),
+        (unsigned)motion_tuning_get_profile_scale_pct(MOTION_PROFILE_KIND_PLACE),
+        (unsigned)motion_tuning_get_profile_scale_pct(MOTION_PROFILE_KIND_CORR),
+        EOL);
+}
+
+static void tune_print_group_scale(motion_profile_kind_e kind){
+    proto_reply_printf("TUNE SCALE group=%s pct=%u effective=%lu%s",
+        motion_tuning_kind_to_str(kind),
+        (unsigned)motion_tuning_get_profile_scale_pct(kind),
+        (unsigned long)tune_effective_scale_pct(kind),
+        EOL);
+}
+
+static void tune_print_global_scale(void){
+    proto_reply_printf("TUNE SCALE group=GLOBAL pct=%u%s",
+        (unsigned)motion_tuning_get_global_scale_pct(),
+        EOL);
+}
+
+static void tune_print_profile_summary(const char* name,
+                                       motion_profile_kind_e kind,
+                                       motion_profile_s base_profile){
+    motion_profile_s scaled = motion_tuning_apply_profile(&base_profile, kind);
+
+    proto_reply_printf("TUNE PROFILE group=%s name=%s start=%lu max=%lu accel=%lu%s",
+        motion_tuning_kind_to_str(kind),
+        name,
+        (unsigned long)scaled.start_step_rate_sps,
+        (unsigned long)scaled.max_step_rate_sps,
+        (unsigned long)scaled.accel_sps2,
+        EOL);
+}
+
+static void tune_print_define_u32(const char* name, uint32_t value){
+    proto_reply_printf("#define %s %luu%s", name, (unsigned long)value, EOL);
+}
+
+static void tune_export_profile_macros(motion_profile_kind_e kind,
+                                       const char* start_name,
+                                       const char* max_name,
+                                       const char* accel_name,
+                                       motion_profile_s base_profile){
+    motion_profile_s scaled = motion_tuning_apply_profile(&base_profile, kind);
+
+    tune_print_define_u32(start_name, scaled.start_step_rate_sps);
+    tune_print_define_u32(max_name, scaled.max_step_rate_sps);
+    tune_print_define_u32(accel_name, scaled.accel_sps2);
+}
+
+static void tune_show_move_profiles(void){
+    tune_print_profile_summary("X", MOTION_PROFILE_KIND_MOVE,
+        (motion_profile_s){ X_START_STEP_RATE_SPS, X_MAX_STEP_RATE_SPS, X_ACCEL_SPS2 });
+    tune_print_profile_summary("Y", MOTION_PROFILE_KIND_MOVE,
+        (motion_profile_s){ Y_START_STEP_RATE_SPS, Y_MAX_STEP_RATE_SPS, Y_ACCEL_SPS2 });
+    tune_print_profile_summary("Z", MOTION_PROFILE_KIND_MOVE,
+        (motion_profile_s){ Z_START_STEP_RATE_SPS, Z_MAX_STEP_RATE_SPS, Z_ACCEL_SPS2 });
+    tune_print_profile_summary("PHI", MOTION_PROFILE_KIND_MOVE,
+        (motion_profile_s){ PHI_START_STEP_RATE_SPS, PHI_MAX_STEP_RATE_SPS, PHI_ACCEL_SPS2 });
+}
+
+static void tune_show_home_profiles(void){
+    tune_print_profile_summary("X_RELEASE", MOTION_PROFILE_KIND_HOME,
+        (motion_profile_s){ HOME_X_RELEASE_START_STEP_RATE_SPS, HOME_X_RELEASE_MAX_STEP_RATE_SPS, HOME_X_RELEASE_ACCEL_SPS2 });
+    tune_print_profile_summary("X_FAST", MOTION_PROFILE_KIND_HOME,
+        (motion_profile_s){ HOME_X_FAST_START_STEP_RATE_SPS, HOME_X_FAST_MAX_STEP_RATE_SPS, HOME_X_FAST_ACCEL_SPS2 });
+    tune_print_profile_summary("X_BACKOFF", MOTION_PROFILE_KIND_HOME,
+        (motion_profile_s){ HOME_X_BACKOFF_START_STEP_RATE_SPS, HOME_X_BACKOFF_MAX_STEP_RATE_SPS, HOME_X_BACKOFF_ACCEL_SPS2 });
+    tune_print_profile_summary("X_SLOW", MOTION_PROFILE_KIND_HOME,
+        (motion_profile_s){ HOME_X_SLOW_START_STEP_RATE_SPS, HOME_X_SLOW_MAX_STEP_RATE_SPS, HOME_X_SLOW_ACCEL_SPS2 });
+    tune_print_profile_summary("Y_RELEASE", MOTION_PROFILE_KIND_HOME,
+        (motion_profile_s){ HOME_Y_RELEASE_START_STEP_RATE_SPS, HOME_Y_RELEASE_MAX_STEP_RATE_SPS, HOME_Y_RELEASE_ACCEL_SPS2 });
+    tune_print_profile_summary("Y_FAST", MOTION_PROFILE_KIND_HOME,
+        (motion_profile_s){ HOME_Y_FAST_START_STEP_RATE_SPS, HOME_Y_FAST_MAX_STEP_RATE_SPS, HOME_Y_FAST_ACCEL_SPS2 });
+    tune_print_profile_summary("Y_BACKOFF", MOTION_PROFILE_KIND_HOME,
+        (motion_profile_s){ HOME_Y_BACKOFF_START_STEP_RATE_SPS, HOME_Y_BACKOFF_MAX_STEP_RATE_SPS, HOME_Y_BACKOFF_ACCEL_SPS2 });
+    tune_print_profile_summary("Y_SLOW", MOTION_PROFILE_KIND_HOME,
+        (motion_profile_s){ HOME_Y_SLOW_START_STEP_RATE_SPS, HOME_Y_SLOW_MAX_STEP_RATE_SPS, HOME_Y_SLOW_ACCEL_SPS2 });
+    tune_print_profile_summary("Z_RELEASE", MOTION_PROFILE_KIND_HOME,
+        (motion_profile_s){ HOME_Z_RELEASE_START_STEP_RATE_SPS, HOME_Z_RELEASE_MAX_STEP_RATE_SPS, HOME_Z_RELEASE_ACCEL_SPS2 });
+    tune_print_profile_summary("Z_FAST", MOTION_PROFILE_KIND_HOME,
+        (motion_profile_s){ HOME_Z_FAST_START_STEP_RATE_SPS, HOME_Z_FAST_MAX_STEP_RATE_SPS, HOME_Z_FAST_ACCEL_SPS2 });
+    tune_print_profile_summary("Z_BACKOFF", MOTION_PROFILE_KIND_HOME,
+        (motion_profile_s){ HOME_Z_BACKOFF_START_STEP_RATE_SPS, HOME_Z_BACKOFF_MAX_STEP_RATE_SPS, HOME_Z_BACKOFF_ACCEL_SPS2 });
+    tune_print_profile_summary("Z_SLOW", MOTION_PROFILE_KIND_HOME,
+        (motion_profile_s){ HOME_Z_SLOW_START_STEP_RATE_SPS, HOME_Z_SLOW_MAX_STEP_RATE_SPS, HOME_Z_SLOW_ACCEL_SPS2 });
+}
+
+static void tune_show_pick_profiles(void){
+    tune_print_profile_summary("Z_DOWN", MOTION_PROFILE_KIND_PICK,
+        (motion_profile_s){ PICK_Z_DOWN_START_STEP_RATE_SPS, PICK_Z_DOWN_MAX_STEP_RATE_SPS, PICK_Z_DOWN_ACCEL_SPS2 });
+    tune_print_profile_summary("Z_UP", MOTION_PROFILE_KIND_PICK,
+        (motion_profile_s){ PICK_Z_UP_START_STEP_RATE_SPS, PICK_Z_UP_MAX_STEP_RATE_SPS, PICK_Z_UP_ACCEL_SPS2 });
+}
+
+static void tune_show_place_profiles(void){
+    tune_print_profile_summary("Z_DOWN", MOTION_PROFILE_KIND_PLACE,
+        (motion_profile_s){ PLACE_Z_DOWN_START_STEP_RATE_SPS, PLACE_Z_DOWN_MAX_STEP_RATE_SPS, PLACE_Z_DOWN_ACCEL_SPS2 });
+    tune_print_profile_summary("Z_UP", MOTION_PROFILE_KIND_PLACE,
+        (motion_profile_s){ PLACE_Z_UP_START_STEP_RATE_SPS, PLACE_Z_UP_MAX_STEP_RATE_SPS, PLACE_Z_UP_ACCEL_SPS2 });
+}
+
+static void tune_show_corr_profiles(void){
+    tune_print_profile_summary("XY_CORR", MOTION_PROFILE_KIND_CORR,
+        (motion_profile_s){ POS_CORR_START_STEP_RATE_SPS, POS_CORR_MAX_STEP_RATE_SPS, POS_CORR_ACCEL_SPS2 });
+}
+
+static void tune_show_group_profiles(motion_profile_kind_e kind){
+    switch(kind){
+    case MOTION_PROFILE_KIND_MOVE:
+        tune_show_move_profiles();
+        break;
+    case MOTION_PROFILE_KIND_HOME:
+        tune_show_home_profiles();
+        break;
+    case MOTION_PROFILE_KIND_PICK:
+        tune_show_pick_profiles();
+        break;
+    case MOTION_PROFILE_KIND_PLACE:
+        tune_show_place_profiles();
+        break;
+    case MOTION_PROFILE_KIND_CORR:
+        tune_show_corr_profiles();
+        break;
+    default:
+        break;
+    }
+}
+
+static void tune_show_all_profiles(void){
+    tune_show_move_profiles();
+    tune_show_home_profiles();
+    tune_show_pick_profiles();
+    tune_show_place_profiles();
+    tune_show_corr_profiles();
+}
+
+static void tune_export_move_profiles(void){
+    tune_export_profile_macros(MOTION_PROFILE_KIND_MOVE,
+        "X_START_STEP_RATE_SPS", "X_MAX_STEP_RATE_SPS", "X_ACCEL_SPS2",
+        (motion_profile_s){ X_START_STEP_RATE_SPS, X_MAX_STEP_RATE_SPS, X_ACCEL_SPS2 });
+    tune_export_profile_macros(MOTION_PROFILE_KIND_MOVE,
+        "Y_START_STEP_RATE_SPS", "Y_MAX_STEP_RATE_SPS", "Y_ACCEL_SPS2",
+        (motion_profile_s){ Y_START_STEP_RATE_SPS, Y_MAX_STEP_RATE_SPS, Y_ACCEL_SPS2 });
+    tune_export_profile_macros(MOTION_PROFILE_KIND_MOVE,
+        "Z_START_STEP_RATE_SPS", "Z_MAX_STEP_RATE_SPS", "Z_ACCEL_SPS2",
+        (motion_profile_s){ Z_START_STEP_RATE_SPS, Z_MAX_STEP_RATE_SPS, Z_ACCEL_SPS2 });
+    tune_export_profile_macros(MOTION_PROFILE_KIND_MOVE,
+        "PHI_START_STEP_RATE_SPS", "PHI_MAX_STEP_RATE_SPS", "PHI_ACCEL_SPS2",
+        (motion_profile_s){ PHI_START_STEP_RATE_SPS, PHI_MAX_STEP_RATE_SPS, PHI_ACCEL_SPS2 });
+}
+
+static void tune_export_home_profiles(void){
+    tune_export_profile_macros(MOTION_PROFILE_KIND_HOME, "HOME_X_RELEASE_START_STEP_RATE_SPS", "HOME_X_RELEASE_MAX_STEP_RATE_SPS", "HOME_X_RELEASE_ACCEL_SPS2", (motion_profile_s){ HOME_X_RELEASE_START_STEP_RATE_SPS, HOME_X_RELEASE_MAX_STEP_RATE_SPS, HOME_X_RELEASE_ACCEL_SPS2 });
+    tune_export_profile_macros(MOTION_PROFILE_KIND_HOME, "HOME_X_FAST_START_STEP_RATE_SPS", "HOME_X_FAST_MAX_STEP_RATE_SPS", "HOME_X_FAST_ACCEL_SPS2", (motion_profile_s){ HOME_X_FAST_START_STEP_RATE_SPS, HOME_X_FAST_MAX_STEP_RATE_SPS, HOME_X_FAST_ACCEL_SPS2 });
+    tune_export_profile_macros(MOTION_PROFILE_KIND_HOME, "HOME_X_BACKOFF_START_STEP_RATE_SPS", "HOME_X_BACKOFF_MAX_STEP_RATE_SPS", "HOME_X_BACKOFF_ACCEL_SPS2", (motion_profile_s){ HOME_X_BACKOFF_START_STEP_RATE_SPS, HOME_X_BACKOFF_MAX_STEP_RATE_SPS, HOME_X_BACKOFF_ACCEL_SPS2 });
+    tune_export_profile_macros(MOTION_PROFILE_KIND_HOME, "HOME_X_SLOW_START_STEP_RATE_SPS", "HOME_X_SLOW_MAX_STEP_RATE_SPS", "HOME_X_SLOW_ACCEL_SPS2", (motion_profile_s){ HOME_X_SLOW_START_STEP_RATE_SPS, HOME_X_SLOW_MAX_STEP_RATE_SPS, HOME_X_SLOW_ACCEL_SPS2 });
+    tune_export_profile_macros(MOTION_PROFILE_KIND_HOME, "HOME_Y_RELEASE_START_STEP_RATE_SPS", "HOME_Y_RELEASE_MAX_STEP_RATE_SPS", "HOME_Y_RELEASE_ACCEL_SPS2", (motion_profile_s){ HOME_Y_RELEASE_START_STEP_RATE_SPS, HOME_Y_RELEASE_MAX_STEP_RATE_SPS, HOME_Y_RELEASE_ACCEL_SPS2 });
+    tune_export_profile_macros(MOTION_PROFILE_KIND_HOME, "HOME_Y_FAST_START_STEP_RATE_SPS", "HOME_Y_FAST_MAX_STEP_RATE_SPS", "HOME_Y_FAST_ACCEL_SPS2", (motion_profile_s){ HOME_Y_FAST_START_STEP_RATE_SPS, HOME_Y_FAST_MAX_STEP_RATE_SPS, HOME_Y_FAST_ACCEL_SPS2 });
+    tune_export_profile_macros(MOTION_PROFILE_KIND_HOME, "HOME_Y_BACKOFF_START_STEP_RATE_SPS", "HOME_Y_BACKOFF_MAX_STEP_RATE_SPS", "HOME_Y_BACKOFF_ACCEL_SPS2", (motion_profile_s){ HOME_Y_BACKOFF_START_STEP_RATE_SPS, HOME_Y_BACKOFF_MAX_STEP_RATE_SPS, HOME_Y_BACKOFF_ACCEL_SPS2 });
+    tune_export_profile_macros(MOTION_PROFILE_KIND_HOME, "HOME_Y_SLOW_START_STEP_RATE_SPS", "HOME_Y_SLOW_MAX_STEP_RATE_SPS", "HOME_Y_SLOW_ACCEL_SPS2", (motion_profile_s){ HOME_Y_SLOW_START_STEP_RATE_SPS, HOME_Y_SLOW_MAX_STEP_RATE_SPS, HOME_Y_SLOW_ACCEL_SPS2 });
+    tune_export_profile_macros(MOTION_PROFILE_KIND_HOME, "HOME_Z_RELEASE_START_STEP_RATE_SPS", "HOME_Z_RELEASE_MAX_STEP_RATE_SPS", "HOME_Z_RELEASE_ACCEL_SPS2", (motion_profile_s){ HOME_Z_RELEASE_START_STEP_RATE_SPS, HOME_Z_RELEASE_MAX_STEP_RATE_SPS, HOME_Z_RELEASE_ACCEL_SPS2 });
+    tune_export_profile_macros(MOTION_PROFILE_KIND_HOME, "HOME_Z_FAST_START_STEP_RATE_SPS", "HOME_Z_FAST_MAX_STEP_RATE_SPS", "HOME_Z_FAST_ACCEL_SPS2", (motion_profile_s){ HOME_Z_FAST_START_STEP_RATE_SPS, HOME_Z_FAST_MAX_STEP_RATE_SPS, HOME_Z_FAST_ACCEL_SPS2 });
+    tune_export_profile_macros(MOTION_PROFILE_KIND_HOME, "HOME_Z_BACKOFF_START_STEP_RATE_SPS", "HOME_Z_BACKOFF_MAX_STEP_RATE_SPS", "HOME_Z_BACKOFF_ACCEL_SPS2", (motion_profile_s){ HOME_Z_BACKOFF_START_STEP_RATE_SPS, HOME_Z_BACKOFF_MAX_STEP_RATE_SPS, HOME_Z_BACKOFF_ACCEL_SPS2 });
+    tune_export_profile_macros(MOTION_PROFILE_KIND_HOME, "HOME_Z_SLOW_START_STEP_RATE_SPS", "HOME_Z_SLOW_MAX_STEP_RATE_SPS", "HOME_Z_SLOW_ACCEL_SPS2", (motion_profile_s){ HOME_Z_SLOW_START_STEP_RATE_SPS, HOME_Z_SLOW_MAX_STEP_RATE_SPS, HOME_Z_SLOW_ACCEL_SPS2 });
+}
+
+static void tune_export_pick_profiles(void){
+    tune_export_profile_macros(MOTION_PROFILE_KIND_PICK, "PICK_Z_DOWN_START_STEP_RATE_SPS", "PICK_Z_DOWN_MAX_STEP_RATE_SPS", "PICK_Z_DOWN_ACCEL_SPS2", (motion_profile_s){ PICK_Z_DOWN_START_STEP_RATE_SPS, PICK_Z_DOWN_MAX_STEP_RATE_SPS, PICK_Z_DOWN_ACCEL_SPS2 });
+    tune_export_profile_macros(MOTION_PROFILE_KIND_PICK, "PICK_Z_UP_START_STEP_RATE_SPS", "PICK_Z_UP_MAX_STEP_RATE_SPS", "PICK_Z_UP_ACCEL_SPS2", (motion_profile_s){ PICK_Z_UP_START_STEP_RATE_SPS, PICK_Z_UP_MAX_STEP_RATE_SPS, PICK_Z_UP_ACCEL_SPS2 });
+}
+
+static void tune_export_place_profiles(void){
+    tune_export_profile_macros(MOTION_PROFILE_KIND_PLACE, "PLACE_Z_DOWN_START_STEP_RATE_SPS", "PLACE_Z_DOWN_MAX_STEP_RATE_SPS", "PLACE_Z_DOWN_ACCEL_SPS2", (motion_profile_s){ PLACE_Z_DOWN_START_STEP_RATE_SPS, PLACE_Z_DOWN_MAX_STEP_RATE_SPS, PLACE_Z_DOWN_ACCEL_SPS2 });
+    tune_export_profile_macros(MOTION_PROFILE_KIND_PLACE, "PLACE_Z_UP_START_STEP_RATE_SPS", "PLACE_Z_UP_MAX_STEP_RATE_SPS", "PLACE_Z_UP_ACCEL_SPS2", (motion_profile_s){ PLACE_Z_UP_START_STEP_RATE_SPS, PLACE_Z_UP_MAX_STEP_RATE_SPS, PLACE_Z_UP_ACCEL_SPS2 });
+}
+
+static void tune_export_corr_profiles(void){
+    tune_export_profile_macros(MOTION_PROFILE_KIND_CORR, "POS_CORR_START_STEP_RATE_SPS", "POS_CORR_MAX_STEP_RATE_SPS", "POS_CORR_ACCEL_SPS2", (motion_profile_s){ POS_CORR_START_STEP_RATE_SPS, POS_CORR_MAX_STEP_RATE_SPS, POS_CORR_ACCEL_SPS2 });
+}
+
+static void tune_export_group_profiles(motion_profile_kind_e kind){
+    switch(kind){
+    case MOTION_PROFILE_KIND_MOVE:
+        tune_export_move_profiles();
+        break;
+    case MOTION_PROFILE_KIND_HOME:
+        tune_export_home_profiles();
+        break;
+    case MOTION_PROFILE_KIND_PICK:
+        tune_export_pick_profiles();
+        break;
+    case MOTION_PROFILE_KIND_PLACE:
+        tune_export_place_profiles();
+        break;
+    case MOTION_PROFILE_KIND_CORR:
+        tune_export_corr_profiles();
+        break;
+    default:
+        break;
+    }
+}
+
+static void tune_export_all_profiles(void){
+    tune_export_move_profiles();
+    tune_export_home_profiles();
+    tune_export_pick_profiles();
+    tune_export_place_profiles();
+    tune_export_corr_profiles();
+}
+
 // -----------------------------------------------------------------------------
 // Command handlers
 // -----------------------------------------------------------------------------
@@ -139,6 +417,14 @@ static bool cmd_status(int argc, char** argv){
     print_mm3("x", g_status.pos_measured.x_mm_scaled);
     print_mm3("y", g_status.pos_measured.y_mm_scaled);
 #endif
+    proto_reply_printf(" TUNE ");
+    proto_reply_printf("global=%u move=%u home=%u pick=%u place=%u corr=%u",
+        (unsigned)motion_tuning_get_global_scale_pct(),
+        (unsigned)motion_tuning_get_profile_scale_pct(MOTION_PROFILE_KIND_MOVE),
+        (unsigned)motion_tuning_get_profile_scale_pct(MOTION_PROFILE_KIND_HOME),
+        (unsigned)motion_tuning_get_profile_scale_pct(MOTION_PROFILE_KIND_PICK),
+        (unsigned)motion_tuning_get_profile_scale_pct(MOTION_PROFILE_KIND_PLACE),
+        (unsigned)motion_tuning_get_profile_scale_pct(MOTION_PROFILE_KIND_CORR));
 
     proto_reply_printf("%s", EOL);
     return true;
@@ -453,6 +739,102 @@ static bool cmd_set_pos(int argc, char** argv){
     return true;
 }
 
+static bool cmd_tune(int argc, char** argv){
+    motion_profile_kind_e kind;
+    uint16_t scale_pct;
+
+    if(argc == 1){
+        tune_print_scales();
+        return true;
+    }
+
+    if(strcmp(argv[1], "GET") == 0){
+        if(argc == 2 || tune_token_is_all(argv[2])){
+            tune_print_scales();
+            return true;
+        }
+        if(tune_token_is_global(argv[2])){
+            tune_print_global_scale();
+            return true;
+        }
+        if(parse_tune_kind(argv[2], &kind)){
+            tune_print_group_scale(kind);
+            return true;
+        }
+        send_err("TUNE", "SYNTAX");
+        return false;
+    }
+
+    if(strcmp(argv[1], "SET") == 0){
+        if(argc != 4){
+            send_err("TUNE", "SYNTAX");
+            return false;
+        }
+        if(!parse_scale_pct(argv[3], &scale_pct)){
+            send_err("TUNE", "SYNTAX");
+            return false;
+        }
+        if(tune_token_is_global(argv[2])){
+            if(!motion_tuning_set_global_scale_pct(scale_pct)){
+                send_err("TUNE", "RANGE");
+                return false;
+            }
+            proto_reply_printf("OK TUNE SET group=GLOBAL pct=%u%s",
+                (unsigned)motion_tuning_get_global_scale_pct(),
+                EOL);
+            return true;
+        }
+        if(parse_tune_kind(argv[2], &kind)){
+            if(!motion_tuning_set_profile_scale_pct(kind, scale_pct)){
+                send_err("TUNE", "RANGE");
+                return false;
+            }
+            proto_reply_printf("OK TUNE SET group=%s pct=%u effective=%lu%s",
+                motion_tuning_kind_to_str(kind),
+                (unsigned)motion_tuning_get_profile_scale_pct(kind),
+                (unsigned long)tune_effective_scale_pct(kind),
+                EOL);
+            return true;
+        }
+        send_err("TUNE", "SYNTAX");
+        return false;
+    }
+
+    if(strcmp(argv[1], "SHOW") == 0){
+        if(argc == 2 || tune_token_is_all(argv[2])){
+            tune_show_all_profiles();
+            return true;
+        }
+        if(tune_token_is_global(argv[2])){
+            tune_print_global_scale();
+            tune_print_scales();
+            return true;
+        }
+        if(parse_tune_kind(argv[2], &kind)){
+            tune_show_group_profiles(kind);
+            return true;
+        }
+        send_err("TUNE", "SYNTAX");
+        return false;
+    }
+
+    if(strcmp(argv[1], "EXPORT") == 0){
+        if(argc == 2 || tune_token_is_all(argv[2])){
+            tune_export_all_profiles();
+            return true;
+        }
+        if(parse_tune_kind(argv[2], &kind)){
+            tune_export_group_profiles(kind);
+            return true;
+        }
+        send_err("TUNE", "SYNTAX");
+        return false;
+    }
+
+    send_err("TUNE", "SYNTAX");
+    return false;
+}
+
 
 // -----------------------------------------------------------------------------
 // Command table
@@ -467,6 +849,7 @@ static const cmd_entry_s s_cmds[] = {
         { "MOVE", cmd_move },
         { "PICK", cmd_pick },
         { "PLACE", cmd_place },
+        { "TUNE", cmd_tune },
         { "RESET", cmd_reset },
         { "CLEAR_ESTOP", cmd_clear_estop },
         { "CESTOP", cmd_clear_estop },

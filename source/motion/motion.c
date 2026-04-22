@@ -21,6 +21,7 @@ motion_start(...) startet eine Bewegung.
 #include "platform.h"
 
 #include "motion.h"
+#include "motion_tuning.h"
 #include "io.h"
 #include "protocol.h"
 #include "bot_engine.h"
@@ -303,7 +304,10 @@ void motion_init(void)
 }
 
 //startet eine Bewegung
-err_e motion_start(const bot_action_s *cur, limit_switch_e stop_on_limits, const motion_profile_s *profile_override){
+err_e motion_start(const bot_action_s *cur,
+                   limit_switch_e stop_on_limits,
+                   const motion_profile_s *profile_override,
+                   motion_profile_kind_e profile_kind){
 
 	if (m.active) {
         return ERR_INTERNAL;
@@ -416,40 +420,45 @@ err_e motion_start(const bot_action_s *cur, limit_switch_e stop_on_limits, const
     uint32_t vmax_sps   = 0;
     uint32_t vstart_sps = 0;
     uint32_t acc_sps2   = 0;
+    motion_profile_s base_profile = { 0u, 0u, 0u };
+    motion_profile_s tuned_profile;
 
     switch (major_ax) {
     case AX_X:
-        vmax_sps   = X_MAX_STEP_RATE_SPS;
-        vstart_sps = X_START_STEP_RATE_SPS;
-        acc_sps2   = X_ACCEL_SPS2;
+        base_profile.max_step_rate_sps = X_MAX_STEP_RATE_SPS;
+        base_profile.start_step_rate_sps = X_START_STEP_RATE_SPS;
+        base_profile.accel_sps2 = X_ACCEL_SPS2;
         break;
 
     case AX_Y:
-        vmax_sps   = Y_MAX_STEP_RATE_SPS;
-        vstart_sps = Y_START_STEP_RATE_SPS;
-        acc_sps2   = Y_ACCEL_SPS2;
+        base_profile.max_step_rate_sps = Y_MAX_STEP_RATE_SPS;
+        base_profile.start_step_rate_sps = Y_START_STEP_RATE_SPS;
+        base_profile.accel_sps2 = Y_ACCEL_SPS2;
         break;
 
     case AX_Z:
-        vmax_sps   = Z_MAX_STEP_RATE_SPS;
-        vstart_sps = Z_START_STEP_RATE_SPS;
-        acc_sps2   = Z_ACCEL_SPS2;
+        base_profile.max_step_rate_sps = Z_MAX_STEP_RATE_SPS;
+        base_profile.start_step_rate_sps = Z_START_STEP_RATE_SPS;
+        base_profile.accel_sps2 = Z_ACCEL_SPS2;
         break;
 
     case AX_PHI:
-        vmax_sps   = PHI_MAX_STEP_RATE_SPS;
-        vstart_sps = PHI_START_STEP_RATE_SPS;
-        acc_sps2   = PHI_ACCEL_SPS2;
+        base_profile.max_step_rate_sps = PHI_MAX_STEP_RATE_SPS;
+        base_profile.start_step_rate_sps = PHI_START_STEP_RATE_SPS;
+        base_profile.accel_sps2 = PHI_ACCEL_SPS2;
         break;
 
     default:
         break;
     }
     if (profile_override != NULL) {
-    	vstart_sps  = profile_override->start_step_rate_sps;
-        vmax_sps    = profile_override->max_step_rate_sps;
-        acc_sps2    = profile_override->accel_sps2;
+        base_profile = *profile_override;
     }
+
+    tuned_profile = motion_tuning_apply_profile(&base_profile, profile_kind);
+    vstart_sps = tuned_profile.start_step_rate_sps;
+    vmax_sps = tuned_profile.max_step_rate_sps;
+    acc_sps2 = tuned_profile.accel_sps2;
 
     if (vmax_sps < 1u) {
         vmax_sps = 1u;

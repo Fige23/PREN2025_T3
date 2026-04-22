@@ -34,7 +34,7 @@ err_e job_move_start(const bot_action_s *a){
 	job_motion_finish_init(&jm.finish, &a->target_pos);
 
 	//Erste bewegung starten
-	return motion_start(a, limit_none, 0);
+	return motion_start(a, limit_none, 0, MOTION_PROFILE_KIND_MOVE);
 }
 
 //delegiert alles an job_motion_finish_step

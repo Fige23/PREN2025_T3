@@ -25,8 +25,18 @@ typedef struct {
     uint32_t accel_sps2;
 } motion_profile_s;
 
+typedef enum {
+    MOTION_PROFILE_KIND_MOVE = 0,
+    MOTION_PROFILE_KIND_HOME,
+    MOTION_PROFILE_KIND_PICK,
+    MOTION_PROFILE_KIND_PLACE,
+    MOTION_PROFILE_KIND_CORR
+} motion_profile_kind_e;
 
-err_e motion_start(const bot_action_s *cur, limit_switch_e stop_on_limits, const motion_profile_s *profile_override);
+err_e motion_start(const bot_action_s *cur,
+                   limit_switch_e stop_on_limits,
+                   const motion_profile_s *profile_override,
+                   motion_profile_kind_e profile_kind);
 
 void motion_init(void);
 bool motion_is_done(void);

@@ -1,13 +1,13 @@
 /*Project: PREN_Puzzleroboter
- (   (          )   (            )   ) (               )          
- )\ ))\ )    ( /(   )\ )      ( /(( /( )\ )      (  ( /(   *   )  
-(()/(()/((   )\()) (()/(   (  )\())\()|()/( (  ( )\ )\())` )  /(  
- /(_))(_))\ ((_)\   /(_))  )\((_)((_)\ /(_)))\ )((_|(_)\  ( )(_)) 
-(_))(_))((_) _((_) (_)) _ ((_)_((_)((_|_)) ((_|(_)_  ((_)(_(_())  
-| _ \ _ \ __| \| | | _ \ | | |_  /_  /| |  | __| _ )/ _ \|_   _|  
-|  _/   / _|| .` | |  _/ |_| |/ / / / | |__| _|| _ \ (_) | | |    
-|_| |_|_\___|_|\_| |_|  \___//___/___||____|___|___/\___/  |_|    
-init.c	Created on: 25.03.2026	   Author: Fige23	Team 3                                                                
+ (   (          )   (            )   ) (               )
+ )\ ))\ )    ( /(   )\ )      ( /(( /( )\ )      (  ( /(   *   )
+(()/(()/((   )\()) (()/(   (  )\())\()|()/( (  ( )\ )\())` )  /(
+ /(_))(_))\ ((_)\   /(_))  )\((_)((_)\ /(_)))\ )((_|(_)\  ( )(_))
+(_))(_))((_) _((_) (_)) _ ((_)_((_)((_|_)) ((_|(_)_  ((_)(_(_())
+| _ \ _ \ __| \| | | _ \ | | |_  /_  /| |  | __| _ )/ _ \|_   _|
+|  _/   / _|| .` | |  _/ |_| |/ / / / | |__| _|| _ \ (_) | | |
+|_| |_|_\___|_|\_| |_|  \___//___/___||____|___|___/\___/  |_|
+init.c	Created on: 25.03.2026	   Author: Fige23	Team 3
 */
 #include "robot_config.h"
 
@@ -21,6 +21,7 @@ init.c	Created on: 25.03.2026	   Author: Fige23	Team 3
 #include "ftm3.h"
 #include "position.h"
 #include "motion.h"
+#include "motion_tuning.h"
 #include "job.h"
 
 static void frontend_init(void)
@@ -32,24 +33,20 @@ static void frontend_init(void)
 #endif
 }
 
-
-
-
-void init_all(void){
-
+void init_all(void)
+{
     BOARD_InitBootPins();
     BOARD_InitBootClocks();
     BOARD_InitBootPeripherals();    //FTM3 etc.
 
-    serial_init(115200);			//UART
+    serial_init(115200);            //UART
 
     ftm3_tick_init(STEP_TICK_HZ);   //konfiguriert periodischen Interrupt
-    position_init();				//nötige Initialisierungen für Encoder
+    position_init();                //nÃ¶tige Initialisierungen fÃ¼r Encoder
 
-    // Initialize core systems
-    // NOTE: In POSITION_DEBUG mode, position_debug_live_loop() will block
-    // before these are used, so it's safe to initialize them.
-    motion_init();                  //setzt Callback-Funktion für ISR
+    // Initialize core systems.
+    motion_init();                  //setzt Callback-Funktion fÃ¼r ISR
+    motion_tuning_init();           //setzt Runtime-Skalierung auf 100%
     job_init();                     //reset j.active / j.last_err / j.corr_iter
-    frontend_init();				//initialisiert aktiviertes Frontend
+    frontend_init();                //initialisiert aktiviertes Frontend
 }
