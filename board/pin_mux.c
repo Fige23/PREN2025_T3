@@ -32,6 +32,7 @@ pin_labels:
 - {pin_num: '98', pin_signal: ADC0_SE6b/PTD5/SPI0_PCS2/UART0_CTS_b/FTM0_CH5/FB_AD1/EWM_OUT_b/SPI1_SCK, label: Limit_Y, identifier: Limit_Y}
 - {pin_num: '99', pin_signal: ADC0_SE7b/PTD6/LLWU_P15/SPI0_PCS3/UART0_RX/FTM0_CH6/FB_AD0/FTM0_FLT0/SPI1_SOUT, label: Limit_Z, identifier: Limit_Z}
 - {pin_num: '43', pin_signal: PTA13/LLWU_P4/FTM1_CH1/I2S0_TX_FS/FTM1_QD_PHB, label: Magnet, identifier: Magnet}
+- {pin_num: '39', pin_signal: PTA5/USB_CLKIN/FTM0_CH2/I2S0_TX_BCLK/JTAG_TRST_b, label: ENABLE_PIN, identifier: ENABLE_PIN}
  * BE CAREFUL MODIFYING THIS COMMENT - IT IS YAML SETTINGS FOR TOOLS ***********
  */
 /* clang-format on */
@@ -40,7 +41,6 @@ pin_labels:
 #include "fsl_port.h"
 #include "fsl_gpio.h"
 #include "pin_mux.h"
-
 
 /* FUNCTION ************************************************************************************************************
  *
@@ -81,6 +81,7 @@ BOARD_InitPins:
   - {pin_num: '43', peripheral: GPIOA, signal: 'GPIO, 13', pin_signal: PTA13/LLWU_P4/FTM1_CH1/I2S0_TX_FS/FTM1_QD_PHB, direction: OUTPUT, pull_enable: disable}
   - {pin_num: '1', peripheral: UART1, signal: TX, pin_signal: ADC1_SE4a/PTE0/CLKOUT32K/SPI1_PCS1/UART1_TX/I2C1_SDA/RTC_CLKOUT}
   - {pin_num: '2', peripheral: UART1, signal: RX, pin_signal: ADC1_SE5a/PTE1/LLWU_P0/SPI1_SOUT/UART1_RX/I2C1_SCL/SPI1_SIN}
+  - {pin_num: '39', peripheral: GPIOA, signal: 'GPIO, 5', pin_signal: PTA5/USB_CLKIN/FTM0_CH2/I2S0_TX_BCLK/JTAG_TRST_b, direction: OUTPUT, gpio_init_state: 'false'}
  * BE CAREFUL MODIFYING THIS COMMENT - IT IS YAML SETTINGS FOR TOOLS ***********
  */
 /* clang-format on */
@@ -103,6 +104,13 @@ void BOARD_InitPins(void)
     CLOCK_EnableClock(kCLOCK_PortD);
     /* Port E Clock Gate Control: Clock enabled */
     CLOCK_EnableClock(kCLOCK_PortE);
+
+    gpio_pin_config_t ENABLE_PIN_config = {
+        .pinDirection = kGPIO_DigitalOutput,
+        .outputLogic = 0U
+    };
+    /* Initialize GPIO functionality on pin PTA5 (pin 39)  */
+    GPIO_PinInit(BOARD_INITPINS_ENABLE_PIN_GPIO, BOARD_INITPINS_ENABLE_PIN_PIN, &ENABLE_PIN_config);
 
     gpio_pin_config_t ESTOP_config = {
         .pinDirection = kGPIO_DigitalInput,
@@ -217,6 +225,9 @@ void BOARD_InitPins(void)
                        * pin. */
                       | PORT_PCR_PE(kPORT_PullDisable));
 
+    /* PORTA5 (pin 39) is configured as PTA5 */
+    PORT_SetPinMux(BOARD_INITPINS_ENABLE_PIN_PORT, BOARD_INITPINS_ENABLE_PIN_PIN, kPORT_MuxAsGpio);
+
     /* PORTB0 (pin 53) is configured as FTM1_QD_PHA */
     PORT_SetPinMux(BOARD_INITPINS_PHA_1_PORT, BOARD_INITPINS_PHA_1_PIN, kPORT_MuxAlt6);
 
@@ -294,6 +305,11 @@ void BOARD_InitPins(void)
                       * corresponding PE field is set. */
                      | (uint32_t)(kPORT_PullUp));
 
+    /* PORTE0 (pin 1) is configured as UART1_TX */
+    PORT_SetPinMux(BOARD_INITPINS_UART1TX_PORT, BOARD_INITPINS_UART1TX_PIN, kPORT_MuxAlt3);
+
+    /* PORTE1 (pin 2) is configured as UART1_RX */
+    PORT_SetPinMux(BOARD_INITPINS_UART1RX_PORT, BOARD_INITPINS_UART1RX_PIN, kPORT_MuxAlt3);
 
     SIM->SOPT5 = ((SIM->SOPT5 &
                    /* Mask bits to zero which are setting */

@@ -25,39 +25,40 @@
 #if SYSTEMVIEW
 #include "SEGGER_SYSVIEW.h"
 #endif
-int main(void)
-{
-
-	init_all();						//initialisiert alles
-    #if SYSTEMVIEW
+#include "io.h"
+int main(void){
+    init_all();
+    enable_pin(true);						//initialisiert alles
+#if SYSTEMVIEW
     SEGGER_SYSVIEW_Conf();
     if(g_systrack.sysview_track){
-    SEGGER_SYSVIEW_Start();
-    g_systrack.sysview_starts = 1;
-    } else if(g_systrack.sysview_starts == 1){
+        SEGGER_SYSVIEW_Start();
+        g_systrack.sysview_starts = 1;
+    }
+    else if(g_systrack.sysview_starts == 1){
         SEGGER_SYSVIEW_Stop();
     }
-    #endif
+#endif
 
     ftm3_tick_start();              // startet periodischen Interrupt
 
     test_tools_run();				//führt alle aktivierten Testfunktionen aus
 
-    for (;;) {
-        #if SYSTEMVIEW
+    for(;;){
+#if SYSTEMVIEW
         SEGGER_SYSVIEW_OnUserStart(1);
-        #endif
-    	poll_all();					//pollt alle schalter und sensoren
-        #if SYSTEMVIEW
+#endif
+        poll_all();					//pollt alle schalter und sensoren
+#if SYSTEMVIEW
         SEGGER_SYSVIEW_OnUserStop(1);
-        
+
 
         SEGGER_SYSVIEW_OnUserStart(2);
-        #endif
+#endif
         bot_step();                	// führt Bot-/Bewegungslogik aus
-        #if SYSTEMVIEW
+#if SYSTEMVIEW
         SEGGER_SYSVIEW_OnUserStop(2);
-        #endif
+#endif
         __asm volatile("nop");
     }
 }
