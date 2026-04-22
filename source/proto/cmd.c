@@ -41,7 +41,9 @@ Wichtig:
 #include "protocol.h"   // g_status + state/err helper + Limits/Scales
 #include "parse_kv.h"   // parse_pos_tokens_mask() + KV_* masks
 #include "bot_engine.h"        // bot_enqueue() + bot_action_s
-#include "job_home.h"
+#if POSITION_ENABLE
+#include "position.h"
+#endif
 
 #ifndef CMD_LINE_MAX
 #define CMD_LINE_MAX 128
@@ -419,7 +421,6 @@ static bool cmd_clear_estop(int argc, char** argv){
 static bool cmd_set_pos(int argc, char** argv){
     if(g_status.estop){ send_err("SET_POS", "ESTOP");   return false; }
     if(REQUIRE_HOME_FOR_MOVE && g_status.homed){ send_err("SET_POS", "POS_ALREADY_KNOWN"); return false; }
-    if(g_status.has_part){ send_err("PICK", "HAS_PART");   return false; }
 
     int32_t x_s = 0, y_s = 0, z_s = 0, ph_s = 0;
 
@@ -428,15 +429,26 @@ static bool cmd_set_pos(int argc, char** argv){
         argc, argv, 1,
         &x_s, &y_s, &z_s, &ph_s,
         /*require_mask=*/KV_X | KV_Y | KV_Z,
-        /*allowed_mask=*/KV_X | KV_Y | KV_Z,
+        /*allowed_mask=*/KV_X | KV_Y | KV_Z | KV_PHI,
         /*seen_out=*/NULL
     );
     if(e != ERR_NONE){ send_err("SET_POS", err_to_str(e)); return false; }
-    home_apply_x_reference();
-    home_apply_y_reference();
+
+    g_status.pos_internal.x_mm_scaled = x_s;
+    g_status.pos_internal.y_mm_scaled = y_s;
     g_status.pos_internal.z_mm_scaled = z_s;
-    g_status.pos_internal.phi_deg_scaled = 0;
+    g_status.pos_internal.phi_deg_scaled = ph_s;
+#if POSITION_ENABLE
+    position_set_xy_mm_scaled(x_s, y_s);
+    g_status.pos_internal.z_mm_scaled = z_s;
+    g_status.pos_internal.phi_deg_scaled = ph_s;
+#else
+    g_status.pos_measured = g_status.pos_internal;
+#endif
     g_status.homed = true;
+    g_status.state = STATE_IDLE;
+    g_status.last_err = ERR_NONE;
+
     send_ok("SET_POS");
     return true;
 }
