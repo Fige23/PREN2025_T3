@@ -76,14 +76,14 @@ motion_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 // Values are intentionally kept round and easy to reason about.
 
 // X axis
-#define X_MAX_SPEED_MM_S                600.0f
+#define X_MAX_SPEED_MM_S                400.0f
 #define X_START_SPEED_MM_S               20.0f
-#define X_ACCEL_MM_S2                  1000.0f
+#define X_ACCEL_MM_S2                   900.0f
 
 // Y axis
-#define Y_MAX_SPEED_MM_S                600.0f
+#define Y_MAX_SPEED_MM_S                400.0f
 #define Y_START_SPEED_MM_S               20.0f
-#define Y_ACCEL_MM_S2                  1000.0f
+#define Y_ACCEL_MM_S2                   900.0f
 
 // Z axis
 #define Z_MAX_SPEED_MM_S                 12.5f
@@ -159,4 +159,4 @@ motion_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 #define VMAX_PHI_DEG_S  ((float)PHI_MAX_STEP_RATE_SPS  / ((float)STEPS_PER_DEG_PHI_Q1000 / 1000.0f))
 
 
-#endif /* CONFIG_MOTION_CONFIG_H_ */
+#endif/* CONFIG_MOTION_CONFIG_H_ */

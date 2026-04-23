@@ -42,8 +42,8 @@ geometry_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 
 // Linear travel per motor revolution in um.
 // These are the main mechanics values for X/Y/Z.
-#define X_TRAVEL_PER_REV_UM             37341u
-#define Y_TRAVEL_PER_REV_UM             37341u
+#define X_TRAVEL_PER_REV_UM             40640u
+#define Y_TRAVEL_PER_REV_UM             40640u
 #define Z_TRAVEL_PER_REV_UM              4000u
 
 // Phi gear ratio: output revolutions per motor revolution = NUM / DEN.
