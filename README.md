@@ -198,15 +198,3 @@ Debug- und Testfeatures werden in `source/config/build_config.h` geschaltet:
 
 `POSITION_DEBUG` blockiert die normale Anwendung und ist nur fuer
 Encoder-Diagnose gedacht.
-
-## Offene Punkte
-
-Weitere geplante oder empfohlene Finalisierungsschritte stehen in
-`docs/IMPLEMENTATION_GUIDE_reworked.md`, insbesondere:
-
-- queue-konsistente Annahme von PICK/PLACE
-- saubere ABORT-Semantik
-- abgesicherte RESET-Semantik
-- klare Fehler- und Recovery-Regeln
-- moegliche spaetere Pick-/Place-Verifikation
-
