@@ -56,14 +56,14 @@
 /* Hold current in A RMS: current used after the motor has stopped. */
 #define TMC2209_HOLDCURR_X_A            0.35f
 #define TMC2209_HOLDCURR_Y_A            0.35f
-#define TMC2209_HOLDCURR_Z_A            0.25f
-#define TMC2209_HOLDCURR_PHI_A          0.25f
+#define TMC2209_HOLDCURR_Z_A            0.20f
+#define TMC2209_HOLDCURR_PHI_A          0.10f
 
 /* Run current in A RMS: current used while the motor is moving. */
-#define TMC2209_RUNCURR_X_A             0.80f
-#define TMC2209_RUNCURR_Y_A             0.80f
-#define TMC2209_RUNCURR_Z_A             0.60f
-#define TMC2209_RUNCURR_PHI_A           0.60f
+#define TMC2209_RUNCURR_X_A             1.20f
+#define TMC2209_RUNCURR_Y_A             1.20f
+#define TMC2209_RUNCURR_Z_A             0.40f
+#define TMC2209_RUNCURR_PHI_A           0.42f
 
 /*
  * 0..15. Delay before switching from run current to hold current.
