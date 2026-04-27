@@ -25,6 +25,7 @@ typedef struct {
     int32_t prev_ey;
     uint8_t no_progress_count;
     bool prev_valid;
+    bool correction_microsteps_active;
 } job_motion_finish_s;
 
 void job_motion_finish_init(job_motion_finish_s *ctx, const robot_pos_s *final_target);

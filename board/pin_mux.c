@@ -21,8 +21,8 @@ pin_labels:
 - {pin_num: '81', pin_signal: ADC1_SE5b/CMP0_IN3/PTC9/FTM3_CH5/I2S0_RX_BCLK/FB_AD6/FTM2_FLT0, label: DIR_Y, identifier: DIR_Y}
 - {pin_num: '82', pin_signal: ADC1_SE6b/PTC10/I2C1_SCL/FTM3_CH6/I2S0_RX_FS/FB_AD5, label: DIR_Z, identifier: DIR_Z}
 - {pin_num: '83', pin_signal: ADC1_SE7b/PTC11/LLWU_P11/I2C1_SDA/FTM3_CH7/FB_RW_b, label: DIR_PHI, identifier: DIR_PHI}
-- {pin_num: '1', pin_signal: ADC1_SE4a/PTE0/CLKOUT32K/SPI1_PCS1/UART1_TX/I2C1_SDA/RTC_CLKOUT, label: UART1TX, identifier: UART1TX}
-- {pin_num: '2', pin_signal: ADC1_SE5a/PTE1/LLWU_P0/SPI1_SOUT/UART1_RX/I2C1_SCL/SPI1_SIN, label: UART1RX, identifier: UART1RX}
+- {pin_num: '1', pin_signal: ADC1_SE4a/PTE0/CLKOUT32K/SPI1_PCS1/UART1_TX/I2C1_SDA/RTC_CLKOUT, label: UART_Stepper_TX, identifier: UART1TX;UART_Stepper_TX}
+- {pin_num: '2', pin_signal: ADC1_SE5a/PTE1/LLWU_P0/SPI1_SOUT/UART1_RX/I2C1_SCL/SPI1_SIN, label: UART_Stepper_RX, identifier: UART1RX;UART_Stepper_RX}
 - {pin_num: '53', pin_signal: ADC0_SE8/ADC1_SE8/PTB0/LLWU_P5/I2C0_SCL/FTM1_CH0/FTM1_QD_PHA, label: PHA_1, identifier: PHA_1}
 - {pin_num: '54', pin_signal: ADC0_SE9/ADC1_SE9/PTB1/I2C0_SDA/FTM1_CH1/FTM1_QD_PHB, label: PHB_1, identifier: PHB_1}
 - {pin_num: '64', pin_signal: PTB18/FTM2_CH0/I2S0_TX_BCLK/FB_AD15/FTM2_QD_PHA, label: PHA_2, identifier: PHA_2}
@@ -79,9 +79,11 @@ BOARD_InitPins:
   - {pin_num: '64', peripheral: FTM2, signal: 'QD_PH, A', pin_signal: PTB18/FTM2_CH0/I2S0_TX_BCLK/FB_AD15/FTM2_QD_PHA}
   - {pin_num: '65', peripheral: FTM2, signal: 'QD_PH, B', pin_signal: PTB19/FTM2_CH1/I2S0_TX_FS/FB_OE_b/FTM2_QD_PHB}
   - {pin_num: '43', peripheral: GPIOA, signal: 'GPIO, 13', pin_signal: PTA13/LLWU_P4/FTM1_CH1/I2S0_TX_FS/FTM1_QD_PHB, direction: OUTPUT, pull_enable: disable}
-  - {pin_num: '1', peripheral: UART1, signal: TX, pin_signal: ADC1_SE4a/PTE0/CLKOUT32K/SPI1_PCS1/UART1_TX/I2C1_SDA/RTC_CLKOUT}
-  - {pin_num: '2', peripheral: UART1, signal: RX, pin_signal: ADC1_SE5a/PTE1/LLWU_P0/SPI1_SOUT/UART1_RX/I2C1_SCL/SPI1_SIN}
+  - {pin_num: '1', peripheral: UART1, signal: TX, pin_signal: ADC1_SE4a/PTE0/CLKOUT32K/SPI1_PCS1/UART1_TX/I2C1_SDA/RTC_CLKOUT, identifier: UART_Stepper_TX, direction: OUTPUT}
+  - {pin_num: '2', peripheral: UART1, signal: RX, pin_signal: ADC1_SE5a/PTE1/LLWU_P0/SPI1_SOUT/UART1_RX/I2C1_SCL/SPI1_SIN, identifier: UART_Stepper_RX}
   - {pin_num: '39', peripheral: GPIOA, signal: 'GPIO, 5', pin_signal: PTA5/USB_CLKIN/FTM0_CH2/I2S0_TX_BCLK/JTAG_TRST_b, direction: OUTPUT, gpio_init_state: 'false'}
+  - {pin_num: '35', peripheral: UART0, signal: RX, pin_signal: PTA1/UART0_RX/FTM0_CH6/JTAG_TDI/EZP_DI}
+  - {pin_num: '36', peripheral: UART0, signal: TX, pin_signal: PTA2/UART0_TX/FTM0_CH7/JTAG_TDO/TRACE_SWO/EZP_DO}
  * BE CAREFUL MODIFYING THIS COMMENT - IT IS YAML SETTINGS FOR TOOLS ***********
  */
 /* clang-format on */
@@ -203,6 +205,9 @@ void BOARD_InitPins(void)
     /* Initialize GPIO functionality on pin PTD6 (pin 99)  */
     GPIO_PinInit(BOARD_INITPINS_Limit_Z_GPIO, BOARD_INITPINS_Limit_Z_PIN, &Limit_Z_config);
 
+    /* PORTA1 (pin 35) is configured as UART0_RX */
+    PORT_SetPinMux(PORTA, 1U, kPORT_MuxAlt2);
+
     /* PORTA12 (pin 42) is configured as PTA12 */
     PORT_SetPinMux(BOARD_INITPINS_ESTOP_PORT, BOARD_INITPINS_ESTOP_PIN, kPORT_MuxAsGpio);
 
@@ -224,6 +229,9 @@ void BOARD_InitPins(void)
                       /* Pull Enable: Internal pullup or pulldown resistor is not enabled on the corresponding
                        * pin. */
                       | PORT_PCR_PE(kPORT_PullDisable));
+
+    /* PORTA2 (pin 36) is configured as UART0_TX */
+    PORT_SetPinMux(PORTA, 2U, kPORT_MuxAlt2);
 
     /* PORTA5 (pin 39) is configured as PTA5 */
     PORT_SetPinMux(BOARD_INITPINS_ENABLE_PIN_PORT, BOARD_INITPINS_ENABLE_PIN_PIN, kPORT_MuxAsGpio);
@@ -306,14 +314,17 @@ void BOARD_InitPins(void)
                      | (uint32_t)(kPORT_PullUp));
 
     /* PORTE0 (pin 1) is configured as UART1_TX */
-    PORT_SetPinMux(BOARD_INITPINS_UART1TX_PORT, BOARD_INITPINS_UART1TX_PIN, kPORT_MuxAlt3);
+    PORT_SetPinMux(BOARD_INITPINS_UART_Stepper_TX_PORT, BOARD_INITPINS_UART_Stepper_TX_PIN, kPORT_MuxAlt3);
 
     /* PORTE1 (pin 2) is configured as UART1_RX */
-    PORT_SetPinMux(BOARD_INITPINS_UART1RX_PORT, BOARD_INITPINS_UART1RX_PIN, kPORT_MuxAlt3);
+    PORT_SetPinMux(BOARD_INITPINS_UART_Stepper_RX_PORT, BOARD_INITPINS_UART_Stepper_RX_PIN, kPORT_MuxAlt3);
 
     SIM->SOPT5 = ((SIM->SOPT5 &
                    /* Mask bits to zero which are setting */
-                   (~(SIM_SOPT5_UART1TXSRC_MASK)))
+                   (~(SIM_SOPT5_UART0TXSRC_MASK | SIM_SOPT5_UART1TXSRC_MASK)))
+
+                  /* UART 0 transmit data source select: UART0_TX pin. */
+                  | SIM_SOPT5_UART0TXSRC(SOPT5_UART0TXSRC_UART_TX)
 
                   /* UART 1 transmit data source select: UART1_TX pin. */
                   | SIM_SOPT5_UART1TXSRC(SOPT5_UART1TXSRC_UART_TX));

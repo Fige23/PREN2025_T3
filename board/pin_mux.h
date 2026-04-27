@@ -26,6 +26,7 @@ extern "C" {
 void BOARD_InitBootPins(void);
 
 #define PORT_DFER_DFE_4_MASK 0x10u     /*!<@brief Digital Filter Enable Mask for item 4. */
+#define SOPT5_UART0TXSRC_UART_TX 0x00u /*!<@brief UART 0 transmit data source select: UART0_TX pin */
 #define SOPT5_UART1TXSRC_UART_TX 0x00u /*!<@brief UART 1 transmit data source select: UART1_TX pin */
 
 /*! @name PORTD0 (number 93), STEP_X
@@ -242,23 +243,23 @@ void BOARD_InitBootPins(void);
 #define BOARD_INITPINS_Magnet_PIN_MASK (1U << 13U)      /*!<@brief PORT pin mask */
                                                         /* @} */
 
-/*! @name PORTE0 (number 1), UART1TX
+/*! @name PORTE0 (number 1), UART_Stepper_TX
   @{ */
 
 /* Symbols to be used with PORT driver */
-#define BOARD_INITPINS_UART1TX_PORT PORTE               /*!<@brief PORT peripheral base pointer */
-#define BOARD_INITPINS_UART1TX_PIN 0U                   /*!<@brief PORT pin number */
-#define BOARD_INITPINS_UART1TX_PIN_MASK (1U << 0U)      /*!<@brief PORT pin mask */
-                                                        /* @} */
+#define BOARD_INITPINS_UART_Stepper_TX_PORT PORTE               /*!<@brief PORT peripheral base pointer */
+#define BOARD_INITPINS_UART_Stepper_TX_PIN 0U                   /*!<@brief PORT pin number */
+#define BOARD_INITPINS_UART_Stepper_TX_PIN_MASK (1U << 0U)      /*!<@brief PORT pin mask */
+                                                                /* @} */
 
-/*! @name PORTE1 (number 2), UART1RX
+/*! @name PORTE1 (number 2), UART_Stepper_RX
   @{ */
 
 /* Symbols to be used with PORT driver */
-#define BOARD_INITPINS_UART1RX_PORT PORTE               /*!<@brief PORT peripheral base pointer */
-#define BOARD_INITPINS_UART1RX_PIN 1U                   /*!<@brief PORT pin number */
-#define BOARD_INITPINS_UART1RX_PIN_MASK (1U << 1U)      /*!<@brief PORT pin mask */
-                                                        /* @} */
+#define BOARD_INITPINS_UART_Stepper_RX_PORT PORTE               /*!<@brief PORT peripheral base pointer */
+#define BOARD_INITPINS_UART_Stepper_RX_PIN 1U                   /*!<@brief PORT pin number */
+#define BOARD_INITPINS_UART_Stepper_RX_PIN_MASK (1U << 1U)      /*!<@brief PORT pin mask */
+                                                                /* @} */
 
 /*! @name PORTA5 (number 39), ENABLE_PIN
   @{ */
