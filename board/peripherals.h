@@ -46,14 +46,6 @@ extern "C" {
 #define UART0_PERIPHERAL UART0
 /* Definition of the clock source frequency */
 #define UART0_CLOCK_SOURCE CLOCK_GetFreq(UART0_CLK_SRC)
-/* UART0 interrupt vector ID (number). */
-#define UART0_SERIAL_RX_TX_IRQN UART0_RX_TX_IRQn
-/* UART0 interrupt handler identifier. */
-#define UART0_SERIAL_RX_TX_IRQHANDLER UART0_RX_TX_IRQHandler
-/* UART0 interrupt vector ID (number). */
-#define UART0_SERIAL_ERROR_IRQN UART0_ERR_IRQn
-/* UART0 interrupt handler identifier. */
-#define UART0_SERIAL_ERROR_IRQHANDLER UART0_ERR_IRQHandler
 
 /***********************************************************************************************************************
  * Global variables

@@ -413,7 +413,6 @@
                      <config_set name="nvic">
                         <array name="interrupt_table">
                            <struct name="0"/>
-                           <struct name="1"/>
                         </array>
                         <array name="interrupts"/>
                      </config_set>
@@ -675,7 +674,7 @@
                         </struct>
                      </config_set>
                   </instance>
-                  <instance name="UART0" uuid="a7b65f7a-e9ca-429d-9f5d-f34d2f544506" type="uart" type_id="uart_2.5.1" mode="interrupts" peripheral="UART0" enabled="true" comment="" custom_name_enabled="false" editing_lock="false">
+                  <instance name="UART0" uuid="a7b65f7a-e9ca-429d-9f5d-f34d2f544506" type="uart" type_id="uart_2.5.1" mode="polling" peripheral="UART0" enabled="true" comment="" custom_name_enabled="false" editing_lock="false">
                      <config_set name="uartConfig_t" quick_selection="QuickSelection1">
                         <struct name="uartConfig">
                            <setting name="clockSource" value="BusInterfaceClock"/>
@@ -692,34 +691,6 @@
                            <setting name="idleType" value="kUART_IdleTypeStartBit"/>
                            <setting name="enableTx" value="true"/>
                            <setting name="enableRx" value="true"/>
-                        </struct>
-                     </config_set>
-                     <config_set name="interruptsCfg" quick_selection="QuickSelection1">
-                        <set name="interrupts">
-                           <selected>
-                              <id>kUART_TxDataRegEmptyInterruptEnable</id>
-                              <id>kUART_TransmissionCompleteInterruptEnable</id>
-                              <id>kUART_RxDataRegFullInterruptEnable</id>
-                              <id>kUART_RxOverrunInterruptEnable</id>
-                           </selected>
-                        </set>
-                        <struct name="interrupt_vectors">
-                           <setting name="enable_rx_tx_irq" value="true"/>
-                           <struct name="interrupt_rx_tx">
-                              <setting name="IRQn" value="UART0_RX_TX_IRQn"/>
-                              <setting name="enable_interrrupt" value="enabled"/>
-                              <setting name="enable_priority" value="false"/>
-                              <setting name="priority" value="0"/>
-                              <setting name="enable_custom_name" value="false"/>
-                           </struct>
-                           <setting name="enable_err_irq" value="false"/>
-                           <struct name="interrupt_err">
-                              <setting name="IRQn" value="UART0_ERR_IRQn"/>
-                              <setting name="enable_interrrupt" value="enabled"/>
-                              <setting name="enable_priority" value="false"/>
-                              <setting name="priority" value="0"/>
-                              <setting name="enable_custom_name" value="false"/>
-                           </struct>
                         </struct>
                      </config_set>
                   </instance>

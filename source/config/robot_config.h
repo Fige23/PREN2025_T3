@@ -96,4 +96,12 @@ Config file: Dieses File inkludiert alle kleineren Config Files!
 #error "TMC2209_MICROSTEPS_CORRECTION must be a supported TMC2209 microstep value"
 #endif
 
+#if (TMC2209_DEFAULT_FREEWHEEL > 3u)
+#error "TMC2209_DEFAULT_FREEWHEEL must be 0..3"
+#endif
+
+#if (TMC2209_IHOLDDELAY > 15u)
+#error "TMC2209_IHOLDDELAY must be 0..15"
+#endif
+
 #endif /* CONFIG_ROBOT_CONFIG_H_ */

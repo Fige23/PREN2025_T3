@@ -70,7 +70,6 @@ instance:
   - nvic:
     - interrupt_table:
       - 0: []
-      - 1: []
     - interrupts: []
  * BE CAREFUL MODIFYING THIS COMMENT - IT IS YAML SETTINGS FOR TOOLS **********/
 /* clang-format on */
@@ -411,7 +410,7 @@ static void FTM2_init(void) {
 instance:
 - name: 'UART0'
 - type: 'uart'
-- mode: 'interrupts'
+- mode: 'polling'
 - custom_name_enabled: 'false'
 - type_id: 'uart_2.5.1'
 - functional_group: 'BOARD_InitPeripherals'
@@ -434,24 +433,6 @@ instance:
       - enableTx: 'true'
       - enableRx: 'true'
     - quick_selection: 'QuickSelection1'
-  - interruptsCfg:
-    - interrupts: 'kUART_TxDataRegEmptyInterruptEnable kUART_TransmissionCompleteInterruptEnable kUART_RxDataRegFullInterruptEnable kUART_RxOverrunInterruptEnable'
-    - interrupt_vectors:
-      - enable_rx_tx_irq: 'true'
-      - interrupt_rx_tx:
-        - IRQn: 'UART0_RX_TX_IRQn'
-        - enable_interrrupt: 'enabled'
-        - enable_priority: 'false'
-        - priority: '0'
-        - enable_custom_name: 'false'
-      - enable_err_irq: 'false'
-      - interrupt_err:
-        - IRQn: 'UART0_ERR_IRQn'
-        - enable_interrrupt: 'enabled'
-        - enable_priority: 'false'
-        - priority: '0'
-        - enable_custom_name: 'false'
-    - quick_selection: 'QuickSelection1'
  * BE CAREFUL MODIFYING THIS COMMENT - IT IS YAML SETTINGS FOR TOOLS **********/
 /* clang-format on */
 const uart_config_t UART0_config = {
@@ -466,9 +447,6 @@ const uart_config_t UART0_config = {
 
 static void UART0_init(void) {
   UART_Init(UART0_PERIPHERAL, &UART0_config, UART0_CLOCK_SOURCE);
-  UART_EnableInterrupts(UART0_PERIPHERAL, kUART_TxDataRegEmptyInterruptEnable | kUART_TransmissionCompleteInterruptEnable | kUART_RxDataRegFullInterruptEnable | kUART_RxOverrunInterruptEnable);
-  /* Enable interrupt UART0_SERIAL_RX_TX_IRQN request in the NVIC */
-  EnableIRQ(UART0_SERIAL_RX_TX_IRQN);
 }
 
 /***********************************************************************************************************************

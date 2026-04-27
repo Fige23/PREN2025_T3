@@ -12,7 +12,6 @@
 
 #define TMC2209_ENABLE                  1
 #define TMC2209_UART_BAUDRATE           115200u
-#define TMC2209_UART_RX_BUF_SIZE        64u
 #define TMC2209_UART_TIMEOUT_LOOPS      200000u
 
 /*
@@ -53,7 +52,11 @@
 #define TMC2209_RUNCURR_Z_A             0.60f
 #define TMC2209_RUNCURR_PHI_A           0.60f
 
-/* 0..15. Delay before switching from run current to hold current. */
+/*
+ * 0..15. Delay before switching from run current to hold current.
+ * Higher: motor keeps full run torque briefly after stopping, useful if an axis
+ * settles or drops immediately after a move. Lower: less heat after motion.
+ */
 #define TMC2209_IHOLDDELAY              8u
 
 /* ============================================================================
@@ -71,8 +74,58 @@
  * DEFAULT BEHAVIOR
  * ========================================================================== */
 
+/*
+ * 1 => quiet, smooth motor behavior at low speed. If an axis is silent but loses
+ * steps under load, test with StealthChop off / SpreadCycle on.
+ */
 #define TMC2209_DEFAULT_STEALTHCHOP     1
+
+/*
+ * 1 => stronger classic current chopper, more audible but usually better torque
+ * robustness. Normally keep this 0 when StealthChop is enabled.
+ */
 #define TMC2209_DEFAULT_SPREADCYCLE     0
+
+/*
+ * Lets the driver adapt StealthChop PWM amplitude/gradient automatically.
+ * Usually keep both enabled. If you hear speed-dependent whining or unstable
+ * quiet-mode behavior, these are good A/B-test switches.
+ */
 #define TMC2209_DEFAULT_PWM_AUTOSCALE   1
+#define TMC2209_DEFAULT_PWM_AUTOGRAD    1
+
+/*
+ * Smooths small STEP timing irregularities before the driver acts on them.
+ * Keep enabled for normal robot motion; disable only while debugging exact high
+ * speed STEP timing.
+ */
+#define TMC2209_DEFAULT_MULTISTEP_FILT  1
+
+/*
+ * 0..255: time to power down after standstill. 0 disables automatic powerdown.
+ * Increase if the axis loses holding force too soon after a move. Decrease if
+ * idle motors stay unnecessarily warm.
+ */
+#define TMC2209_DEFAULT_TPOWERDOWN      20u
+
+/*
+ * Upper velocity threshold for StealthChop. 0 keeps StealthChop active over the
+ * full speed range when enabled. Increase if the motor should switch earlier to
+ * the louder but more forceful SpreadCycle behavior at speed.
+ */
+#define TMC2209_DEFAULT_TPWMTHRS        0u
+
+/*
+ * 0..255. StallGuard sensitivity threshold; tune per mechanics if sensorless
+ * load/stall detection is used. Not needed for ordinary step/dir operation.
+ */
+#define TMC2209_DEFAULT_SGTHRS          0u
+
+/*
+ * Standstill mode: 0 normal hold, 1 freewheel, 2 coil short LS, 3 coil short HS.
+ * Use normal hold for axes that must keep position. Freewheel keeps the motor
+ * cool and movable by hand, but the position can drift.
+ */
+#define TMC2209_DEFAULT_FREEWHEEL       0u
 
 #endif /* CONFIG_TMC2209_CONFIG_H_ */

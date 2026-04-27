@@ -3,20 +3,20 @@
 #include <stddef.h>
 
 #include "MK22F51212.h"
-#include "fsl_common.h"
 #include "fsl_uart.h"
 #include "robot_config.h"
 
-#if SYSTEMVIEW
-#include "SEGGER_SYSVIEW.h"
-#include "debug.h"
-#endif
-
 #define TMC_REG_GCONF        0x00u
 #define TMC_REG_GSTAT        0x01u
+#define TMC_REG_IFCNT        0x02u
 #define TMC_REG_GLOBALSCALER 0x0Bu
 #define TMC_REG_IHOLD_IRUN   0x10u
+#define TMC_REG_TPOWERDOWN   0x11u
+#define TMC_REG_TPWMTHRS     0x13u
+#define TMC_REG_SGTHRS       0x40u
+#define TMC_REG_SG_RESULT    0x41u
 #define TMC_REG_CHOPCONF     0x6Cu
+#define TMC_REG_DRV_STATUS   0x6Fu
 #define TMC_REG_PWMCONF      0x70u
 
 #define TMC_WRITE_BIT        0x80u
@@ -24,8 +24,10 @@
 
 #define TMC_GCONF_I_SCALE_ANALOG_MASK  (1u << 0)
 #define TMC_GCONF_EN_SPREADCYCLE_MASK  (1u << 2)
+#define TMC_GCONF_SHAFT_MASK           (1u << 4)
 #define TMC_GCONF_PDN_DISABLE_MASK     (1u << 6)
 #define TMC_GCONF_MSTEP_REG_SELECT_MASK (1u << 7)
+#define TMC_GCONF_MULTISTEP_FILT_MASK  (1u << 8)
 
 #define TMC_CHOPCONF_DEFAULT           0x10000053u
 #define TMC_CHOPCONF_INTPOL_MASK       (1ul << 28)
@@ -35,25 +37,27 @@
 
 #define TMC_PWMCONF_DEFAULT            0xC10D0024u
 #define TMC_PWMCONF_PWM_AUTOSCALE_MASK (1ul << 18)
+#define TMC_PWMCONF_PWM_AUTOGRAD_MASK  (1ul << 19)
+#define TMC_PWMCONF_FREEWHEEL_SHIFT    20u
+#define TMC_PWMCONF_FREEWHEEL_MASK     (0x03ul << TMC_PWMCONF_FREEWHEEL_SHIFT)
 
 typedef struct {
     uint8_t address;
     uint8_t irun;
     uint8_t ihold;
     uint16_t microsteps;
+    uint32_t gconf;
+    uint32_t chopconf;
+    uint32_t pwmconf;
 } tmc_driver_state_s;
 
 static tmc_driver_state_s g_driver[DRIVER_MOTOR_COUNT] = {
-    { TMC2209_ADDR_X,   0u, 0u, TMC2209_MICROSTEPS_MOVE },
-    { TMC2209_ADDR_Y,   0u, 0u, TMC2209_MICROSTEPS_MOVE },
-    { TMC2209_ADDR_Z,   0u, 0u, TMC2209_MICROSTEPS_MOVE },
-    { TMC2209_ADDR_PHI, 0u, 0u, TMC2209_MICROSTEPS_MOVE },
+    { TMC2209_ADDR_X,   0u, 0u, TMC2209_MICROSTEPS_MOVE, 0u, TMC_CHOPCONF_DEFAULT, TMC_PWMCONF_DEFAULT },
+    { TMC2209_ADDR_Y,   0u, 0u, TMC2209_MICROSTEPS_MOVE, 0u, TMC_CHOPCONF_DEFAULT, TMC_PWMCONF_DEFAULT },
+    { TMC2209_ADDR_Z,   0u, 0u, TMC2209_MICROSTEPS_MOVE, 0u, TMC_CHOPCONF_DEFAULT, TMC_PWMCONF_DEFAULT },
+    { TMC2209_ADDR_PHI, 0u, 0u, TMC2209_MICROSTEPS_MOVE, 0u, TMC_CHOPCONF_DEFAULT, TMC_PWMCONF_DEFAULT },
 };
 
-static volatile uint8_t g_rx_buf[TMC2209_UART_RX_BUF_SIZE];
-static volatile uint16_t g_rx_write;
-static volatile uint16_t g_rx_read;
-static volatile uint16_t g_rx_count;
 static volatile bool g_uart_error;
 static bool g_initialized;
 
@@ -113,36 +117,18 @@ static uint8_t mres_from_microsteps(uint16_t microsteps)
     }
 }
 
-static void rx_clear(void)
+static void uart_clear_rx_and_errors(void)
 {
-    uint32_t primask = DisableGlobalIRQ();
-    g_rx_write = 0u;
-    g_rx_read = 0u;
-    g_rx_count = 0u;
     g_uart_error = false;
-    EnableGlobalIRQ(primask);
-}
 
-static bool rx_pop(uint8_t *out)
-{
-    if (g_rx_count == 0u) {
-        return false;
+    for (;;) {
+        uint8_t status = UART0->S1;
+        if ((status & (UART_S1_RDRF_MASK | UART_S1_OR_MASK | UART_S1_NF_MASK |
+                       UART_S1_FE_MASK | UART_S1_PF_MASK)) == 0u) {
+            break;
+        }
+        (void)UART0->D;
     }
-
-    uint32_t primask = DisableGlobalIRQ();
-    if (g_rx_count == 0u) {
-        EnableGlobalIRQ(primask);
-        return false;
-    }
-
-    *out = g_rx_buf[g_rx_read];
-    g_rx_read++;
-    if (g_rx_read >= TMC2209_UART_RX_BUF_SIZE) {
-        g_rx_read = 0u;
-    }
-    g_rx_count--;
-    EnableGlobalIRQ(primask);
-    return true;
 }
 
 static tmc2209_status_e uart_send(const uint8_t *data, uint8_t len)
@@ -151,12 +137,20 @@ static tmc2209_status_e uart_send(const uint8_t *data, uint8_t len)
         return TMC2209_STATUS_DISABLED;
     }
 
-    rx_clear();
+    UART0->C2 &= (uint8_t)~(UART_C2_RIE_MASK | UART_C2_TIE_MASK | UART_C2_TCIE_MASK);
+    uart_clear_rx_and_errors();
+
+#if TMC2209_UART_SINGLE_WIRE
+    UART_EnableRx(UART0, false);
+#endif
 
     for (uint8_t i = 0u; i < len; i++) {
         uint32_t timeout = TMC2209_UART_TIMEOUT_LOOPS;
         while ((UART0->S1 & UART_S1_TDRE_MASK) == 0u) {
             if (--timeout == 0u) {
+#if TMC2209_UART_SINGLE_WIRE
+                UART_EnableRx(UART0, true);
+#endif
                 return TMC2209_STATUS_TIMEOUT;
             }
         }
@@ -166,22 +160,41 @@ static tmc2209_status_e uart_send(const uint8_t *data, uint8_t len)
     uint32_t timeout = TMC2209_UART_TIMEOUT_LOOPS;
     while ((UART0->S1 & UART_S1_TC_MASK) == 0u) {
         if (--timeout == 0u) {
+#if TMC2209_UART_SINGLE_WIRE
+            UART_EnableRx(UART0, true);
+#endif
             return TMC2209_STATUS_TIMEOUT;
         }
     }
+
+#if TMC2209_UART_SINGLE_WIRE
+    uart_clear_rx_and_errors();
+    UART_EnableRx(UART0, true);
+#endif
 
     return g_uart_error ? TMC2209_STATUS_UART_ERROR : TMC2209_STATUS_OK;
 }
 
 static tmc2209_status_e read_byte_timeout(uint8_t *out, uint32_t *timeout)
 {
-    while (!rx_pop(out)) {
+    for (;;) {
+        uint8_t status = UART0->S1;
+
+        if ((status & (UART_S1_OR_MASK | UART_S1_NF_MASK | UART_S1_FE_MASK | UART_S1_PF_MASK)) != 0u) {
+            (void)UART0->D;
+            g_uart_error = true;
+            return TMC2209_STATUS_UART_ERROR;
+        }
+
+        if ((status & UART_S1_RDRF_MASK) != 0u) {
+            *out = UART0->D;
+            return TMC2209_STATUS_OK;
+        }
+
         if ((*timeout)-- == 0u) {
             return TMC2209_STATUS_TIMEOUT;
         }
     }
-
-    return g_uart_error ? TMC2209_STATUS_UART_ERROR : TMC2209_STATUS_OK;
 }
 
 static tmc2209_status_e read_valid_response(uint8_t reg, uint8_t *out)
@@ -229,60 +242,28 @@ static tmc2209_status_e write_ihold_irun(driver_motor_e motor)
     return tmc2209_write_reg(motor, TMC_REG_IHOLD_IRUN, value);
 }
 
-void UART0_RX_TX_IRQHandler(void)
+static tmc2209_status_e write_shadow_gconf(driver_motor_e motor)
 {
-#if SYSTEMVIEW
-    if (g_systrack.sysview_track) {
-        SEGGER_SYSVIEW_RecordEnterISR();
-    }
-#endif
-
-    uint8_t status = UART0->S1;
-
-    if ((status & (UART_S1_OR_MASK | UART_S1_NF_MASK | UART_S1_FE_MASK | UART_S1_PF_MASK)) != 0u) {
-        (void)UART0->D;
-        g_uart_error = true;
-    } else if ((status & UART_S1_RDRF_MASK) != 0u) {
-        uint8_t data = UART0->D;
-        if (g_rx_count < TMC2209_UART_RX_BUF_SIZE) {
-            g_rx_buf[g_rx_write] = data;
-            g_rx_write++;
-            if (g_rx_write >= TMC2209_UART_RX_BUF_SIZE) {
-                g_rx_write = 0u;
-            }
-            g_rx_count++;
-        }
-    }
-
-    UART0->C2 &= (uint8_t)~(UART_C2_TIE_MASK | UART_C2_TCIE_MASK);
-
-#if SYSTEMVIEW
-    if (g_systrack.sysview_track) {
-        SEGGER_SYSVIEW_RecordExitISR();
-    }
-#endif
+    return tmc2209_write_reg(motor, TMC_REG_GCONF, g_driver[motor].gconf);
 }
 
-void UART0_ERR_IRQHandler(void)
+static tmc2209_status_e write_shadow_chopconf(driver_motor_e motor)
 {
-    (void)UART0->S1;
-    (void)UART0->D;
-    g_uart_error = true;
+    return tmc2209_write_reg(motor, TMC_REG_CHOPCONF, g_driver[motor].chopconf);
+}
+
+static tmc2209_status_e write_shadow_pwmconf(driver_motor_e motor)
+{
+    return tmc2209_write_reg(motor, TMC_REG_PWMCONF, g_driver[motor].pwmconf);
 }
 
 void tmc2209_init(void)
 {
 #if TMC2209_ENABLE
-    rx_clear();
-
-    UART0->C2 &= (uint8_t)~(UART_C2_TIE_MASK | UART_C2_TCIE_MASK);
-    UART0->C2 |= (uint8_t)(UART_C2_RIE_MASK | UART_C2_RE_MASK | UART_C2_TE_MASK);
-    UART0->C3 |= (uint8_t)(UART_C3_ORIE_MASK | UART_C3_NEIE_MASK | UART_C3_FEIE_MASK);
-
-    NVIC_SetPriority(UART0_RX_TX_IRQn, 2u);
-    NVIC_EnableIRQ(UART0_RX_TX_IRQn);
-    NVIC_SetPriority(UART0_ERR_IRQn, 2u);
-    NVIC_EnableIRQ(UART0_ERR_IRQn);
+    UART_DisableInterrupts(UART0, kUART_AllInterruptsEnable);
+    UART_EnableTx(UART0, true);
+    UART_EnableRx(UART0, true);
+    uart_clear_rx_and_errors();
 
     g_initialized = true;
     (void)tmc2209_configure_defaults();
@@ -400,7 +381,7 @@ tmc2209_status_e tmc2209_set_microsteps(driver_motor_e motor, uint16_t microstep
         return TMC2209_STATUS_BAD_ARG;
     }
 
-    uint32_t chopconf = TMC_CHOPCONF_DEFAULT;
+    uint32_t chopconf = g_driver[motor].chopconf;
     chopconf &= ~TMC_CHOPCONF_MRES_MASK;
     chopconf |= ((uint32_t)mres << TMC_CHOPCONF_MRES_SHIFT);
 
@@ -416,7 +397,9 @@ tmc2209_status_e tmc2209_set_microsteps(driver_motor_e motor, uint16_t microstep
     chopconf &= ~TMC_CHOPCONF_VSENSE_MASK;
 #endif
 
-    tmc2209_status_e status = tmc2209_write_reg(motor, TMC_REG_CHOPCONF, chopconf);
+    g_driver[motor].chopconf = chopconf;
+
+    tmc2209_status_e status = write_shadow_chopconf(motor);
     if (status == TMC2209_STATUS_OK) {
         g_driver[motor].microsteps = microsteps;
     }
@@ -435,6 +418,181 @@ tmc2209_status_e tmc2209_set_microsteps_all(uint16_t microsteps)
     }
 
     return last;
+}
+
+tmc2209_status_e tmc2209_set_stealthchop(driver_motor_e motor, bool enable)
+{
+    if (!valid_motor(motor)) {
+        return TMC2209_STATUS_BAD_ARG;
+    }
+
+    if (enable) {
+        g_driver[motor].gconf &= ~TMC_GCONF_EN_SPREADCYCLE_MASK;
+    } else {
+        g_driver[motor].gconf |= TMC_GCONF_EN_SPREADCYCLE_MASK;
+    }
+
+    return write_shadow_gconf(motor);
+}
+
+tmc2209_status_e tmc2209_set_stealthchop_all(bool enable)
+{
+    tmc2209_status_e last = TMC2209_STATUS_OK;
+
+    for (uint8_t i = 0u; i < (uint8_t)DRIVER_MOTOR_COUNT; i++) {
+        tmc2209_status_e status = tmc2209_set_stealthchop((driver_motor_e)i, enable);
+        if (status != TMC2209_STATUS_OK) {
+            last = status;
+        }
+    }
+
+    return last;
+}
+
+tmc2209_status_e tmc2209_set_multistep_filter(driver_motor_e motor, bool enable)
+{
+    if (!valid_motor(motor)) {
+        return TMC2209_STATUS_BAD_ARG;
+    }
+
+    if (enable) {
+        g_driver[motor].gconf |= TMC_GCONF_MULTISTEP_FILT_MASK;
+    } else {
+        g_driver[motor].gconf &= ~TMC_GCONF_MULTISTEP_FILT_MASK;
+    }
+
+    return write_shadow_gconf(motor);
+}
+
+tmc2209_status_e tmc2209_set_powerdown_delay(driver_motor_e motor, uint8_t delay)
+{
+    if (!valid_motor(motor)) {
+        return TMC2209_STATUS_BAD_ARG;
+    }
+
+    return tmc2209_write_reg(motor, TMC_REG_TPOWERDOWN, delay);
+}
+
+tmc2209_status_e tmc2209_set_tpwmthrs(driver_motor_e motor, uint32_t threshold)
+{
+    if (!valid_motor(motor)) {
+        return TMC2209_STATUS_BAD_ARG;
+    }
+
+    return tmc2209_write_reg(motor, TMC_REG_TPWMTHRS, threshold & 0x000FFFFFul);
+}
+
+tmc2209_status_e tmc2209_set_pwm_autoscale(driver_motor_e motor, bool enable)
+{
+    if (!valid_motor(motor)) {
+        return TMC2209_STATUS_BAD_ARG;
+    }
+
+    if (enable) {
+        g_driver[motor].pwmconf |= TMC_PWMCONF_PWM_AUTOSCALE_MASK;
+    } else {
+        g_driver[motor].pwmconf &= ~TMC_PWMCONF_PWM_AUTOSCALE_MASK;
+    }
+
+    return write_shadow_pwmconf(motor);
+}
+
+tmc2209_status_e tmc2209_set_pwm_autograd(driver_motor_e motor, bool enable)
+{
+    if (!valid_motor(motor)) {
+        return TMC2209_STATUS_BAD_ARG;
+    }
+
+    if (enable) {
+        g_driver[motor].pwmconf |= TMC_PWMCONF_PWM_AUTOGRAD_MASK;
+    } else {
+        g_driver[motor].pwmconf &= ~TMC_PWMCONF_PWM_AUTOGRAD_MASK;
+    }
+
+    return write_shadow_pwmconf(motor);
+}
+
+tmc2209_status_e tmc2209_set_standstill_mode(driver_motor_e motor, tmc2209_standstill_mode_e mode)
+{
+    if (!valid_motor(motor) || (uint32_t)mode > 3u) {
+        return TMC2209_STATUS_BAD_ARG;
+    }
+
+    g_driver[motor].pwmconf &= ~TMC_PWMCONF_FREEWHEEL_MASK;
+    g_driver[motor].pwmconf |= ((uint32_t)mode << TMC_PWMCONF_FREEWHEEL_SHIFT);
+
+    return write_shadow_pwmconf(motor);
+}
+
+tmc2209_status_e tmc2209_set_stallguard_threshold(driver_motor_e motor, uint8_t threshold)
+{
+    if (!valid_motor(motor)) {
+        return TMC2209_STATUS_BAD_ARG;
+    }
+
+    return tmc2209_write_reg(motor, TMC_REG_SGTHRS, threshold);
+}
+
+tmc2209_status_e tmc2209_set_direction_inverted(driver_motor_e motor, bool inverted)
+{
+    if (!valid_motor(motor)) {
+        return TMC2209_STATUS_BAD_ARG;
+    }
+
+    if (inverted) {
+        g_driver[motor].gconf |= TMC_GCONF_SHAFT_MASK;
+    } else {
+        g_driver[motor].gconf &= ~TMC_GCONF_SHAFT_MASK;
+    }
+
+    return write_shadow_gconf(motor);
+}
+
+tmc2209_status_e tmc2209_read_ifcnt(driver_motor_e motor, uint8_t *ifcnt)
+{
+    uint32_t value = 0u;
+    tmc2209_status_e status;
+
+    if (ifcnt == NULL) {
+        return TMC2209_STATUS_BAD_ARG;
+    }
+
+    status = tmc2209_read_reg(motor, TMC_REG_IFCNT, &value);
+    if (status == TMC2209_STATUS_OK) {
+        *ifcnt = (uint8_t)(value & 0xFFu);
+    }
+    return status;
+}
+
+tmc2209_status_e tmc2209_read_gstat(driver_motor_e motor, uint32_t *gstat)
+{
+    return tmc2209_read_reg(motor, TMC_REG_GSTAT, gstat);
+}
+
+tmc2209_status_e tmc2209_read_drv_status(driver_motor_e motor, uint32_t *drv_status)
+{
+    return tmc2209_read_reg(motor, TMC_REG_DRV_STATUS, drv_status);
+}
+
+tmc2209_status_e tmc2209_read_sg_result(driver_motor_e motor, uint16_t *sg_result)
+{
+    uint32_t value = 0u;
+    tmc2209_status_e status;
+
+    if (sg_result == NULL) {
+        return TMC2209_STATUS_BAD_ARG;
+    }
+
+    status = tmc2209_read_reg(motor, TMC_REG_SG_RESULT, &value);
+    if (status == TMC2209_STATUS_OK) {
+        *sg_result = (uint16_t)(value & 0x03FFu);
+    }
+    return status;
+}
+
+tmc2209_status_e tmc2209_clear_gstat(driver_motor_e motor)
+{
+    return tmc2209_write_reg(motor, TMC_REG_GSTAT, 0x00000007u);
 }
 
 uint16_t tmc2209_get_microsteps(driver_motor_e motor)
@@ -478,18 +636,51 @@ tmc2209_status_e tmc2209_configure_defaults(void)
 
     for (uint8_t i = 0u; i < (uint8_t)DRIVER_MOTOR_COUNT; i++) {
         uint32_t gconf = TMC_GCONF_PDN_DISABLE_MASK | TMC_GCONF_MSTEP_REG_SELECT_MASK;
+        uint32_t chopconf = TMC_CHOPCONF_DEFAULT;
+        uint32_t pwmconf = TMC_PWMCONF_DEFAULT;
 
 #if TMC2209_VSENSE_LOW_CURRENT
         gconf &= ~TMC_GCONF_I_SCALE_ANALOG_MASK;
+        chopconf |= TMC_CHOPCONF_VSENSE_MASK;
 #else
         gconf |= TMC_GCONF_I_SCALE_ANALOG_MASK;
+        chopconf &= ~TMC_CHOPCONF_VSENSE_MASK;
 #endif
 
-#if TMC2209_DEFAULT_SPREADCYCLE
+#if (!TMC2209_DEFAULT_STEALTHCHOP) || TMC2209_DEFAULT_SPREADCYCLE
         gconf |= TMC_GCONF_EN_SPREADCYCLE_MASK;
 #endif
 
-        tmc2209_status_e status = tmc2209_write_reg((driver_motor_e)i, TMC_REG_GCONF, gconf);
+#if TMC2209_DEFAULT_MULTISTEP_FILT
+        gconf |= TMC_GCONF_MULTISTEP_FILT_MASK;
+#endif
+
+#if TMC2209_INTERPOLATION_ENABLE
+        chopconf |= TMC_CHOPCONF_INTPOL_MASK;
+#else
+        chopconf &= ~TMC_CHOPCONF_INTPOL_MASK;
+#endif
+
+#if TMC2209_DEFAULT_PWM_AUTOSCALE
+        pwmconf |= TMC_PWMCONF_PWM_AUTOSCALE_MASK;
+#else
+        pwmconf &= ~TMC_PWMCONF_PWM_AUTOSCALE_MASK;
+#endif
+
+#if TMC2209_DEFAULT_PWM_AUTOGRAD
+        pwmconf |= TMC_PWMCONF_PWM_AUTOGRAD_MASK;
+#else
+        pwmconf &= ~TMC_PWMCONF_PWM_AUTOGRAD_MASK;
+#endif
+
+        pwmconf &= ~TMC_PWMCONF_FREEWHEEL_MASK;
+        pwmconf |= ((uint32_t)(TMC2209_DEFAULT_FREEWHEEL & 0x03u) << TMC_PWMCONF_FREEWHEEL_SHIFT);
+
+        g_driver[i].gconf = gconf;
+        g_driver[i].chopconf = chopconf;
+        g_driver[i].pwmconf = pwmconf;
+
+        tmc2209_status_e status = write_shadow_gconf((driver_motor_e)i);
         if (status != TMC2209_STATUS_OK) {
             last = status;
         }
@@ -511,18 +702,27 @@ tmc2209_status_e tmc2209_configure_defaults(void)
             last = status;
         }
 
-#if TMC2209_DEFAULT_STEALTHCHOP
-        uint32_t pwmconf = TMC_PWMCONF_DEFAULT;
-#if TMC2209_DEFAULT_PWM_AUTOSCALE
-        pwmconf |= TMC_PWMCONF_PWM_AUTOSCALE_MASK;
-#endif
-        status = tmc2209_write_reg((driver_motor_e)i, TMC_REG_PWMCONF, pwmconf);
+        status = tmc2209_set_powerdown_delay((driver_motor_e)i, TMC2209_DEFAULT_TPOWERDOWN);
         if (status != TMC2209_STATUS_OK) {
             last = status;
         }
-#endif
 
-        (void)tmc2209_write_reg((driver_motor_e)i, TMC_REG_GSTAT, 0x00000007u);
+        status = tmc2209_set_tpwmthrs((driver_motor_e)i, TMC2209_DEFAULT_TPWMTHRS);
+        if (status != TMC2209_STATUS_OK) {
+            last = status;
+        }
+
+        status = tmc2209_set_stallguard_threshold((driver_motor_e)i, TMC2209_DEFAULT_SGTHRS);
+        if (status != TMC2209_STATUS_OK) {
+            last = status;
+        }
+
+        status = write_shadow_pwmconf((driver_motor_e)i);
+        if (status != TMC2209_STATUS_OK) {
+            last = status;
+        }
+
+        (void)tmc2209_clear_gstat((driver_motor_e)i);
     }
 
     return last;
