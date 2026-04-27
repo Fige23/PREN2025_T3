@@ -35,18 +35,31 @@
  * CURRENT SETTINGS
  * ========================================================================== */
 
-/* Set to your board's actual sense resistor. Common modules are 0.110 Ohm. */
+/*
+ * Current configuration is written in Ampere RMS motor phase current.
+ *
+ * Example:
+ *   TMC2209_HOLDCURR_X_A = 0.10f  -> about 0.10 A while standing
+ *   TMC2209_RUNCURR_X_A  = 0.42f  -> about 0.42 A while moving
+ *
+ * tmc2209.c converts these values to the TMC2209 current-scale register using
+ * RSENSE and VSENSE. No manual register conversion is needed here.
+ *
+ * Set this to your board's actual sense resistor. Common modules are 0.110 Ohm.
+ */
 #define TMC2209_RSENSE_OHM              0.110f
 
 /* 1 => lower current-scale voltage, better resolution for moderate currents. */
 #define TMC2209_GLOBAL_SCALER           0u
 #define TMC2209_VSENSE_LOW_CURRENT      1
 
+/* Hold current in A RMS: current used after the motor has stopped. */
 #define TMC2209_HOLDCURR_X_A            0.35f
 #define TMC2209_HOLDCURR_Y_A            0.35f
 #define TMC2209_HOLDCURR_Z_A            0.25f
 #define TMC2209_HOLDCURR_PHI_A          0.25f
 
+/* Run current in A RMS: current used while the motor is moving. */
 #define TMC2209_RUNCURR_X_A             0.80f
 #define TMC2209_RUNCURR_Y_A             0.80f
 #define TMC2209_RUNCURR_Z_A             0.60f
