@@ -1,49 +1,89 @@
-# PREN Puzzleroboter - Branch `feature/uart_speed_tuning`
+# PREN Puzzleroboter - UART Driver + Speed Tuning
 
-Dieser Branch erweitert die PREN-Puzzleroboter-Firmware um Runtime-Speed-Tuning
-ueber das UART-Protokoll. Ziel: Bewegungsprofile direkt am laufenden Roboter
-langsamer oder schneller testen, ohne jedes Mal `motion_config.h`,
-`home_config.h`, `pick_config.h` oder `place_config.h` umzubauen und neu zu
-flashen.
+Dieser Stand kombiniert zwei Feature-Zweige:
+
+- `test/uart-stepper-driver`: TMC2209-Treiberkonfiguration ueber UART0
+- `feature/uart_speed_tuning`: Runtime-Speed-Tuning ueber das UART-Protokoll
+
+Ziel ist eine Firmware, bei der die TMC2209-Schrittmotortreiber beim Start
+konfiguriert werden und Bewegungsprofile danach zur Laufzeit ueber UART
+langsamer oder schneller getestet werden koennen.
 
 ## Branch-Fokus
 
-- Neuer Runtime-Tuning-Layer in `source/motion/motion_tuning.c`
-- Neues UART-Kommando `TUNE`
-- Globale Speed-Skalierung fuer alle Bewegungen
-- Zusaetzliche Skalierung pro Profilgruppe:
+- TMC2209-UART-Treiber unter `source/TMC2209/`
+- Vier adressierte Treiber fuer `X`, `Y`, `Z` und `PHI`
+- Run-/Hold-Strom in Ampere RMS ueber `source/config/tmc2209_config.h`
+- Microstep-Umschaltung fuer normale Motion und Korrekturfahrten
+- Runtime-Speed-Tuning mit dem Kommando `TUNE`
+- Globale Skalierung und Skalierung pro Bewegungsgruppe:
   - `MOVE`
   - `HOME`
   - `PICK`
   - `PLACE`
   - `CORR`
-- `STATUS` zeigt die aktuellen Tuning-Werte an
-- `TUNE SHOW` zeigt die aktuell wirksamen Profile
-- `TUNE EXPORT` gibt passende `#define`-Zeilen aus, um getestete Werte spaeter
-  fest in die Config zu uebernehmen
+- `TUNE EXPORT MOVE` und `TUNE EXPORT HOME` geben reale Master-Config-Makros
+  aus, z. B. `X_MAX_SPEED_MM_S` oder `HOME_XY_FAST_MAX_MM_S`
 
-## Was wird skaliert?
+## Hardware-UARTs
 
-Die Config-Dateien auf dem neuen `master` werden in realen Einheiten gepflegt,
-z. B. `mm/s`, `mm/s^2`, `deg/s` und `deg/s^2`. Dieser Branch respektiert das:
-`TUNE EXPORT MOVE` und `TUNE EXPORT HOME` geben reale Config-Makros aus.
+| Zweck | UART | Pins | Bemerkung |
+| --- | --- | --- | --- |
+| TMC2209-Treiberbus | UART0 | PTA1 RX, PTA2 TX | Single-Wire-Bus fuer PDN_UART |
+| Bot-Protokoll | UART1 | PTC3/PTC4 oder PTE0/PTE1 | Umschaltbar mit `UART1_USE_HARDWARE_PINS` |
 
-Intern rechnet die Motion Engine weiterhin mit `motion_profile_s`, also mit den
-aus der Geometrie abgeleiteten Stepwerten:
+Die TMC2209-Adressen sind in `source/config/tmc2209_config.h` definiert:
 
 ```c
-start_step_rate_sps
-max_step_rate_sps
-accel_sps2
+#define TMC2209_ADDR_X    0u
+#define TMC2209_ADDR_Y    1u
+#define TMC2209_ADDR_Z    2u
+#define TMC2209_ADDR_PHI  3u
 ```
 
-Das Runtime-Tuning skaliert diese abgeleiteten Werte beim Start einer Bewegung.
-Die Config bleibt trotzdem auf realen Einheiten.
+## Wichtige Dateien
 
-Die Strecke, Zielposition, Geometrie, Step/mm-Werte und Limit-Switch-Logik
-werden nicht veraendert.
+```text
+source/TMC2209/                 TMC2209-UART-Treiber
+source/config/tmc2209_config.h  Treiberadressen, Strom, Microsteps, Defaults
+source/motion/motion_tuning.*   Runtime-Speed-Tuning
+source/motion/motion.c          Motion Engine mit Tuning und TMC-Microsteps
+source/proto/cmd.c              UART-Kommandos inkl. TUNE
+source/job/                     HOME, MOVE, PICK, PLACE und Korrekturfahrten
+board/peripherals.c             UART0-Initialisierung fuer TMC2209
+board/pin_mux.c                 UART0/UART1/GPIO Pin-Muxing
+```
 
-## Gueltiger Wertebereich
+## Startablauf
+
+Beim Start passiert in `init_all()`:
+
+1. Pins, Clocks und Peripherals initialisieren
+2. TMC2209-Treiber ueber UART0 initialisieren
+3. Bot-Protokoll ueber UART1 mit `115200` Baud starten
+4. FTM3-Motion-Tick konfigurieren
+5. Encoder-Position initialisieren
+6. Motion Engine initialisieren
+7. Speed-Tuning auf `100 %` initialisieren
+8. Job-System und Command-Frontend initialisieren
+
+## TMC2209-Strom und Microsteps
+
+Die Stromwerte werden direkt in Ampere RMS eingetragen:
+
+```c
+#define TMC2209_HOLDCURR_X_A  0.10f
+#define TMC2209_RUNCURR_X_A   0.42f
+```
+
+Die Umrechnung in TMC2209-Registerwerte macht `tmc2209.c` anhand von
+`TMC2209_RSENSE_OHM` und `TMC2209_VSENSE_LOW_CURRENT`.
+
+Normale Bewegungen verwenden `TMC2209_MICROSTEPS_MOVE`. Fuer geschlossene
+Korrekturfahrten kann temporaer auf `TMC2209_MICROSTEPS_CORRECTION` gewechselt
+werden; danach wird wieder auf die normalen Motion-Microsteps zurueckgestellt.
+
+## Speed-Tuning
 
 Tuning-Werte sind Prozentwerte:
 
@@ -60,13 +100,13 @@ Beispiele:
 | `150` | 1.5-fache Geschwindigkeit und Beschleunigung |
 | `200` | doppelte Geschwindigkeit und Beschleunigung |
 
-Beim Start wird alles auf `100` gesetzt. Die Werte sind nur zur Laufzeit im RAM
-gespeichert und gehen nach Reset/Power-Cycle verloren.
+Die effektive Skalierung ist:
+
+```text
+effective = GLOBAL * GROUP / 100
+```
 
 ## TUNE-Kommandos
-
-Alle Kommandos laufen ueber UART1 mit `115200 8N1`. Die Eingabe ist
-case-insensitive.
 
 Aktuelle Skalierung anzeigen:
 
@@ -93,28 +133,10 @@ TUNE SET PLACE 70
 TUNE SET CORR 50
 ```
 
-`POSCORR` ist als Alias fuer `CORR` erlaubt:
-
-```text
-TUNE SET POSCORR 50
-```
-
-Einzelne Werte abfragen:
-
-```text
-TUNE GET GLOBAL
-TUNE GET MOVE
-TUNE GET HOME
-TUNE GET PICK
-TUNE GET PLACE
-TUNE GET CORR
-```
-
 Wirksame Profile anzeigen:
 
 ```text
 TUNE SHOW
-TUNE SHOW ALL
 TUNE SHOW MOVE
 TUNE SHOW HOME
 TUNE SHOW PICK
@@ -122,7 +144,7 @@ TUNE SHOW PLACE
 TUNE SHOW CORR
 ```
 
-Wirksame Profile als Config-Makros ausgeben:
+Wirksame Profile als Config-Makros exportieren:
 
 ```text
 TUNE EXPORT
@@ -133,141 +155,11 @@ TUNE EXPORT PLACE
 TUNE EXPORT CORR
 ```
 
-Hinweis: `MOVE` und `HOME` exportieren reale Einheiten fuer die aktuellen
-Master-Configs. `PICK`, `PLACE` und `CORR` exportieren weiterhin Step-Makros,
-weil diese Configs aktuell noch als `motion_profile_s` definiert sind.
-
-## Skalierungslogik
-
-Es gibt zwei Ebenen:
-
-1. `GLOBAL` gilt fuer alle Bewegungsgruppen
-2. die jeweilige Gruppe gilt nur fuer ihren Profiltyp
-
-Die effektive Skalierung ist:
-
-```text
-effective = GLOBAL * GROUP / 100
-```
-
-Beispiel:
-
-```text
-TUNE SET GLOBAL 80
-TUNE SET MOVE 50
-```
-
-Dann laufen `MOVE`-Bewegungen effektiv mit:
-
-```text
-80 * 50 / 100 = 40 %
-```
-
-`HOME`, `PICK`, `PLACE` und `CORR` bleiben bei 80 %, solange ihre jeweilige
-Gruppenskalierung auf 100 steht.
-
-## Beispiel-Workflow zum Speed-Tuning
-
-1. Firmware flashen und UART verbinden.
-2. Verbindung pruefen:
-
-```text
-PING
-```
-
-3. Roboterposition initialisieren oder homen:
-
-```text
-SET_POS x=0 y=0 z=0 phi=0
-```
-
-4. Erst langsam testen:
-
-```text
-TUNE SET GLOBAL 40
-MOVE x=20 y=0 z=0 phi=0
-```
-
-5. Schrittweise schneller werden:
-
-```text
-TUNE SET GLOBAL 60
-MOVE x=0 y=0 z=0 phi=0
-TUNE SET GLOBAL 80
-MOVE x=20 y=0 z=0 phi=0
-```
-
-6. Wenn nur normale Fahrbewegungen schneller/langsamer werden sollen:
-
-```text
-TUNE SET GLOBAL 100
-TUNE SET MOVE 75
-```
-
-7. Aktuelle Werte ansehen:
-
-```text
-STATUS
-TUNE SHOW MOVE
-```
-
-8. Gute Werte fuer die Config exportieren:
-
-```text
-TUNE EXPORT MOVE
-```
-
-Die ausgegebenen `#define`-Zeilen koennen anschliessend als feste Werte in die
-passenden Config-Dateien uebernommen werden. Fuer `MOVE` sind das z. B.
-`X_MAX_SPEED_MM_S` oder `PHI_ACCEL_DEG_S2`, nicht mehr die abgeleiteten
-Step/s-Makros.
-
-## Betroffene Dateien
-
-Branch-spezifisch wichtig:
-
-- `source/motion/motion_tuning.h`
-- `source/motion/motion_tuning.c`
-- `source/motion/motion.h`
-- `source/motion/motion.c`
-- `source/proto/cmd.c`
-- `source/app/init.c`
-- `source/job/*.c`
-
-Die Basisprofile kommen weiterhin aus:
-
-- `source/config/motion_config.h`
-- `source/config/home_config.h`
-- `source/config/pick_config.h`
-- `source/config/place_config.h`
-- `source/config/encoder_config.h` fuer `CORR`
-
-## Integration im Code
-
-Beim Start ruft `init_all()`:
-
-```c
-motion_tuning_init();
-```
-
-Damit werden alle Skalierungen auf `100 %` gesetzt.
-
-`motion_start()` bekommt zusaetzlich einen `motion_profile_kind_e`. Dadurch kann
-jede Bewegung beim Start passend skaliert werden:
-
-```c
-MOTION_PROFILE_KIND_MOVE
-MOTION_PROFILE_KIND_HOME
-MOTION_PROFILE_KIND_PICK
-MOTION_PROFILE_KIND_PLACE
-MOTION_PROFILE_KIND_CORR
-```
-
-Die Job-Dateien geben diese Gruppe beim Starten ihrer Bewegungen mit.
+Hinweis: `MOVE` und `HOME` exportieren reale Einheiten passend zum aktuellen
+Master. `PICK`, `PLACE` und `CORR` exportieren weiterhin Step-Makros, weil diese
+Profile aktuell noch als `motion_profile_s` definiert sind.
 
 ## Normale UART-Kommandos
-
-Die bestehenden Roboterbefehle bleiben erhalten:
 
 ```text
 PING
@@ -286,25 +178,33 @@ CESTOP
 UNLATCH
 ```
 
-Bewegungsbefehle werden weiterhin asynchron in die Queue gelegt und antworten
-zuerst mit:
+Bewegungsbefehle werden asynchron in die Queue gelegt und antworten zuerst mit:
 
 ```text
 QUEUED <CMD> id=<n>
 ```
 
+## Bring-up
+
+1. TMC2209-Adresspins fuer X/Y/Z/PHI auf `0/1/2/3` setzen.
+2. PDN_UART-Bus mit UART0 verbinden:
+   - PTA2 TX ueber Serienwiderstand auf PDN_UART
+   - PTA1 RX auf denselben Busknoten
+3. UART1 fuer das Bot-Protokoll verbinden.
+4. Firmware bauen und flashen.
+5. `PING` senden und `OK PING` erwarten.
+6. Mit `STATUS` Systemzustand und Tuning-Werte pruefen.
+7. Fuer einen kontrollierten ersten Test `SET_POS x=0 y=0 z=0 phi=0` setzen.
+8. Mit kleinem Speed starten:
+
+```text
+TUNE SET GLOBAL 40
+MOVE x=20 y=0 z=0 phi=0
+```
+
+9. Schrittweise erhoehen und gute Werte mit `TUNE EXPORT ...` sichern.
+
 ## Build
-
-Voraussetzungen:
-
-- CMake
-- Ninja
-- ARM GCC Toolchain
-- MCUXpresso SDK fuer MK22FN512
-- gesetzte Umgebungsvariablen `ARMGCC_DIR`, `SdkRootDirPath` und je nach Setup
-  `POSTPROCESS_UTILITY`
-
-Build:
 
 ```powershell
 cmake --preset Debug
@@ -317,12 +217,10 @@ Ziel:
 PREN_Puzzleroboter.elf
 ```
 
-## Hinweise und Grenzen
+## Hinweise
 
-- Tuning-Werte sind nicht persistent.
-- `TUNE SET ...` beeinflusst neu gestartete Bewegungen. Bereits laufende
-  Bewegungen behalten ihr beim Start berechnetes Profil.
-- Zu hohe Werte koennen zu Schrittverlusten oder mechanisch harten Bewegungen
-  fuehren. Fuer Bring-up zuerst mit kleinen Prozentwerten testen.
-- Dieser Branch enthaelt keine TMC2209-UART-Treiberlogik; er tuned die
-  Step/Dir-Motion-Profile der bestehenden Firmware.
+- Tuning-Werte sind nur zur Laufzeit im RAM gespeichert.
+- `TUNE SET ...` beeinflusst neu gestartete Bewegungen, nicht bereits laufende.
+- Zu hohe Tuning-Werte koennen Schrittverluste verursachen.
+- Wenn `IFCNT` nach TMC2209-Writes nicht steigt, zuerst Adresse,
+  Single-Wire-Verkabelung und UART0-Pins pruefen.

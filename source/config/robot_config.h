@@ -30,6 +30,7 @@ Config file: Dieses File inkludiert alle kleineren Config Files!
 #include "encoder_config.h"
 #include "home_config.h"
 #include "motion_config.h"
+#include "tmc2209_config.h"
 
 /* ============================================================================
  * CONFIG CHECKS
@@ -73,6 +74,34 @@ Config file: Dieses File inkludiert alle kleineren Config Files!
 
 #if (ESTOP_POLL_ISR_DIVIDER < 1u)
 #error "ESTOP_POLL_ISR_DIVIDER must be >= 1"
+#endif
+
+#if (TMC2209_ENABLE != 0) && (TMC2209_ENABLE != 1)
+#error "TMC2209_ENABLE must be 0 or 1"
+#endif
+
+#if (TMC2209_MICROSTEPS_MOVE != 1u) && (TMC2209_MICROSTEPS_MOVE != 2u) && \
+    (TMC2209_MICROSTEPS_MOVE != 4u) && (TMC2209_MICROSTEPS_MOVE != 8u) && \
+    (TMC2209_MICROSTEPS_MOVE != 16u) && (TMC2209_MICROSTEPS_MOVE != 32u) && \
+    (TMC2209_MICROSTEPS_MOVE != 64u) && (TMC2209_MICROSTEPS_MOVE != 128u) && \
+    (TMC2209_MICROSTEPS_MOVE != 256u)
+#error "TMC2209_MICROSTEPS_MOVE must be a supported TMC2209 microstep value"
+#endif
+
+#if (TMC2209_MICROSTEPS_CORRECTION != 1u) && (TMC2209_MICROSTEPS_CORRECTION != 2u) && \
+    (TMC2209_MICROSTEPS_CORRECTION != 4u) && (TMC2209_MICROSTEPS_CORRECTION != 8u) && \
+    (TMC2209_MICROSTEPS_CORRECTION != 16u) && (TMC2209_MICROSTEPS_CORRECTION != 32u) && \
+    (TMC2209_MICROSTEPS_CORRECTION != 64u) && (TMC2209_MICROSTEPS_CORRECTION != 128u) && \
+    (TMC2209_MICROSTEPS_CORRECTION != 256u)
+#error "TMC2209_MICROSTEPS_CORRECTION must be a supported TMC2209 microstep value"
+#endif
+
+#if (TMC2209_DEFAULT_FREEWHEEL > 3u)
+#error "TMC2209_DEFAULT_FREEWHEEL must be 0..3"
+#endif
+
+#if (TMC2209_IHOLDDELAY > 15u)
+#error "TMC2209_IHOLDDELAY must be 0..15"
 #endif
 
 #endif /* CONFIG_ROBOT_CONFIG_H_ */

@@ -29,6 +29,7 @@ motion_start(...) startet eine Bewegung.
 #include "ftm3.h"
 #include "limit_switch.h"
 #include "poll.h"
+#include "tmc2209.h"
 #if !ENABLE_CONSOLE_UART_SIM
 #include "position.h"
 #endif
@@ -84,6 +85,18 @@ static inline uint32_t ticks_from_speed_sps(uint32_t speed_sps)
     }
 
     return period;
+}
+
+static int32_t scale_steps_per_unit_for_microsteps(int32_t nominal_steps_q1000,
+                                                   uint16_t active_microsteps,
+                                                   uint16_t nominal_microsteps)
+{
+    if (nominal_microsteps == 0u) {
+        return nominal_steps_q1000;
+    }
+
+    uint64_t num = (uint64_t)nominal_steps_q1000 * (uint64_t)active_microsteps;
+    return (int32_t)((num + (nominal_microsteps / 2u)) / (uint64_t)nominal_microsteps);
 }
 
 static uint32_t isqrt_u64(uint64_t x)
@@ -326,10 +339,14 @@ err_e motion_start(const bot_action_s *cur,
 
 
 
-    const int32_t spx   = STEPS_PER_MM_X_Q1000;
-    const int32_t spy   = STEPS_PER_MM_Y_Q1000;
-    const int32_t spz   = STEPS_PER_MM_Z_Q1000;
-    const int32_t spphi = STEPS_PER_DEG_PHI_Q1000;
+    const int32_t spx = scale_steps_per_unit_for_microsteps(
+        STEPS_PER_MM_X_Q1000, driver_get_microsteps(DRIVER_MOTOR_X), MICROSTEPS_X);
+    const int32_t spy = scale_steps_per_unit_for_microsteps(
+        STEPS_PER_MM_Y_Q1000, driver_get_microsteps(DRIVER_MOTOR_Y), MICROSTEPS_Y);
+    const int32_t spz = scale_steps_per_unit_for_microsteps(
+        STEPS_PER_MM_Z_Q1000, driver_get_microsteps(DRIVER_MOTOR_Z), MICROSTEPS_Z);
+    const int32_t spphi = scale_steps_per_unit_for_microsteps(
+        STEPS_PER_DEG_PHI_Q1000, driver_get_microsteps(DRIVER_MOTOR_PHI), MICROSTEPS_PHI);
 
     int32_t dx = cur->target_pos.x_mm_scaled    - g_status.pos_internal.x_mm_scaled;
     int32_t dy = cur->target_pos.y_mm_scaled    - g_status.pos_internal.y_mm_scaled;

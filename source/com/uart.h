@@ -17,49 +17,21 @@
 #define NEW_LINE                '\n'
 
 
-#define UART0_EN                  1     // [0|1] 1=>enable, 0=>disable
-#define UART0_PRINTF_EN           0     // [0|1] redirect printf to uart 0
-#define UART0_SCANF_EN            0     // [0|1] redirect scanf to uart 0
-#define UART0_RX_BUF_SIZE       512     // size of the receive buffer in bytes
-#define UART0_TX_BUF_SIZE       512     // size of the transmit buffer in bytes
-
 #define UART1_EN                  1     // [0|1] 1=>enable, 0=>disable
 #define UART1_PRINTF_EN           1     // [0|1] redirect printf to uart 0
 #define UART1_SCANF_EN            1     // [0|1] redirect scanf to uart 0
 #define UART1_RX_BUF_SIZE       512     // size of the receive buffer in bytes
 #define UART1_TX_BUF_SIZE       512     // size of the transmit buffer in bytes
 
-#define LPUART0_EN                0     // [0|1] 1=>enable, 0=>disable
-#define LPUART0_PRINTF_EN         0     // [0|1] redirect printf to uart 0
-#define LPUART0_SCANF_EN          0     // [0|1] redirect scanf to uart 0
-#define LPUART0_RX_BUF_SIZE     512     // size of the receive buffer in bytes
-#define LPUART0_TX_BUF_SIZE     512     // size of the transmit buffer in bytes
 
 
-#if ((PLATFORM & TINYK22) == 0)
-#undef UART1_EN
-#endif
 
-#if ((PLATFORM & MC_CAR) == 0)
-#undef UART0_EN
-#undef LPUART0_EN
-#endif
-
-
-void uart0WriteChar(char ch);
-void uart0Write(const char *str);
-void uart0WriteLine(const char *str);
-char uart0ReadChar(void);
-uint16_t uart0ReadLine(char *str, uint16_t length);
-bool uart0HasLineReceived(void);
-uint16_t uart0RxBufCount(void);
-void uart0Init(uint32_t baudrate);
 
 void uart1WriteChar(char ch);
-void uart1Write(const char *str);
-void uart1WriteLine(const char *str);
+void uart1Write(const char* str);
+void uart1WriteLine(const char* str);
 char uart1ReadChar(void);
-uint16_t uart1ReadLine(char *str, uint16_t length);
+uint16_t uart1ReadLine(char* str, uint16_t length);
 bool uart1HasLineReceived(void);
 uint16_t uart1RxBufCount(void);
 void uart1_init(uint32_t baudrate);
