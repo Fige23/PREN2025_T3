@@ -158,6 +158,10 @@ static uint32_t tune_effective_scale_pct(motion_profile_kind_e kind){
     return (global_pct * local_pct + 50u) / 100u;
 }
 
+static float tune_scale_float(float base, motion_profile_kind_e kind){
+    return base * ((float)tune_effective_scale_pct(kind) / 100.0f);
+}
+
 static void tune_print_scales(void){
     proto_reply_printf("TUNE SCALES global=%u move=%u home=%u pick=%u place=%u corr=%u%s",
         (unsigned)motion_tuning_get_global_scale_pct(),
@@ -188,7 +192,7 @@ static void tune_print_profile_summary(const char* name,
                                        motion_profile_s base_profile){
     motion_profile_s scaled = motion_tuning_apply_profile(&base_profile, kind);
 
-    proto_reply_printf("TUNE PROFILE group=%s name=%s start=%lu max=%lu accel=%lu%s",
+    proto_reply_printf("TUNE PROFILE group=%s name=%s start_sps=%lu max_sps=%lu accel_sps2=%lu%s",
         motion_tuning_kind_to_str(kind),
         name,
         (unsigned long)scaled.start_step_rate_sps,
@@ -199,6 +203,22 @@ static void tune_print_profile_summary(const char* name,
 
 static void tune_print_define_u32(const char* name, uint32_t value){
     proto_reply_printf("#define %s %luu%s", name, (unsigned long)value, EOL);
+}
+
+static void tune_print_define_float3(const char* name, float value){
+    int32_t milli = (int32_t)((value * 1000.0f) + 0.5f);
+    int32_t whole = milli / 1000;
+    int32_t frac = milli % 1000;
+
+    if(frac < 0){
+        frac = -frac;
+    }
+
+    proto_reply_printf("#define %s %ld.%03ldf%s",
+        name,
+        (long)whole,
+        (long)frac,
+        EOL);
 }
 
 static void tune_export_profile_macros(motion_profile_kind_e kind,
@@ -272,23 +292,12 @@ static void tune_show_corr_profiles(void){
 
 static void tune_show_group_profiles(motion_profile_kind_e kind){
     switch(kind){
-    case MOTION_PROFILE_KIND_MOVE:
-        tune_show_move_profiles();
-        break;
-    case MOTION_PROFILE_KIND_HOME:
-        tune_show_home_profiles();
-        break;
-    case MOTION_PROFILE_KIND_PICK:
-        tune_show_pick_profiles();
-        break;
-    case MOTION_PROFILE_KIND_PLACE:
-        tune_show_place_profiles();
-        break;
-    case MOTION_PROFILE_KIND_CORR:
-        tune_show_corr_profiles();
-        break;
-    default:
-        break;
+    case MOTION_PROFILE_KIND_MOVE: tune_show_move_profiles(); break;
+    case MOTION_PROFILE_KIND_HOME: tune_show_home_profiles(); break;
+    case MOTION_PROFILE_KIND_PICK: tune_show_pick_profiles(); break;
+    case MOTION_PROFILE_KIND_PLACE: tune_show_place_profiles(); break;
+    case MOTION_PROFILE_KIND_CORR: tune_show_corr_profiles(); break;
+    default: break;
     }
 }
 
@@ -301,33 +310,45 @@ static void tune_show_all_profiles(void){
 }
 
 static void tune_export_move_profiles(void){
-    tune_export_profile_macros(MOTION_PROFILE_KIND_MOVE,
-        "X_START_STEP_RATE_SPS", "X_MAX_STEP_RATE_SPS", "X_ACCEL_SPS2",
-        (motion_profile_s){ X_START_STEP_RATE_SPS, X_MAX_STEP_RATE_SPS, X_ACCEL_SPS2 });
-    tune_export_profile_macros(MOTION_PROFILE_KIND_MOVE,
-        "Y_START_STEP_RATE_SPS", "Y_MAX_STEP_RATE_SPS", "Y_ACCEL_SPS2",
-        (motion_profile_s){ Y_START_STEP_RATE_SPS, Y_MAX_STEP_RATE_SPS, Y_ACCEL_SPS2 });
-    tune_export_profile_macros(MOTION_PROFILE_KIND_MOVE,
-        "Z_START_STEP_RATE_SPS", "Z_MAX_STEP_RATE_SPS", "Z_ACCEL_SPS2",
-        (motion_profile_s){ Z_START_STEP_RATE_SPS, Z_MAX_STEP_RATE_SPS, Z_ACCEL_SPS2 });
-    tune_export_profile_macros(MOTION_PROFILE_KIND_MOVE,
-        "PHI_START_STEP_RATE_SPS", "PHI_MAX_STEP_RATE_SPS", "PHI_ACCEL_SPS2",
-        (motion_profile_s){ PHI_START_STEP_RATE_SPS, PHI_MAX_STEP_RATE_SPS, PHI_ACCEL_SPS2 });
+    tune_print_define_float3("X_START_SPEED_MM_S", tune_scale_float(X_START_SPEED_MM_S, MOTION_PROFILE_KIND_MOVE));
+    tune_print_define_float3("X_MAX_SPEED_MM_S", tune_scale_float(X_MAX_SPEED_MM_S, MOTION_PROFILE_KIND_MOVE));
+    tune_print_define_float3("X_ACCEL_MM_S2", tune_scale_float(X_ACCEL_MM_S2, MOTION_PROFILE_KIND_MOVE));
+    tune_print_define_float3("Y_START_SPEED_MM_S", tune_scale_float(Y_START_SPEED_MM_S, MOTION_PROFILE_KIND_MOVE));
+    tune_print_define_float3("Y_MAX_SPEED_MM_S", tune_scale_float(Y_MAX_SPEED_MM_S, MOTION_PROFILE_KIND_MOVE));
+    tune_print_define_float3("Y_ACCEL_MM_S2", tune_scale_float(Y_ACCEL_MM_S2, MOTION_PROFILE_KIND_MOVE));
+    tune_print_define_float3("Z_START_SPEED_MM_S", tune_scale_float(Z_START_SPEED_MM_S, MOTION_PROFILE_KIND_MOVE));
+    tune_print_define_float3("Z_MAX_SPEED_MM_S", tune_scale_float(Z_MAX_SPEED_MM_S, MOTION_PROFILE_KIND_MOVE));
+    tune_print_define_float3("Z_ACCEL_MM_S2", tune_scale_float(Z_ACCEL_MM_S2, MOTION_PROFILE_KIND_MOVE));
+    tune_print_define_float3("PHI_START_SPEED_DEG_S", tune_scale_float(PHI_START_SPEED_DEG_S, MOTION_PROFILE_KIND_MOVE));
+    tune_print_define_float3("PHI_MAX_SPEED_DEG_S", tune_scale_float(PHI_MAX_SPEED_DEG_S, MOTION_PROFILE_KIND_MOVE));
+    tune_print_define_float3("PHI_ACCEL_DEG_S2", tune_scale_float(PHI_ACCEL_DEG_S2, MOTION_PROFILE_KIND_MOVE));
 }
 
 static void tune_export_home_profiles(void){
-    tune_export_profile_macros(MOTION_PROFILE_KIND_HOME, "HOME_X_RELEASE_START_STEP_RATE_SPS", "HOME_X_RELEASE_MAX_STEP_RATE_SPS", "HOME_X_RELEASE_ACCEL_SPS2", (motion_profile_s){ HOME_X_RELEASE_START_STEP_RATE_SPS, HOME_X_RELEASE_MAX_STEP_RATE_SPS, HOME_X_RELEASE_ACCEL_SPS2 });
-    tune_export_profile_macros(MOTION_PROFILE_KIND_HOME, "HOME_X_FAST_START_STEP_RATE_SPS", "HOME_X_FAST_MAX_STEP_RATE_SPS", "HOME_X_FAST_ACCEL_SPS2", (motion_profile_s){ HOME_X_FAST_START_STEP_RATE_SPS, HOME_X_FAST_MAX_STEP_RATE_SPS, HOME_X_FAST_ACCEL_SPS2 });
-    tune_export_profile_macros(MOTION_PROFILE_KIND_HOME, "HOME_X_BACKOFF_START_STEP_RATE_SPS", "HOME_X_BACKOFF_MAX_STEP_RATE_SPS", "HOME_X_BACKOFF_ACCEL_SPS2", (motion_profile_s){ HOME_X_BACKOFF_START_STEP_RATE_SPS, HOME_X_BACKOFF_MAX_STEP_RATE_SPS, HOME_X_BACKOFF_ACCEL_SPS2 });
-    tune_export_profile_macros(MOTION_PROFILE_KIND_HOME, "HOME_X_SLOW_START_STEP_RATE_SPS", "HOME_X_SLOW_MAX_STEP_RATE_SPS", "HOME_X_SLOW_ACCEL_SPS2", (motion_profile_s){ HOME_X_SLOW_START_STEP_RATE_SPS, HOME_X_SLOW_MAX_STEP_RATE_SPS, HOME_X_SLOW_ACCEL_SPS2 });
-    tune_export_profile_macros(MOTION_PROFILE_KIND_HOME, "HOME_Y_RELEASE_START_STEP_RATE_SPS", "HOME_Y_RELEASE_MAX_STEP_RATE_SPS", "HOME_Y_RELEASE_ACCEL_SPS2", (motion_profile_s){ HOME_Y_RELEASE_START_STEP_RATE_SPS, HOME_Y_RELEASE_MAX_STEP_RATE_SPS, HOME_Y_RELEASE_ACCEL_SPS2 });
-    tune_export_profile_macros(MOTION_PROFILE_KIND_HOME, "HOME_Y_FAST_START_STEP_RATE_SPS", "HOME_Y_FAST_MAX_STEP_RATE_SPS", "HOME_Y_FAST_ACCEL_SPS2", (motion_profile_s){ HOME_Y_FAST_START_STEP_RATE_SPS, HOME_Y_FAST_MAX_STEP_RATE_SPS, HOME_Y_FAST_ACCEL_SPS2 });
-    tune_export_profile_macros(MOTION_PROFILE_KIND_HOME, "HOME_Y_BACKOFF_START_STEP_RATE_SPS", "HOME_Y_BACKOFF_MAX_STEP_RATE_SPS", "HOME_Y_BACKOFF_ACCEL_SPS2", (motion_profile_s){ HOME_Y_BACKOFF_START_STEP_RATE_SPS, HOME_Y_BACKOFF_MAX_STEP_RATE_SPS, HOME_Y_BACKOFF_ACCEL_SPS2 });
-    tune_export_profile_macros(MOTION_PROFILE_KIND_HOME, "HOME_Y_SLOW_START_STEP_RATE_SPS", "HOME_Y_SLOW_MAX_STEP_RATE_SPS", "HOME_Y_SLOW_ACCEL_SPS2", (motion_profile_s){ HOME_Y_SLOW_START_STEP_RATE_SPS, HOME_Y_SLOW_MAX_STEP_RATE_SPS, HOME_Y_SLOW_ACCEL_SPS2 });
-    tune_export_profile_macros(MOTION_PROFILE_KIND_HOME, "HOME_Z_RELEASE_START_STEP_RATE_SPS", "HOME_Z_RELEASE_MAX_STEP_RATE_SPS", "HOME_Z_RELEASE_ACCEL_SPS2", (motion_profile_s){ HOME_Z_RELEASE_START_STEP_RATE_SPS, HOME_Z_RELEASE_MAX_STEP_RATE_SPS, HOME_Z_RELEASE_ACCEL_SPS2 });
-    tune_export_profile_macros(MOTION_PROFILE_KIND_HOME, "HOME_Z_FAST_START_STEP_RATE_SPS", "HOME_Z_FAST_MAX_STEP_RATE_SPS", "HOME_Z_FAST_ACCEL_SPS2", (motion_profile_s){ HOME_Z_FAST_START_STEP_RATE_SPS, HOME_Z_FAST_MAX_STEP_RATE_SPS, HOME_Z_FAST_ACCEL_SPS2 });
-    tune_export_profile_macros(MOTION_PROFILE_KIND_HOME, "HOME_Z_BACKOFF_START_STEP_RATE_SPS", "HOME_Z_BACKOFF_MAX_STEP_RATE_SPS", "HOME_Z_BACKOFF_ACCEL_SPS2", (motion_profile_s){ HOME_Z_BACKOFF_START_STEP_RATE_SPS, HOME_Z_BACKOFF_MAX_STEP_RATE_SPS, HOME_Z_BACKOFF_ACCEL_SPS2 });
-    tune_export_profile_macros(MOTION_PROFILE_KIND_HOME, "HOME_Z_SLOW_START_STEP_RATE_SPS", "HOME_Z_SLOW_MAX_STEP_RATE_SPS", "HOME_Z_SLOW_ACCEL_SPS2", (motion_profile_s){ HOME_Z_SLOW_START_STEP_RATE_SPS, HOME_Z_SLOW_MAX_STEP_RATE_SPS, HOME_Z_SLOW_ACCEL_SPS2 });
+    tune_print_define_float3("HOME_XY_RELEASE_START_MM_S", tune_scale_float(HOME_XY_RELEASE_START_MM_S, MOTION_PROFILE_KIND_HOME));
+    tune_print_define_float3("HOME_XY_RELEASE_MAX_MM_S", tune_scale_float(HOME_XY_RELEASE_MAX_MM_S, MOTION_PROFILE_KIND_HOME));
+    tune_print_define_float3("HOME_XY_RELEASE_ACCEL_MM_S2", tune_scale_float(HOME_XY_RELEASE_ACCEL_MM_S2, MOTION_PROFILE_KIND_HOME));
+    tune_print_define_float3("HOME_XY_FAST_START_MM_S", tune_scale_float(HOME_XY_FAST_START_MM_S, MOTION_PROFILE_KIND_HOME));
+    tune_print_define_float3("HOME_XY_FAST_MAX_MM_S", tune_scale_float(HOME_XY_FAST_MAX_MM_S, MOTION_PROFILE_KIND_HOME));
+    tune_print_define_float3("HOME_XY_FAST_ACCEL_MM_S2", tune_scale_float(HOME_XY_FAST_ACCEL_MM_S2, MOTION_PROFILE_KIND_HOME));
+    tune_print_define_float3("HOME_XY_BACKOFF_START_MM_S", tune_scale_float(HOME_XY_BACKOFF_START_MM_S, MOTION_PROFILE_KIND_HOME));
+    tune_print_define_float3("HOME_XY_BACKOFF_MAX_MM_S", tune_scale_float(HOME_XY_BACKOFF_MAX_MM_S, MOTION_PROFILE_KIND_HOME));
+    tune_print_define_float3("HOME_XY_BACKOFF_ACCEL_MM_S2", tune_scale_float(HOME_XY_BACKOFF_ACCEL_MM_S2, MOTION_PROFILE_KIND_HOME));
+    tune_print_define_float3("HOME_XY_SLOW_START_MM_S", tune_scale_float(HOME_XY_SLOW_START_MM_S, MOTION_PROFILE_KIND_HOME));
+    tune_print_define_float3("HOME_XY_SLOW_MAX_MM_S", tune_scale_float(HOME_XY_SLOW_MAX_MM_S, MOTION_PROFILE_KIND_HOME));
+    tune_print_define_float3("HOME_XY_SLOW_ACCEL_MM_S2", tune_scale_float(HOME_XY_SLOW_ACCEL_MM_S2, MOTION_PROFILE_KIND_HOME));
+    tune_print_define_float3("HOME_Z_RELEASE_START_MM_S", tune_scale_float(HOME_Z_RELEASE_START_MM_S, MOTION_PROFILE_KIND_HOME));
+    tune_print_define_float3("HOME_Z_RELEASE_MAX_MM_S", tune_scale_float(HOME_Z_RELEASE_MAX_MM_S, MOTION_PROFILE_KIND_HOME));
+    tune_print_define_float3("HOME_Z_RELEASE_ACCEL_MM_S2", tune_scale_float(HOME_Z_RELEASE_ACCEL_MM_S2, MOTION_PROFILE_KIND_HOME));
+    tune_print_define_float3("HOME_Z_FAST_START_MM_S", tune_scale_float(HOME_Z_FAST_START_MM_S, MOTION_PROFILE_KIND_HOME));
+    tune_print_define_float3("HOME_Z_FAST_MAX_MM_S", tune_scale_float(HOME_Z_FAST_MAX_MM_S, MOTION_PROFILE_KIND_HOME));
+    tune_print_define_float3("HOME_Z_FAST_ACCEL_MM_S2", tune_scale_float(HOME_Z_FAST_ACCEL_MM_S2, MOTION_PROFILE_KIND_HOME));
+    tune_print_define_float3("HOME_Z_BACKOFF_START_MM_S", tune_scale_float(HOME_Z_BACKOFF_START_MM_S, MOTION_PROFILE_KIND_HOME));
+    tune_print_define_float3("HOME_Z_BACKOFF_MAX_MM_S", tune_scale_float(HOME_Z_BACKOFF_MAX_MM_S, MOTION_PROFILE_KIND_HOME));
+    tune_print_define_float3("HOME_Z_BACKOFF_ACCEL_MM_S2", tune_scale_float(HOME_Z_BACKOFF_ACCEL_MM_S2, MOTION_PROFILE_KIND_HOME));
+    tune_print_define_float3("HOME_Z_SLOW_START_MM_S", tune_scale_float(HOME_Z_SLOW_START_MM_S, MOTION_PROFILE_KIND_HOME));
+    tune_print_define_float3("HOME_Z_SLOW_MAX_MM_S", tune_scale_float(HOME_Z_SLOW_MAX_MM_S, MOTION_PROFILE_KIND_HOME));
+    tune_print_define_float3("HOME_Z_SLOW_ACCEL_MM_S2", tune_scale_float(HOME_Z_SLOW_ACCEL_MM_S2, MOTION_PROFILE_KIND_HOME));
 }
 
 static void tune_export_pick_profiles(void){
@@ -346,23 +367,12 @@ static void tune_export_corr_profiles(void){
 
 static void tune_export_group_profiles(motion_profile_kind_e kind){
     switch(kind){
-    case MOTION_PROFILE_KIND_MOVE:
-        tune_export_move_profiles();
-        break;
-    case MOTION_PROFILE_KIND_HOME:
-        tune_export_home_profiles();
-        break;
-    case MOTION_PROFILE_KIND_PICK:
-        tune_export_pick_profiles();
-        break;
-    case MOTION_PROFILE_KIND_PLACE:
-        tune_export_place_profiles();
-        break;
-    case MOTION_PROFILE_KIND_CORR:
-        tune_export_corr_profiles();
-        break;
-    default:
-        break;
+    case MOTION_PROFILE_KIND_MOVE: tune_export_move_profiles(); break;
+    case MOTION_PROFILE_KIND_HOME: tune_export_home_profiles(); break;
+    case MOTION_PROFILE_KIND_PICK: tune_export_pick_profiles(); break;
+    case MOTION_PROFILE_KIND_PLACE: tune_export_place_profiles(); break;
+    case MOTION_PROFILE_KIND_CORR: tune_export_corr_profiles(); break;
+    default: break;
     }
 }
 

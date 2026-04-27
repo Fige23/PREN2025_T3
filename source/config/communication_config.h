@@ -45,7 +45,7 @@ communication_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 #define DEBUG_BACKEND_SEMIHOST          1   // printf() → Debugger-Konsole
 #define DEBUG_BACKEND_UART              2   // → UART (serial_puts)
 
-#define DEBUG_BACKEND                   DEBUG_BACKEND_SEMIHOST
+#define DEBUG_BACKEND                   DEBUG_BACKEND_UART
 #else
 #define DEBUG_ENABLE                    0
 #endif

@@ -425,26 +425,26 @@ err_e motion_start(const bot_action_s *cur,
 
     switch (major_ax) {
     case AX_X:
-        base_profile.max_step_rate_sps = X_MAX_STEP_RATE_SPS;
         base_profile.start_step_rate_sps = X_START_STEP_RATE_SPS;
+        base_profile.max_step_rate_sps = X_MAX_STEP_RATE_SPS;
         base_profile.accel_sps2 = X_ACCEL_SPS2;
         break;
 
     case AX_Y:
-        base_profile.max_step_rate_sps = Y_MAX_STEP_RATE_SPS;
         base_profile.start_step_rate_sps = Y_START_STEP_RATE_SPS;
+        base_profile.max_step_rate_sps = Y_MAX_STEP_RATE_SPS;
         base_profile.accel_sps2 = Y_ACCEL_SPS2;
         break;
 
     case AX_Z:
-        base_profile.max_step_rate_sps = Z_MAX_STEP_RATE_SPS;
         base_profile.start_step_rate_sps = Z_START_STEP_RATE_SPS;
+        base_profile.max_step_rate_sps = Z_MAX_STEP_RATE_SPS;
         base_profile.accel_sps2 = Z_ACCEL_SPS2;
         break;
 
     case AX_PHI:
-        base_profile.max_step_rate_sps = PHI_MAX_STEP_RATE_SPS;
         base_profile.start_step_rate_sps = PHI_START_STEP_RATE_SPS;
+        base_profile.max_step_rate_sps = PHI_MAX_STEP_RATE_SPS;
         base_profile.accel_sps2 = PHI_ACCEL_SPS2;
         break;
 

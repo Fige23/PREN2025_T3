@@ -24,7 +24,12 @@ flashen.
 
 ## Was wird skaliert?
 
-Das Tuning skaliert jeweils diese drei Werte eines `motion_profile_s`:
+Die Config-Dateien auf dem neuen `master` werden in realen Einheiten gepflegt,
+z. B. `mm/s`, `mm/s^2`, `deg/s` und `deg/s^2`. Dieser Branch respektiert das:
+`TUNE EXPORT MOVE` und `TUNE EXPORT HOME` geben reale Config-Makros aus.
+
+Intern rechnet die Motion Engine weiterhin mit `motion_profile_s`, also mit den
+aus der Geometrie abgeleiteten Stepwerten:
 
 ```c
 start_step_rate_sps
@@ -32,11 +37,8 @@ max_step_rate_sps
 accel_sps2
 ```
 
-Das betrifft also:
-
-- Startgeschwindigkeit in Steps/s
-- Maximalgeschwindigkeit in Steps/s
-- Beschleunigung in Steps/s^2
+Das Runtime-Tuning skaliert diese abgeleiteten Werte beim Start einer Bewegung.
+Die Config bleibt trotzdem auf realen Einheiten.
 
 Die Strecke, Zielposition, Geometrie, Step/mm-Werte und Limit-Switch-Logik
 werden nicht veraendert.
@@ -131,6 +133,10 @@ TUNE EXPORT PLACE
 TUNE EXPORT CORR
 ```
 
+Hinweis: `MOVE` und `HOME` exportieren reale Einheiten fuer die aktuellen
+Master-Configs. `PICK`, `PLACE` und `CORR` exportieren weiterhin Step-Makros,
+weil diese Configs aktuell noch als `motion_profile_s` definiert sind.
+
 ## Skalierungslogik
 
 Es gibt zwei Ebenen:
@@ -212,7 +218,9 @@ TUNE EXPORT MOVE
 ```
 
 Die ausgegebenen `#define`-Zeilen koennen anschliessend als feste Werte in die
-passenden Config-Dateien uebernommen werden.
+passenden Config-Dateien uebernommen werden. Fuer `MOVE` sind das z. B.
+`X_MAX_SPEED_MM_S` oder `PHI_ACCEL_DEG_S2`, nicht mehr die abgeleiteten
+Step/s-Makros.
 
 ## Betroffene Dateien
 
@@ -318,4 +326,3 @@ PREN_Puzzleroboter.elf
   fuehren. Fuer Bring-up zuerst mit kleinen Prozentwerten testen.
 - Dieser Branch enthaelt keine TMC2209-UART-Treiberlogik; er tuned die
   Step/Dir-Motion-Profile der bestehenden Firmware.
-

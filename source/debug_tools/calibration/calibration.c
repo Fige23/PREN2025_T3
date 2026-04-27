@@ -389,15 +389,15 @@ void calibrate_n_iterations(int axis, int iterations)
     switch (axis)
     {
         case CAL_AXIS_X:
-            printf("macro: #define X_STEPS_PER_MM_Q1000 %luU\r\n", (unsigned long)steps_per_mm_q1000);
+            printf("macro: #define STEPS_PER_MM_X_Q1000 %luU\r\n", (unsigned long)steps_per_mm_q1000);
             break;
 
         case CAL_AXIS_Y:
-            printf("macro: #define Y_STEPS_PER_MM_Q1000 %luU\r\n", (unsigned long)steps_per_mm_q1000);
+            printf("macro: #define STEPS_PER_MM_Y_Q1000 %luU\r\n", (unsigned long)steps_per_mm_q1000);
             break;
 
         case CAL_AXIS_Z:
-            printf("macro: #define Z_STEPS_PER_MM_Q1000 %luU\r\n", (unsigned long)steps_per_mm_q1000);
+            printf("macro: #define STEPS_PER_MM_Z_Q1000 %luU\r\n", (unsigned long)steps_per_mm_q1000);
             break;
 
         default:
