@@ -117,6 +117,21 @@ static uint8_t mres_from_microsteps(uint16_t microsteps)
     }
 }
 
+static void uart0_configure_bus_pins(void)
+{
+    SIM->SCGC5 |= SIM_SCGC5_PORTA_MASK;
+
+    PORTA->PCR[1] = PORT_PCR_MUX(2); /* PTA1 = UART0_RX */
+    PORTA->PCR[2] = PORT_PCR_MUX(2); /* PTA2 = UART0_TX */
+
+    SIM->SOPT5 = (SIM->SOPT5 &
+                  ~(SIM_SOPT5_UART0TXSRC_MASK | SIM_SOPT5_UART0RXSRC_MASK))
+               | SIM_SOPT5_UART0TXSRC(0u)
+               | SIM_SOPT5_UART0RXSRC(0u);
+
+    UART0->C1 &= (uint8_t)~(UART_C1_LOOPS_MASK | UART_C1_RSRC_MASK);
+}
+
 static void uart_clear_rx_and_errors(void)
 {
     g_uart_error = false;
@@ -260,6 +275,7 @@ static tmc2209_status_e write_shadow_pwmconf(driver_motor_e motor)
 void tmc2209_init(void)
 {
 #if TMC2209_ENABLE
+    uart0_configure_bus_pins();
     UART_DisableInterrupts(UART0, kUART_AllInterruptsEnable);
     UART_EnableTx(UART0, true);
     UART_EnableRx(UART0, true);

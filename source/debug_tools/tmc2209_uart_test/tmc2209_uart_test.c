@@ -6,6 +6,8 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include "MK22F51212.h"
+#include "fsl_uart.h"
 #include "tmc2209.h"
 #include "debug.h"
 
@@ -17,6 +19,113 @@ typedef struct {
     const char* name;
     uint8_t address;
 } tmc2209_uart_test_axis_t;
+
+static uint8_t test_crc(const uint8_t *data, uint8_t len){
+    uint8_t crc = 0u;
+
+    for(uint8_t i = 0u; i < len; i++){
+        uint8_t current = data[i];
+
+        for(uint8_t bit = 0u; bit < 8u; bit++){
+            if(((crc >> 7) ^ (current & 0x01u)) != 0u){
+                crc = (uint8_t)((crc << 1) ^ 0x07u);
+            }
+            else{
+                crc <<= 1;
+            }
+            current >>= 1;
+        }
+    }
+
+    return crc;
+}
+
+static void clear_uart0_rx(void){
+    for(;;){
+        uint8_t status = UART0->S1;
+        if((status & (UART_S1_RDRF_MASK | UART_S1_OR_MASK | UART_S1_NF_MASK |
+                      UART_S1_FE_MASK | UART_S1_PF_MASK)) == 0u){
+            break;
+        }
+        (void)UART0->D;
+    }
+}
+
+static void configure_uart0_bus_pins(void){
+    SIM->SCGC5 |= SIM_SCGC5_PORTA_MASK;
+
+    PORTA->PCR[1] = PORT_PCR_MUX(2); /* PTA1 = UART0_RX */
+    PORTA->PCR[2] = PORT_PCR_MUX(2); /* PTA2 = UART0_TX */
+
+    SIM->SOPT5 = (SIM->SOPT5 &
+                  ~(SIM_SOPT5_UART0TXSRC_MASK | SIM_SOPT5_UART0RXSRC_MASK))
+               | SIM_SOPT5_UART0TXSRC(0u)
+               | SIM_SOPT5_UART0RXSRC(0u);
+}
+
+static uint8_t raw_echo_test(bool internal_loopback){
+    uint8_t frame[4] = {0x05u, TMC2209_ADDR_X, 0x02u, 0u};
+    uint8_t echoed = 0u;
+    uint8_t index = 0u;
+    uint32_t timeout = TMC2209_UART_TIMEOUT_LOOPS;
+    uint8_t c1_saved = UART0->C1;
+
+    frame[3] = test_crc(frame, 3u);
+
+    configure_uart0_bus_pins();
+    UART0->C2 &= (uint8_t)~(UART_C2_RIE_MASK | UART_C2_TIE_MASK | UART_C2_TCIE_MASK);
+    UART_EnableTx(UART0, false);
+    UART_EnableRx(UART0, false);
+    if(internal_loopback){
+        UART0->C1 = (uint8_t)((c1_saved & ~(UART_C1_RSRC_MASK)) | UART_C1_LOOPS_MASK);
+    }
+    else{
+        UART0->C1 = (uint8_t)(c1_saved & ~(UART_C1_LOOPS_MASK | UART_C1_RSRC_MASK));
+    }
+    UART_EnableTx(UART0, true);
+    UART_EnableRx(UART0, true);
+    clear_uart0_rx();
+
+    for(uint8_t i = 0u; i < (uint8_t)sizeof(frame); i++){
+        timeout = TMC2209_UART_TIMEOUT_LOOPS;
+        while((UART0->S1 & UART_S1_TDRE_MASK) == 0u){
+            if(--timeout == 0u){
+                UART0->C1 = c1_saved;
+                return echoed;
+            }
+        }
+        UART0->D = frame[i];
+
+        timeout = TMC2209_UART_TIMEOUT_LOOPS;
+        while(timeout-- > 0u){
+            uint8_t status = UART0->S1;
+            if((status & (UART_S1_OR_MASK | UART_S1_NF_MASK | UART_S1_FE_MASK | UART_S1_PF_MASK)) != 0u){
+                (void)UART0->D;
+                break;
+            }
+            if((status & UART_S1_RDRF_MASK) != 0u){
+                uint8_t byte = UART0->D;
+                if(byte == frame[index]){
+                    echoed++;
+                }
+                index++;
+                break;
+            }
+        }
+    }
+
+    timeout = TMC2209_UART_TIMEOUT_LOOPS;
+    while((UART0->S1 & UART_S1_TC_MASK) == 0u){
+        if(--timeout == 0u){
+            UART0->C1 = c1_saved;
+            return echoed;
+        }
+    }
+
+    clear_uart0_rx();
+    UART0->C1 = c1_saved;
+    return echoed;
+}
 
 static void print_read_u8(const char* label, tmc2209_status_e status, uint8_t value){
     if(status == TMC2209_STATUS_OK){
@@ -73,6 +182,12 @@ void tmc2209_uart_test_run(void){
         (unsigned long)TMC2209_UART_BAUDRATE,
         (unsigned long)TMC2209_UART_TIMEOUT_LOOPS,
         (unsigned int)TMC2209_UART_SINGLE_WIRE);
+    debug_printf("bus=%s tx=%s rx=%s\r\n",
+        TMC2209_UART_BUS_NAME,
+        TMC2209_UART_TX_PIN_NAME,
+        TMC2209_UART_RX_PIN_NAME);
+    debug_printf("internal-loopback echo=%u/4\r\n", (unsigned int)raw_echo_test(true));
+    debug_printf("single-wire echo=%u/4\r\n", (unsigned int)raw_echo_test(false));
 
     if(!tmc2209_is_initialized()){
         debug_printf("TMC2209 driver module is not initialized\r\n");

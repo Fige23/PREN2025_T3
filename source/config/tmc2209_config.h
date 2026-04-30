@@ -13,6 +13,9 @@
 #define TMC2209_ENABLE                  1
 #define TMC2209_UART_BAUDRATE           115200u
 #define TMC2209_UART_TIMEOUT_LOOPS      200000u
+#define TMC2209_UART_BUS_NAME           "UART0"
+#define TMC2209_UART_TX_PIN_NAME        "PTA2"
+#define TMC2209_UART_RX_PIN_NAME        "PTA1"
 
 /*
  * Board Config Tools currently configure UART0 as:

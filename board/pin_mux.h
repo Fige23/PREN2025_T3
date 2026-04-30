@@ -243,23 +243,23 @@ void BOARD_InitBootPins(void);
 #define BOARD_INITPINS_Magnet_PIN_MASK (1U << 13U)      /*!<@brief PORT pin mask */
                                                         /* @} */
 
-/*! @name PORTE0 (number 1), UART_Stepper_TX
+/*! @name PORTE0 (number 1), UART1TX
   @{ */
 
 /* Symbols to be used with PORT driver */
-#define BOARD_INITPINS_UART_Stepper_TX_PORT PORTE               /*!<@brief PORT peripheral base pointer */
-#define BOARD_INITPINS_UART_Stepper_TX_PIN 0U                   /*!<@brief PORT pin number */
-#define BOARD_INITPINS_UART_Stepper_TX_PIN_MASK (1U << 0U)      /*!<@brief PORT pin mask */
-                                                                /* @} */
+#define BOARD_INITPINS_UART1TX_PORT PORTE               /*!<@brief PORT peripheral base pointer */
+#define BOARD_INITPINS_UART1TX_PIN 0U                   /*!<@brief PORT pin number */
+#define BOARD_INITPINS_UART1TX_PIN_MASK (1U << 0U)      /*!<@brief PORT pin mask */
+                                                        /* @} */
 
-/*! @name PORTE1 (number 2), UART_Stepper_RX
+/*! @name PORTE1 (number 2), UART1RX
   @{ */
 
 /* Symbols to be used with PORT driver */
-#define BOARD_INITPINS_UART_Stepper_RX_PORT PORTE               /*!<@brief PORT peripheral base pointer */
-#define BOARD_INITPINS_UART_Stepper_RX_PIN 1U                   /*!<@brief PORT pin number */
-#define BOARD_INITPINS_UART_Stepper_RX_PIN_MASK (1U << 1U)      /*!<@brief PORT pin mask */
-                                                                /* @} */
+#define BOARD_INITPINS_UART1RX_PORT PORTE               /*!<@brief PORT peripheral base pointer */
+#define BOARD_INITPINS_UART1RX_PIN 1U                   /*!<@brief PORT pin number */
+#define BOARD_INITPINS_UART1RX_PIN_MASK (1U << 1U)      /*!<@brief PORT pin mask */
+                                                        /* @} */
 
 /*! @name PORTA5 (number 39), ENABLE_PIN
   @{ */
@@ -274,6 +274,24 @@ void BOARD_InitBootPins(void);
 #define BOARD_INITPINS_ENABLE_PIN_PIN 5U                   /*!<@brief PORT pin number */
 #define BOARD_INITPINS_ENABLE_PIN_PIN_MASK (1U << 5U)      /*!<@brief PORT pin mask */
                                                            /* @} */
+
+/*! @name PORTA1 (number 35), UART0RX
+  @{ */
+
+/* Symbols to be used with PORT driver */
+#define BOARD_INITPINS_UART0RX_PORT PORTA               /*!<@brief PORT peripheral base pointer */
+#define BOARD_INITPINS_UART0RX_PIN 1U                   /*!<@brief PORT pin number */
+#define BOARD_INITPINS_UART0RX_PIN_MASK (1U << 1U)      /*!<@brief PORT pin mask */
+                                                        /* @} */
+
+/*! @name PORTA2 (number 36), UART0TX
+  @{ */
+
+/* Symbols to be used with PORT driver */
+#define BOARD_INITPINS_UART0TX_PORT PORTA               /*!<@brief PORT peripheral base pointer */
+#define BOARD_INITPINS_UART0TX_PIN 2U                   /*!<@brief PORT pin number */
+#define BOARD_INITPINS_UART0TX_PIN_MASK (1U << 2U)      /*!<@brief PORT pin mask */
+                                                        /* @} */
 
 /*!
  * @brief 
