@@ -60,6 +60,10 @@ build_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 // Location: source/debug_tools/calibration/
 #define CALIBRATION_MODE                0
 
+// TMC2209_UART_TEST_MODE: Query all stepper drivers and print UART response status
+// Location: source/debug_tools/tmc2209_uart_test/
+#define TMC2209_UART_TEST_MODE          1
+
 // DEMO_DRAW_MODE: Draw test patterns for hardware diagnostics
 // Location: source/debug_tools/demo_draw/
 #define DEMO_DRAW_MODE					0
@@ -82,6 +86,7 @@ build_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 
 // Debug/Test features disabled in release
 #define CALIBRATION_MODE                0
+#define TMC2209_UART_TEST_MODE          0
 #define DEMO_DRAW_MODE					0
 #define POSITION_DEBUG					0
 #endif

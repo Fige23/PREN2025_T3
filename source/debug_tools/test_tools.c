@@ -18,6 +18,7 @@ test_tools.c	Created on: 25.03.2026	   Author: Fige23	Team 3
 #include "calibration.h"
 #include "demo_draw.h"
 #include "position_debug.h"
+#include "tmc2209_uart_test.h"
 
 // Test/Debug Features Coordinator
 // This file triggers various debug features based on build_config.h settings
@@ -33,6 +34,11 @@ void test_tools_run(void) {
 #if CALIBRATION_MODE
     // Run automatic calibration on startup
     calibrate_n_iterations(CAL_AXIS_X, 5);   // blocking
+#endif
+
+#if TMC2209_UART_TEST_MODE
+    // Probe every configured TMC2209 address once on startup.
+    tmc2209_uart_test_run();
 #endif
 
 #if DEMO_DRAW_MODE
