@@ -42,7 +42,9 @@ void init_all(void){
     BOARD_InitBootClocks();
     BOARD_InitBootPeripherals();    //FTM3 etc.
 
+#if TMC2209_UART_ENABLE
     tmc2209_init();                  //UART0 TMC2209 Treiberbus
+#endif
     serial_init(115200);			//UART
 
     ftm3_tick_init(STEP_TICK_HZ);   //konfiguriert periodischen Interrupt

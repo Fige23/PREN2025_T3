@@ -36,7 +36,7 @@ void test_tools_run(void) {
     calibrate_n_iterations(CAL_AXIS_X, 5);   // blocking
 #endif
 
-#if TMC2209_UART_TEST_MODE
+#if TMC2209_UART_TEST_MODE && TMC2209_UART_ENABLE
     // Probe every configured TMC2209 address once on startup.
     tmc2209_uart_test_run();
 #endif

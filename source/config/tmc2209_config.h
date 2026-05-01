@@ -10,7 +10,18 @@
  * UART BUS
  * ========================================================================== */
 
-#define TMC2209_ENABLE                  1
+/*
+ * Big mode switch:
+ *   1 = configure/control TMC2209 drivers over UART
+ *   0 = standalone drivers; ignore all TMC2209 UART configuration/tests
+ *
+ * In standalone mode the STEP/DIR motion code still runs, but all TMC2209 UART
+ * calls become no-ops and UART0 is left untouched.
+ */
+#define TMC2209_UART_ENABLE             0
+
+/* Legacy alias for older code. Prefer TMC2209_UART_ENABLE in new code. */
+#define TMC2209_ENABLE                  TMC2209_UART_ENABLE
 #define TMC2209_UART_BAUDRATE           115200u
 #define TMC2209_UART_TIMEOUT_LOOPS      200000u
 #define TMC2209_UART_BUS_NAME           "UART0"
@@ -23,7 +34,7 @@
  * TMC2209 single-wire UART usually connects TX to PDN_UART through a series
  * resistor and RX directly to the same bus node.
  */
-#define TMC2209_UART_SINGLE_WIRE        0
+#define TMC2209_UART_SINGLE_WIRE        1
 
 /* ============================================================================
  * DRIVER ADDRESSES
@@ -84,7 +95,9 @@
 #define TMC2209_INTERPOLATION_ENABLE    1
 
 /* Switch to 64 microsteps for closed-loop correction moves, then restore 8. */
-#define TMC2209_CORRECTION_MICROSTEP_ENABLE 1
+#define TMC2209_CORRECTION_MICROSTEP_REQUEST 1
+#define TMC2209_CORRECTION_MICROSTEP_ENABLE \
+    (TMC2209_UART_ENABLE && TMC2209_CORRECTION_MICROSTEP_REQUEST)
 
 /* ============================================================================
  * DEFAULT BEHAVIOR

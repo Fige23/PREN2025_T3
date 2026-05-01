@@ -2,9 +2,12 @@
 
 #include <stddef.h>
 
+#include "robot_config.h"
+
+#if TMC2209_UART_ENABLE
+
 #include "MK22F51212.h"
 #include "fsl_uart.h"
-#include "robot_config.h"
 
 #define TMC_REG_GCONF        0x00u
 #define TMC_REG_GSTAT        0x01u
@@ -632,9 +635,6 @@ tmc2209_status_e tmc2209_use_correction_microsteps(void)
 
 tmc2209_status_e tmc2209_configure_defaults(void)
 {
-#if !TMC2209_ENABLE
-    return TMC2209_STATUS_DISABLED;
-#else
     const float run[DRIVER_MOTOR_COUNT] = {
         TMC2209_RUNCURR_X_A,
         TMC2209_RUNCURR_Y_A,
@@ -742,8 +742,195 @@ tmc2209_status_e tmc2209_configure_defaults(void)
     }
 
     return last;
-#endif
 }
+
+#else /* TMC2209_UART_ENABLE */
+
+void tmc2209_init(void)
+{
+}
+
+bool tmc2209_is_initialized(void)
+{
+    return false;
+}
+
+tmc2209_status_e tmc2209_write_reg(driver_motor_e motor, uint8_t reg, uint32_t value)
+{
+    (void)motor;
+    (void)reg;
+    (void)value;
+    return TMC2209_STATUS_DISABLED;
+}
+
+tmc2209_status_e tmc2209_read_reg(driver_motor_e motor, uint8_t reg, uint32_t *value)
+{
+    (void)motor;
+    (void)reg;
+    (void)value;
+    return TMC2209_STATUS_DISABLED;
+}
+
+tmc2209_status_e tmc2209_set_hold_current(driver_motor_e motor, float current_a)
+{
+    (void)motor;
+    (void)current_a;
+    return TMC2209_STATUS_DISABLED;
+}
+
+tmc2209_status_e tmc2209_set_run_current(driver_motor_e motor, float current_a)
+{
+    (void)motor;
+    (void)current_a;
+    return TMC2209_STATUS_DISABLED;
+}
+
+tmc2209_status_e tmc2209_set_currents(driver_motor_e motor, float run_current_a, float hold_current_a)
+{
+    (void)motor;
+    (void)run_current_a;
+    (void)hold_current_a;
+    return TMC2209_STATUS_DISABLED;
+}
+
+tmc2209_status_e tmc2209_set_microsteps(driver_motor_e motor, uint16_t microsteps)
+{
+    (void)motor;
+    (void)microsteps;
+    return TMC2209_STATUS_DISABLED;
+}
+
+tmc2209_status_e tmc2209_set_microsteps_all(uint16_t microsteps)
+{
+    (void)microsteps;
+    return TMC2209_STATUS_DISABLED;
+}
+
+tmc2209_status_e tmc2209_set_stealthchop(driver_motor_e motor, bool enable)
+{
+    (void)motor;
+    (void)enable;
+    return TMC2209_STATUS_DISABLED;
+}
+
+tmc2209_status_e tmc2209_set_stealthchop_all(bool enable)
+{
+    (void)enable;
+    return TMC2209_STATUS_DISABLED;
+}
+
+tmc2209_status_e tmc2209_set_multistep_filter(driver_motor_e motor, bool enable)
+{
+    (void)motor;
+    (void)enable;
+    return TMC2209_STATUS_DISABLED;
+}
+
+tmc2209_status_e tmc2209_set_powerdown_delay(driver_motor_e motor, uint8_t delay)
+{
+    (void)motor;
+    (void)delay;
+    return TMC2209_STATUS_DISABLED;
+}
+
+tmc2209_status_e tmc2209_set_tpwmthrs(driver_motor_e motor, uint32_t threshold)
+{
+    (void)motor;
+    (void)threshold;
+    return TMC2209_STATUS_DISABLED;
+}
+
+tmc2209_status_e tmc2209_set_pwm_autoscale(driver_motor_e motor, bool enable)
+{
+    (void)motor;
+    (void)enable;
+    return TMC2209_STATUS_DISABLED;
+}
+
+tmc2209_status_e tmc2209_set_pwm_autograd(driver_motor_e motor, bool enable)
+{
+    (void)motor;
+    (void)enable;
+    return TMC2209_STATUS_DISABLED;
+}
+
+tmc2209_status_e tmc2209_set_standstill_mode(driver_motor_e motor, tmc2209_standstill_mode_e mode)
+{
+    (void)motor;
+    (void)mode;
+    return TMC2209_STATUS_DISABLED;
+}
+
+tmc2209_status_e tmc2209_set_stallguard_threshold(driver_motor_e motor, uint8_t threshold)
+{
+    (void)motor;
+    (void)threshold;
+    return TMC2209_STATUS_DISABLED;
+}
+
+tmc2209_status_e tmc2209_set_direction_inverted(driver_motor_e motor, bool inverted)
+{
+    (void)motor;
+    (void)inverted;
+    return TMC2209_STATUS_DISABLED;
+}
+
+tmc2209_status_e tmc2209_read_ifcnt(driver_motor_e motor, uint8_t *ifcnt)
+{
+    (void)motor;
+    (void)ifcnt;
+    return TMC2209_STATUS_DISABLED;
+}
+
+tmc2209_status_e tmc2209_read_gstat(driver_motor_e motor, uint32_t *gstat)
+{
+    (void)motor;
+    (void)gstat;
+    return TMC2209_STATUS_DISABLED;
+}
+
+tmc2209_status_e tmc2209_read_drv_status(driver_motor_e motor, uint32_t *drv_status)
+{
+    (void)motor;
+    (void)drv_status;
+    return TMC2209_STATUS_DISABLED;
+}
+
+tmc2209_status_e tmc2209_read_sg_result(driver_motor_e motor, uint16_t *sg_result)
+{
+    (void)motor;
+    (void)sg_result;
+    return TMC2209_STATUS_DISABLED;
+}
+
+tmc2209_status_e tmc2209_clear_gstat(driver_motor_e motor)
+{
+    (void)motor;
+    return TMC2209_STATUS_DISABLED;
+}
+
+uint16_t tmc2209_get_microsteps(driver_motor_e motor)
+{
+    (void)motor;
+    return TMC2209_MICROSTEPS_MOVE;
+}
+
+tmc2209_status_e tmc2209_use_motion_microsteps(void)
+{
+    return TMC2209_STATUS_DISABLED;
+}
+
+tmc2209_status_e tmc2209_use_correction_microsteps(void)
+{
+    return TMC2209_STATUS_DISABLED;
+}
+
+tmc2209_status_e tmc2209_configure_defaults(void)
+{
+    return TMC2209_STATUS_DISABLED;
+}
+
+#endif /* TMC2209_UART_ENABLE */
 
 const char *tmc2209_status_str(tmc2209_status_e status)
 {

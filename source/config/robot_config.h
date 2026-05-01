@@ -76,8 +76,16 @@ Config file: Dieses File inkludiert alle kleineren Config Files!
 #error "ESTOP_POLL_ISR_DIVIDER must be >= 1"
 #endif
 
-#if (TMC2209_ENABLE != 0) && (TMC2209_ENABLE != 1)
-#error "TMC2209_ENABLE must be 0 or 1"
+#if (TMC2209_UART_ENABLE != 0) && (TMC2209_UART_ENABLE != 1)
+#error "TMC2209_UART_ENABLE must be 0 or 1"
+#endif
+
+#if (TMC2209_ENABLE != TMC2209_UART_ENABLE)
+#error "TMC2209_ENABLE must stay an alias of TMC2209_UART_ENABLE"
+#endif
+
+#if (TMC2209_CORRECTION_MICROSTEP_REQUEST != 0) && (TMC2209_CORRECTION_MICROSTEP_REQUEST != 1)
+#error "TMC2209_CORRECTION_MICROSTEP_REQUEST must be 0 or 1"
 #endif
 
 #if (TMC2209_MICROSTEPS_MOVE != 1u) && (TMC2209_MICROSTEPS_MOVE != 2u) && \

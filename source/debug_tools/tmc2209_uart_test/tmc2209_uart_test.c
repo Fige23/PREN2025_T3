@@ -12,7 +12,7 @@
 #include "debug.h"
 
 
-#if TMC2209_UART_TEST_MODE
+#if TMC2209_UART_TEST_MODE && TMC2209_UART_ENABLE
 
 typedef struct {
     driver_motor_e motor;
