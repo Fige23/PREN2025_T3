@@ -23,7 +23,7 @@
  * TMC2209 single-wire UART usually connects TX to PDN_UART through a series
  * resistor and RX directly to the same bus node.
  */
-#define TMC2209_UART_SINGLE_WIRE        1
+#define TMC2209_UART_SINGLE_WIRE        0
 
 /* ============================================================================
  * DRIVER ADDRESSES
