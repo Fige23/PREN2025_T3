@@ -20,6 +20,7 @@
 #include "protocol.h"     // g_status, err_to_str(), state/error enums
 #include "proto_io.h"
 #include "robot_config.h"
+#include "motion.h"
 // -----------------------------------------------------------------------------
 // Reply helper
 // -----------------------------------------------------------------------------
