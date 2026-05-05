@@ -25,6 +25,10 @@
 // -----------------------------------------------------------------------------
 static const char* EOL = "\n";
 
+static bool s_busy = false;
+static bot_action_s s_cur;
+
+
 static const char* act_name(bot_action_e t){
     switch(t){
     case ACT_MOVE:
@@ -112,9 +116,26 @@ static bot_state_e busy_state_from_action(bot_action_e t){
 // -----------------------------------------------------------------------------
 // Bot Engine
 // -----------------------------------------------------------------------------
+
+void bot_abort_current(bool magnet_off){
+    bot_queue_clear();
+    job_abort();
+    motion_abort();
+
+    if(magnet_off){
+        magnet_on_off(false);
+    }
+    s_busy = false;
+    if(g_status.estop){
+        g_status.state = STATE_IDLE;
+    }
+    g_status.last_err = ERR_NONE;
+}
+
+
+
+
 void bot_step(void){
-    static bool busy = false;
-    static bot_action_s cur;
 
     // Wenn ESTOP aktiv: keine neuen Actions starten, Queue verwerfen
     if(g_status.estop){
@@ -122,7 +143,7 @@ void bot_step(void){
         g_status.state = STATE_EMERGENCY_STOP;
         g_status.last_err = ERR_ESTOP;
 
-        if(!busy){
+        if(!s_busy){
             return;
         }
     }
@@ -130,23 +151,23 @@ void bot_step(void){
     // -------------------------------------------------------------------------
     // 1) IDLE: nächste Action holen + starten
     // -------------------------------------------------------------------------
-    if(!busy){
-        if(!bot_dequeue(&cur)){
+    if(!s_busy){
+        if(!bot_dequeue(&s_cur)){
             return;
         }
 
         // Instant Action: MAGNET
-        if(cur.type == ACT_MAGNET){
-            magnet_on_off(cur.magnet_on);
+        if(s_cur.type == ACT_MAGNET){
+            magnet_on_off(s_cur.magnet_on);
             g_status.last_err = ERR_NONE;
-            reply_ok_action(&cur);
+            reply_ok_action(&s_cur);
             return;
         }
 
         // Busy-State für Anzeige setzen
-        g_status.state = busy_state_from_action(cur.type);
+        g_status.state = busy_state_from_action(s_cur.type);
 
-        err_e e = job_start(&cur);
+        err_e e = job_start(&s_cur);
         if(e != ERR_NONE){
             if(e == ERR_ESTOP){
                 g_status.state = STATE_EMERGENCY_STOP;
@@ -158,11 +179,11 @@ void bot_step(void){
             }
 
             g_status.last_err = e;
-            reply_err_action(&cur, e);
+            reply_err_action(&s_cur, e);
             return;
         }
 
-        busy = true;
+        s_busy = true;
         return;
     }
 
@@ -188,22 +209,22 @@ void bot_step(void){
         }
 
         g_status.last_err = je;
-        reply_err_action(&cur, je);
-        busy = false;
+        reply_err_action(&s_cur, je);
+        s_busy = false;
         return;
     }
 
     // Erfolg: Status finalisieren je nach Action
-    if(cur.type == ACT_PICK){
+    if(s_cur.type == ACT_PICK){
         g_status.has_part = true;
     }
-    else if(cur.type == ACT_PLACE){
+    else if(s_cur.type == ACT_PLACE){
         g_status.has_part = false;
     }
 
     g_status.state = STATE_IDLE;
     g_status.last_err = ERR_NONE;
-    reply_ok_action(&cur);
+    reply_ok_action(&s_cur);
 
-    busy = false;
+    s_busy = false;
 }

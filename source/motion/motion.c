@@ -269,6 +269,17 @@ limit_switch_e motion_limit_hit(void){
     return m.hit_limits;
 }
 
+void motion_abort(void){
+    __disable_irq();
+    m.active = false;
+    m.err = ERR_NONE;
+
+    __enable_irq();
+    step_set(AX_X, false);
+    step_set(AX_Y, false);
+    step_set(AX_Z, false);
+    step_set(AX_PHI, false);
+}
 
 
 static void motion_finish(err_e e){
