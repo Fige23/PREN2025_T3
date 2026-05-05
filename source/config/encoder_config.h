@@ -32,8 +32,8 @@ encoder_config.h   Created on: 24.03.2026      Author: Fige23 Team 3
  * unit: scaled mm (SCALE_MM = 1000 => 1 == 0.001 mm)
  * ========================================================================== */
 
-#define POS_TOL_X_SCALED                     20      /* 0.020 mm */
-#define POS_TOL_Y_SCALED                     20      /* 0.020 mm */
+#define POS_TOL_X_SCALED                     200      /* 0.020 mm */
+#define POS_TOL_Y_SCALED                     200      /* 0.020 mm */
 
 /* ============================================================================
  * CORRECTION CONTROLLER
