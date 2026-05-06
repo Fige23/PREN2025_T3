@@ -74,6 +74,8 @@ Motion:
   physikalischen Einheiten definiert und werden daraus in Steps/s abgeleitet
 - E-Stop wird zusaetzlich im Motion-ISR-Pfad gepollt
 - Limit-Switch-Filterung ist aktiv
+- `MOTION_TUNING_ENABLE` in `source/config/build_config.h` schaltet das
+  UART-Speed-Tuning ein. Bei `0` laufen die normalen Compile-Time-Profile.
 
 Kommunikation:
 
@@ -147,6 +149,16 @@ CLEAR_ESTOP
 
 Asynchrone Befehle antworten zuerst mit `QUEUED ... id=...`. Das finale
 `OK`/`ERR` kommt spaeter aus der Bot Engine.
+
+Wenn `MOTION_TUNING_ENABLE` auf `1` steht, ist zusaetzlich `TUNE` aktiv:
+
+```text
+TUNE GET
+TUNE SET GLOBAL 80
+TUNE SET MOVE 120
+TUNE SHOW ALL
+TUNE EXPORT MOVE
+```
 
 ## TMC2209-Testhinweise
 

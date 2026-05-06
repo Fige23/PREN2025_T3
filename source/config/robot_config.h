@@ -56,6 +56,10 @@ Config file: Dieses File inkludiert alle kleineren Config Files!
 #error "POSITION_CLOSED_LOOP_ENABLE must be 0 or 1"
 #endif
 
+#if (MOTION_TUNING_ENABLE != 0) && (MOTION_TUNING_ENABLE != 1)
+#error "MOTION_TUNING_ENABLE must be 0 or 1"
+#endif
+
 #if (DEBUG_ENABLE != 0) && (DEBUG_ENABLE != 1)
 #error "DEBUG_ENABLE must be 0 or 1"
 #endif

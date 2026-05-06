@@ -21,6 +21,7 @@ init.c	Created on: 25.03.2026	   Author: Fige23	Team 3
 #include "ftm3.h"
 #include "position.h"
 #include "motion.h"
+#include "motion_tuning.h"
 #include "job.h"
 #include "tmc2209.h"
 
@@ -54,6 +55,9 @@ void init_all(void){
     // NOTE: In POSITION_DEBUG mode, position_debug_live_loop() will block
     // before these are used, so it's safe to initialize them.
     motion_init();                  //setzt Callback-Funktion für ISR
+#if MOTION_TUNING_ENABLE
+    motion_tuning_init();           //setzt Runtime-Skalierung auf 100%
+#endif
     job_init();                     //reset j.active / j.last_err / j.corr_iter
     frontend_init();				//initialisiert aktiviertes Frontend
 }

@@ -401,7 +401,7 @@ bool job_motion_finish_step(job_motion_finish_s* ctx, err_e* out_err){
         (long)corr.target_pos.z_mm_scaled,
         (long)corr.target_pos.phi_deg_scaled);
 
-    err_e e = motion_start(&corr, limit_none, &g_pos_corr_profile);
+    err_e e = motion_start(&corr, limit_none, &g_pos_corr_profile, MOTION_PROFILE_KIND_CORR);
     if(e != ERR_NONE){
         debug_printf("CORR abort: motion_start for correction failed with err=%d\r\n", (int)e);
         restore_motion_microsteps_if_needed(ctx);

@@ -51,6 +51,7 @@ build_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 // Position feedback / closed loop
 #define POSITION_ENABLE                 1   // 0=no encoder, 1=encoder active
 #define POSITION_CLOSED_LOOP_ENABLE     1   // 0=measure only, 1=MOVE corrects position
+#define MOTION_TUNING_ENABLE            0   // 0=normal profiles, 1=UART TUNE command active
 
 // -------------------------------------------------------------------------
 // DEBUG/TEST FEATURES (for development/diagnostics)
@@ -83,6 +84,7 @@ build_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 // Position feedback / closed loop
 #define POSITION_ENABLE                 1   // 0=no encoder, 1=encoder active
 #define POSITION_CLOSED_LOOP_ENABLE     1   // Release: closed-loop correction active
+#define MOTION_TUNING_ENABLE            0   // Runtime speed tuning disabled in release by default
 
 // Debug/Test features disabled in release
 #define CALIBRATION_MODE                0

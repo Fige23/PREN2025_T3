@@ -25,6 +25,7 @@ motion_start(...) startet eine Bewegung.
 #include "protocol.h"
 #include "bot_engine.h"
 #include "robot_config.h"
+#include "motion_tuning.h"
 #include "ftm3.h"
 #include "limit_switch.h"
 #include "poll.h"
@@ -315,7 +316,10 @@ void motion_init(void){
 }
 
 //startet eine Bewegung
-err_e motion_start(const bot_action_s* cur, limit_switch_e stop_on_limits, const motion_profile_s* profile_override){
+err_e motion_start(const bot_action_s* cur,
+    limit_switch_e stop_on_limits,
+    const motion_profile_s* profile_override,
+    motion_profile_kind_e profile_kind){
 
     if(m.active){
         return ERR_INTERNAL;
@@ -461,11 +465,20 @@ err_e motion_start(const bot_action_s* cur, limit_switch_e stop_on_limits, const
     default:
         break;
     }
+    motion_profile_s selected_profile = {
+        vstart_sps,
+        vmax_sps,
+        acc_sps2
+    };
+
     if(profile_override != NULL){
-        vstart_sps = profile_override->start_step_rate_sps;
-        vmax_sps = profile_override->max_step_rate_sps;
-        acc_sps2 = profile_override->accel_sps2;
+        selected_profile = *profile_override;
     }
+
+    selected_profile = motion_tuning_apply_profile(&selected_profile, profile_kind);
+    vstart_sps = selected_profile.start_step_rate_sps;
+    vmax_sps = selected_profile.max_step_rate_sps;
+    acc_sps2 = selected_profile.accel_sps2;
 
     if(vmax_sps < 1u){
         vmax_sps = 1u;

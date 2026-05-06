@@ -139,7 +139,7 @@ static err_e home_start_x_release(void){
     a.type = ACT_HOME;
     a.target_pos = g_status.pos_internal;
     a.target_pos.x_mm_scaled += HOME_X_RELEASE_MM_SCALED;
-    return motion_start(&a, limit_none, &g_home_x_release_profile);
+    return motion_start(&a, limit_none, &g_home_x_release_profile, MOTION_PROFILE_KIND_HOME);
 }
 
 static err_e home_start_x_seek_fast(void){
@@ -147,7 +147,7 @@ static err_e home_start_x_seek_fast(void){
     a.type = ACT_HOME;
     a.target_pos = g_status.pos_internal;
     a.target_pos.x_mm_scaled -= HOME_X_SEEK_MM_SCALED;
-    return motion_start(&a, limit_x, &g_home_x_fast_profile);
+    return motion_start(&a, limit_x, &g_home_x_fast_profile, MOTION_PROFILE_KIND_HOME);
 }
 
 static err_e home_start_x_backoff(void){
@@ -155,7 +155,7 @@ static err_e home_start_x_backoff(void){
     a.type = ACT_HOME;
     a.target_pos = g_status.pos_internal;
     a.target_pos.x_mm_scaled += HOME_X_BACKOFF_MM_SCALED;
-    return motion_start(&a, limit_none, &g_home_x_backoff_profile);
+    return motion_start(&a, limit_none, &g_home_x_backoff_profile, MOTION_PROFILE_KIND_HOME);
 }
 
 static err_e home_start_x_seek_slow(void){
@@ -163,7 +163,7 @@ static err_e home_start_x_seek_slow(void){
     a.type = ACT_HOME;
     a.target_pos = g_status.pos_internal;
     a.target_pos.x_mm_scaled -= HOME_X_SEEK_MM_SCALED;
-    return motion_start(&a, limit_x, &g_home_x_slow_profile);
+    return motion_start(&a, limit_x, &g_home_x_slow_profile, MOTION_PROFILE_KIND_HOME);
 }
 #endif
 
@@ -173,7 +173,7 @@ static err_e home_start_y_release(void){
     a.type = ACT_HOME;
     a.target_pos = g_status.pos_internal;
     a.target_pos.y_mm_scaled += HOME_Y_RELEASE_MM_SCALED;
-    return motion_start(&a, limit_none, &g_home_y_release_profile);
+    return motion_start(&a, limit_none, &g_home_y_release_profile, MOTION_PROFILE_KIND_HOME);
 }
 
 static err_e home_start_y_seek_fast(void){
@@ -181,7 +181,7 @@ static err_e home_start_y_seek_fast(void){
     a.type = ACT_HOME;
     a.target_pos = g_status.pos_internal;
     a.target_pos.y_mm_scaled -= HOME_Y_SEEK_MM_SCALED;
-    return motion_start(&a, limit_y, &g_home_y_fast_profile);
+    return motion_start(&a, limit_y, &g_home_y_fast_profile, MOTION_PROFILE_KIND_HOME);
 }
 
 static err_e home_start_y_backoff(void){
@@ -189,7 +189,7 @@ static err_e home_start_y_backoff(void){
     a.type = ACT_HOME;
     a.target_pos = g_status.pos_internal;
     a.target_pos.y_mm_scaled += HOME_Y_BACKOFF_MM_SCALED;
-    return motion_start(&a, limit_none, &g_home_y_backoff_profile);
+    return motion_start(&a, limit_none, &g_home_y_backoff_profile, MOTION_PROFILE_KIND_HOME);
 }
 
 static err_e home_start_y_seek_slow(void){
@@ -197,7 +197,7 @@ static err_e home_start_y_seek_slow(void){
     a.type = ACT_HOME;
     a.target_pos = g_status.pos_internal;
     a.target_pos.y_mm_scaled -= HOME_Y_SEEK_MM_SCALED;
-    return motion_start(&a, limit_y, &g_home_y_slow_profile);
+    return motion_start(&a, limit_y, &g_home_y_slow_profile, MOTION_PROFILE_KIND_HOME);
 }
 #endif
 
@@ -207,7 +207,7 @@ static err_e home_start_z_release(void){
     a.type = ACT_HOME;
     a.target_pos = g_status.pos_internal;
     a.target_pos.z_mm_scaled += HOME_Z_RELEASE_MM_SCALED;
-    return motion_start(&a, limit_none, &g_home_z_release_profile);
+    return motion_start(&a, limit_none, &g_home_z_release_profile, MOTION_PROFILE_KIND_HOME);
 }
 
 static err_e home_start_z_seek_fast(void){
@@ -215,7 +215,7 @@ static err_e home_start_z_seek_fast(void){
     a.type = ACT_HOME;
     a.target_pos = g_status.pos_internal;
     a.target_pos.z_mm_scaled -= HOME_Z_SEEK_MM_SCALED;
-    return motion_start(&a, limit_z, &g_home_z_fast_profile);
+    return motion_start(&a, limit_z, &g_home_z_fast_profile, MOTION_PROFILE_KIND_HOME);
 }
 
 static err_e home_start_z_backoff(void){
@@ -223,7 +223,7 @@ static err_e home_start_z_backoff(void){
     a.type = ACT_HOME;
     a.target_pos = g_status.pos_internal;
     a.target_pos.z_mm_scaled += HOME_Z_BACKOFF_MM_SCALED;
-    return motion_start(&a, limit_none, &g_home_z_backoff_profile);
+    return motion_start(&a, limit_none, &g_home_z_backoff_profile, MOTION_PROFILE_KIND_HOME);
 }
 
 static err_e home_start_z_seek_slow(void){
@@ -231,7 +231,7 @@ static err_e home_start_z_seek_slow(void){
     a.type = ACT_HOME;
     a.target_pos = g_status.pos_internal;
     a.target_pos.z_mm_scaled -= HOME_Z_SEEK_MM_SCALED;
-    return motion_start(&a, limit_z, &g_home_z_slow_profile);
+    return motion_start(&a, limit_z, &g_home_z_slow_profile, MOTION_PROFILE_KIND_HOME);
 }
 #endif
 
