@@ -17,6 +17,7 @@ job_motion_finish.c	Created on: 17.03.2026	   Author: Fige23	Team 3
 #include "position.h"
 #include "debug.h"
 #include "io.h"
+#include "tmc2209.h"
 
 #if POSITION_ENABLE
 
@@ -114,6 +115,42 @@ static void set_internal_pos_exact(const robot_pos_s* p){
     g_status.pos_internal.phi_deg_scaled = p->phi_deg_scaled;
 }
 
+static void restore_motion_microsteps_if_needed(job_motion_finish_s* ctx){
+#if TMC2209_CORRECTION_MICROSTEP_ENABLE
+    if(ctx != 0 && ctx->correction_microsteps_active){
+        tmc2209_status_e ds = driver_use_motion_microsteps();
+        if(ds != TMC2209_STATUS_OK){
+            debug_printf("CORR warn: restore microsteps failed: %s\r\n",
+                tmc2209_status_str(ds));
+        }
+        ctx->correction_microsteps_active = false;
+    }
+#else
+    (void)ctx;
+#endif
+}
+
+static tmc2209_status_e enable_correction_microsteps_if_needed(job_motion_finish_s* ctx){
+#if TMC2209_CORRECTION_MICROSTEP_ENABLE
+    if(ctx == 0 || ctx->correction_microsteps_active){
+        return TMC2209_STATUS_OK;
+    }
+
+    tmc2209_status_e ds = driver_use_correction_microsteps();
+    if(ds == TMC2209_STATUS_OK){
+        ctx->correction_microsteps_active = true;
+    }
+    else{
+        debug_printf("CORR warn: correction microsteps failed: %s\r\n",
+            tmc2209_status_str(ds));
+    }
+    return ds;
+#else
+    (void)ctx;
+    return TMC2209_STATUS_OK;
+#endif
+}
+
 void job_motion_finish_init(job_motion_finish_s* ctx, const robot_pos_s* final_target){
     if(ctx == 0 || final_target == 0){
         return;
@@ -126,6 +163,7 @@ void job_motion_finish_init(job_motion_finish_s* ctx, const robot_pos_s* final_t
     ctx->prev_ey = 0;
     ctx->no_progress_count = 0u;
     ctx->prev_valid = false;
+    ctx->correction_microsteps_active = false;
 }
 
 bool job_motion_finish_step(job_motion_finish_s* ctx, err_e* out_err){
@@ -145,6 +183,7 @@ bool job_motion_finish_step(job_motion_finish_s* ctx, err_e* out_err){
     err_e me = motion_last_err();
     if(me != ERR_NONE){
         debug_printf("CORR motion finished with motion error=%d\r\n", (int)me);
+        restore_motion_microsteps_if_needed(ctx);
         if(out_err){
             *out_err = me;
         }
@@ -156,6 +195,7 @@ bool job_motion_finish_step(job_motion_finish_s* ctx, err_e* out_err){
     /* Bei normalem Zielanfahren darf ein Limit nicht stillschweigend als OK gelten */
     if(motion_stopped_by_limit()){
         debug_printf("CORR abort: unexpected limit during finish/correction\r\n");
+        restore_motion_microsteps_if_needed(ctx);
         if(out_err){
             *out_err = ERR_UNEXPECTED_LIMIT;
         }
@@ -195,6 +235,7 @@ bool job_motion_finish_step(job_motion_finish_s* ctx, err_e* out_err){
             (long)dix,
             (long)diy);
 
+        restore_motion_microsteps_if_needed(ctx);
         if(out_err){
             *out_err = ERR_ENCODER_POSITION_MISMATCH;
         }
@@ -227,6 +268,7 @@ bool job_motion_finish_step(job_motion_finish_s* ctx, err_e* out_err){
 
         /* commanded/internal sauber exakt auf Ziel setzen */
         set_internal_pos_exact(&ctx->final_target);
+        restore_motion_microsteps_if_needed(ctx);
 
         if(out_err){
             *out_err = ERR_NONE;
@@ -281,6 +323,7 @@ bool job_motion_finish_step(job_motion_finish_s* ctx, err_e* out_err){
                 debug_printf(
                     "CORR abort: no measurable total progress after %u correction cycles\r\n",
                     (unsigned)ctx->no_progress_count);
+                restore_motion_microsteps_if_needed(ctx);
                 if(out_err){
                     *out_err = ERR_ENCODER_NO_PROGRESS;
                 }
@@ -295,6 +338,7 @@ bool job_motion_finish_step(job_motion_finish_s* ctx, err_e* out_err){
             (unsigned)POS_CORR_MAX_ITERATIONS,
             (long)ex,
             (long)ey);
+        restore_motion_microsteps_if_needed(ctx);
         if(out_err){
             *out_err = ERR_ENCODER_MAX_ITERATIONS;
         }
@@ -328,11 +372,14 @@ bool job_motion_finish_step(job_motion_finish_s* ctx, err_e* out_err){
             "CORR abort: correction command became zero while still out of tolerance, err=(%ld,%ld)\r\n",
             (long)ex,
             (long)ey);
+        restore_motion_microsteps_if_needed(ctx);
         if(out_err){
             *out_err = ERR_ENCODER_NO_PROGRESS;
         }
         return true;
     }
+
+    (void)enable_correction_microsteps_if_needed(ctx);
 
     /* Neues relatives Korrektursegment auf Basis der commanded/internal Welt */
     bot_action_s corr = { 0 };
@@ -357,6 +404,7 @@ bool job_motion_finish_step(job_motion_finish_s* ctx, err_e* out_err){
     err_e e = motion_start(&corr, limit_none, &g_pos_corr_profile);
     if(e != ERR_NONE){
         debug_printf("CORR abort: motion_start for correction failed with err=%d\r\n", (int)e);
+        restore_motion_microsteps_if_needed(ctx);
         if(out_err){
             *out_err = e;
         }
@@ -373,6 +421,7 @@ bool job_motion_finish_step(job_motion_finish_s* ctx, err_e* out_err){
 #else
     /* Ohne closed-loop ist nach sauberem Motion-Ende alles fertig */
     set_internal_pos_exact(&ctx->final_target);
+    restore_motion_microsteps_if_needed(ctx);
 
     if(out_err){
         *out_err = ERR_NONE;

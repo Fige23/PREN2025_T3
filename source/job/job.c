@@ -39,6 +39,10 @@ void job_init(void){
     j.type = JOB_TYPE_NONE;
 }
 
+void job_abort(void){
+    job_init();
+}
+
 bool job_is_active(void){
     return j.active;
 }

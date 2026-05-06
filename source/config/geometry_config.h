@@ -107,8 +107,8 @@ geometry_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 #define LIMIT_Y_MAX                      255
 #define LIMIT_Z_MIN                      0
 #define LIMIT_Z_MAX                      150
-#define LIMIT_PHI_MIN                   -180
-#define LIMIT_PHI_MAX                    180
+#define LIMIT_PHI_MIN                   -360
+#define LIMIT_PHI_MAX                    360
 
 // Safe-Z Hoehe fuer PICK/PLACE Sequenzen
 // MOVE ignoriert Safe-Z bewusst

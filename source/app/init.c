@@ -22,6 +22,7 @@ init.c	Created on: 25.03.2026	   Author: Fige23	Team 3
 #include "position.h"
 #include "motion.h"
 #include "job.h"
+#include "tmc2209.h"
 
 static void frontend_init(void)
 {
@@ -41,6 +42,9 @@ void init_all(void){
     BOARD_InitBootClocks();
     BOARD_InitBootPeripherals();    //FTM3 etc.
 
+#if TMC2209_UART_ENABLE
+    tmc2209_init();                  //UART0 TMC2209 Treiberbus
+#endif
     serial_init(115200);			//UART
 
     ftm3_tick_init(STEP_TICK_HZ);   //konfiguriert periodischen Interrupt

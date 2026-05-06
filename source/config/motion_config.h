@@ -36,10 +36,10 @@ motion_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 // E-STOP polling mode:
 // - EDGE: latch only on rising edge (original behavior)
 // - LEVEL_LATCH: latch whenever pin is active (more robust against missed edges)
-#define ESTOP_POLL_MODE_EDGE            0
-#define ESTOP_POLL_MODE_LEVEL_LATCH     1
+#define ESTOP_POLL_MODE_EDGE            1
+#define ESTOP_POLL_MODE_LEVEL_LATCH     0
 
-#define ESTOP_POLL_MODE                 ESTOP_POLL_MODE_LEVEL_LATCH
+#define ESTOP_POLL_MODE                 ESTOP_POLL_MODE_EDGE
 
 // Optional additional E-STOP polling inside motion tick ISR dispatch.
 // Keep disabled by default to minimize ISR work.

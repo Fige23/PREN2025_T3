@@ -47,7 +47,7 @@ bool job_move_step(err_e *out_err){
 	} else {
 		return false;
 	}
-	#elif
+	#else
 	return job_motion_finish_step(&jm.finish, out_err);
 	#endif
 }

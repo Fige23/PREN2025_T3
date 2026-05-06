@@ -50,7 +50,7 @@ build_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 
 // Position feedback / closed loop
 #define POSITION_ENABLE                 1   // 0=no encoder, 1=encoder active
-#define POSITION_CLOSED_LOOP_ENABLE     0   // 0=measure only, 1=MOVE corrects position
+#define POSITION_CLOSED_LOOP_ENABLE     1   // 0=measure only, 1=MOVE corrects position
 
 // -------------------------------------------------------------------------
 // DEBUG/TEST FEATURES (for development/diagnostics)
@@ -59,6 +59,10 @@ build_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 // CALIBRATION_MODE: Run automatic calibration on startup
 // Location: source/debug_tools/calibration/
 #define CALIBRATION_MODE                0
+
+// TMC2209_UART_TEST_MODE: Query all stepper drivers and print UART response status
+// Location: source/debug_tools/tmc2209_uart_test/
+#define TMC2209_UART_TEST_MODE          0
 
 // DEMO_DRAW_MODE: Draw test patterns for hardware diagnostics
 // Location: source/debug_tools/demo_draw/
@@ -82,6 +86,7 @@ build_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 
 // Debug/Test features disabled in release
 #define CALIBRATION_MODE                0
+#define TMC2209_UART_TEST_MODE          0
 #define DEMO_DRAW_MODE					0
 #define POSITION_DEBUG					0
 #endif

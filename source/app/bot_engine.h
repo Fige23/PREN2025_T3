@@ -1,13 +1,13 @@
 /*Project: PREN_Puzzleroboter
- (   (          )   (            )   ) (               )          
- )\ ))\ )    ( /(   )\ )      ( /(( /( )\ )      (  ( /(   *   )  
-(()/(()/((   )\()) (()/(   (  )\())\()|()/( (  ( )\ )\())` )  /(  
- /(_))(_))\ ((_)\   /(_))  )\((_)((_)\ /(_)))\ )((_|(_)\  ( )(_)) 
-(_))(_))((_) _((_) (_)) _ ((_)_((_)((_|_)) ((_|(_)_  ((_)(_(_())  
-| _ \ _ \ __| \| | | _ \ | | |_  /_  /| |  | __| _ )/ _ \|_   _|  
-|  _/   / _|| .` | |  _/ |_| |/ / / / | |__| _|| _ \ (_) | | |    
-|_| |_|_\___|_|\_| |_|  \___//___/___||____|___|___/\___/  |_|    
-bot.h	Created on: 14.11.2025	   Author: Fige23	Team 3                                                                
+ (   (          )   (            )   ) (               )
+ )\ ))\ )    ( /(   )\ )      ( /(( /( )\ )      (  ( /(   *   )
+(()/(()/((   )\()) (()/(   (  )\())\()|()/( (  ( )\ )\())` )  /(
+ /(_))(_))\ ((_)\   /(_))  )\((_)((_)\ /(_)))\ )((_|(_)\  ( )(_))
+(_))(_))((_) _((_) (_)) _ ((_)_((_)((_|_)) ((_|(_)_  ((_)(_(_())
+| _ \ _ \ __| \| | | _ \ | | |_  /_  /| |  | __| _ )/ _ \|_   _|
+|  _/   / _|| .` | |  _/ |_| |/ / / / | |__| _|| _ \ (_) | | |
+|_| |_|_\___|_|\_| |_|  \___//___/___||____|___|___/\___/  |_|
+bot.h	Created on: 14.11.2025	   Author: Fige23	Team 3
 */
 
 #ifndef CONTROLS_BOT_H_
@@ -18,7 +18,7 @@ bot.h	Created on: 14.11.2025	   Author: Fige23	Team 3
 #include "protocol.h"
 
 typedef enum {
-  ACT_MOVE, ACT_HOME, ACT_PICK, ACT_PLACE, ACT_MAGNET
+    ACT_MOVE, ACT_HOME, ACT_PICK, ACT_PLACE, ACT_MAGNET
 } bot_action_e;
 
 typedef struct {
@@ -32,8 +32,9 @@ typedef struct {
     uint16_t request_id;    // Antwort-Korrelation (ID)
 } bot_action_s;
 
-bool bot_enqueue(const bot_action_s *a);
+bool bot_enqueue(const bot_action_s* a);
 void bot_step(void);                  // im main-Loop aufrufen
 void bot_clear_queue(void);
+void bot_abort_current(bool magnet_off);
 
 #endif /* CONTROLS_BOT_H_ */

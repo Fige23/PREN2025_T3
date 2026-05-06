@@ -1,13 +1,13 @@
 /*Project: PREN_Puzzleroboter
- (   (          )   (            )   ) (               )          
- )\ ))\ )    ( /(   )\ )      ( /(( /( )\ )      (  ( /(   *   )  
-(()/(()/((   )\()) (()/(   (  )\())\()|()/( (  ( )\ )\())` )  /(  
- /(_))(_))\ ((_)\   /(_))  )\((_)((_)\ /(_)))\ )((_|(_)\  ( )(_)) 
-(_))(_))((_) _((_) (_)) _ ((_)_((_)((_|_)) ((_|(_)_  ((_)(_(_())  
-| _ \ _ \ __| \| | | _ \ | | |_  /_  /| |  | __| _ )/ _ \|_   _|  
-|  _/   / _|| .` | |  _/ |_| |/ / / / | |__| _|| _ \ (_) | | |    
-|_| |_|_\___|_|\_| |_|  \___//___/___||____|___|___/\___/  |_|    
-motion.h	Created on: 24.11.2025	   Author: Fige23	Team 3                                                                
+ (   (          )   (            )   ) (               )
+ )\ ))\ )    ( /(   )\ )      ( /(( /( )\ )      (  ( /(   *   )
+(()/(()/((   )\()) (()/(   (  )\())\()|()/( (  ( )\ )\())` )  /(
+ /(_))(_))\ ((_)\   /(_))  )\((_)((_)\ /(_)))\ )((_|(_)\  ( )(_))
+(_))(_))((_) _((_) (_)) _ ((_)_((_)((_|_)) ((_|(_)_  ((_)(_(_())
+| _ \ _ \ __| \| | | _ \ | | |_  /_  /| |  | __| _ )/ _ \|_   _|
+|  _/   / _|| .` | |  _/ |_| |/ / / / | |__| _|| _ \ (_) | | |
+|_| |_|_\___|_|\_| |_|  \___//___/___||____|___|___/\___/  |_|
+motion.h	Created on: 24.11.2025	   Author: Fige23	Team 3
 */
 
 #ifndef MOTION_MOTION_H_
@@ -26,11 +26,12 @@ typedef struct {
 } motion_profile_s;
 
 
-err_e motion_start(const bot_action_s *cur, limit_switch_e stop_on_limits, const motion_profile_s *profile_override);
+err_e motion_start(const bot_action_s* cur, limit_switch_e stop_on_limits, const motion_profile_s* profile_override);
 
 void motion_init(void);
 bool motion_is_done(void);
 err_e motion_last_err(void);
+void motion_abort(void);
 
 bool motion_stopped_by_limit(void);
 limit_switch_e motion_limit_hit(void);

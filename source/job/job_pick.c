@@ -47,29 +47,26 @@ static job_pick_s jp;
 
 /* Z profiles */
 static const motion_profile_s g_pick_z_down_profile = PICK_Z_DOWN_PROFILE;
-static const motion_profile_s g_pick_z_up_profile   = PICK_Z_UP_PROFILE;
+static const motion_profile_s g_pick_z_up_profile = PICK_Z_UP_PROFILE;
 
 /* -------------------------------------------------------------------------- */
 /* Helpers                                                                    */
 /* -------------------------------------------------------------------------- */
 
-static bool wait_elapsed(uint32_t start_tick, uint32_t wait_ticks)
-{
-    return (motion_get_isr_tick_count() - start_tick) >= wait_ticks;
+static bool wait_elapsed(uint32_t start_tick, uint32_t wait_ticks){
+    return (uint32_t)(motion_get_isr_tick_count() - start_tick) >= wait_ticks;
 }
 
-static void pick_enter_wait(pick_state_e next_state)
-{
+static void pick_enter_wait(pick_state_e next_state){
     jp.state = next_state;
     jp.wait_start_tick = motion_get_isr_tick_count();
 }
 
-static bool pick_fail(err_e e, err_e *out_err)
-{
+static bool pick_fail(err_e e, err_e* out_err){
     jp.state = PICK_STATE_ERROR;
     jp.last_err = e;
 
-    if (out_err != 0) {
+    if(out_err != 0){
         *out_err = e;
     }
     return true;
@@ -83,14 +80,12 @@ static bool pick_fail(err_e e, err_e *out_err)
  * Therefore:
  *   current_z > safe_z  => tool is too low, so first go up to safe z.
  */
-static bool pick_needs_raise_to_safe(void)
-{
+static bool pick_needs_raise_to_safe(void){
     return g_status.pos_internal.z_mm_scaled > PICK_Z_SAFE_POS_MM_SCALED;
 }
 
-static err_e pick_start_raise_to_safe_z(void)
-{
-    bot_action_s cmd = {0};
+static err_e pick_start_raise_to_safe_z(void){
+    bot_action_s cmd = { 0 };
 
     cmd.type = ACT_PICK;
     cmd.target_pos = g_status.pos_internal;
@@ -100,17 +95,16 @@ static err_e pick_start_raise_to_safe_z(void)
     return motion_start(&cmd, limit_none, &g_pick_z_up_profile);
 }
 
-static err_e pick_start_xy_move(const robot_pos_s *target_xy)
-{
-    bot_action_s cmd = {0};
+static err_e pick_start_xy_move(const robot_pos_s* target_xy){
+    bot_action_s cmd = { 0 };
 
     cmd.type = ACT_PICK;
     cmd.target_pos = g_status.pos_internal;
 
     /* Move only in XY to target, keep Z at safe height, phi forced to 0 for pick */
-    cmd.target_pos.x_mm_scaled   = target_xy->x_mm_scaled;
-    cmd.target_pos.y_mm_scaled   = target_xy->y_mm_scaled;
-    cmd.target_pos.z_mm_scaled   = PICK_Z_SAFE_POS_MM_SCALED;
+    cmd.target_pos.x_mm_scaled = target_xy->x_mm_scaled;
+    cmd.target_pos.y_mm_scaled = target_xy->y_mm_scaled;
+    cmd.target_pos.z_mm_scaled = PICK_Z_SAFE_POS_MM_SCALED;
     cmd.target_pos.phi_deg_scaled = 0;
 
     jp.xy_safe_target = cmd.target_pos;
@@ -119,9 +113,8 @@ static err_e pick_start_xy_move(const robot_pos_s *target_xy)
     return motion_start(&cmd, limit_none, 0);
 }
 
-static err_e pick_start_z_down(void)
-{
-    bot_action_s cmd = {0};
+static err_e pick_start_z_down(void){
+    bot_action_s cmd = { 0 };
 
     cmd.type = ACT_PICK;
     cmd.target_pos = g_status.pos_internal;
@@ -130,9 +123,8 @@ static err_e pick_start_z_down(void)
     return motion_start(&cmd, limit_none, &g_pick_z_down_profile);
 }
 
-static err_e pick_start_z_up(void)
-{
-    bot_action_s cmd = {0};
+static err_e pick_start_z_up(void){
+    bot_action_s cmd = { 0 };
 
     cmd.type = ACT_PICK;
     cmd.target_pos = g_status.pos_internal;
@@ -145,22 +137,21 @@ static err_e pick_start_z_up(void)
 /* Public API                                                                 */
 /* -------------------------------------------------------------------------- */
 
-err_e job_pick_start(const bot_action_s *a)
-{
+err_e job_pick_start(const bot_action_s* a){
     err_e e;
 
-    if (a == 0) {
+    if(a == 0){
         return ERR_INTERNAL;
     }
 
-    jp = (job_pick_s){0};
+    jp = (job_pick_s){ 0 };
     jp.state = PICK_STATE_IDLE;
     jp.last_err = ERR_NONE;
     jp.pick_target = a->target_pos;
 
-    if (pick_needs_raise_to_safe()) {
+    if(pick_needs_raise_to_safe()){
         e = pick_start_raise_to_safe_z();
-        if (e != ERR_NONE) {
+        if(e != ERR_NONE){
             jp.state = PICK_STATE_ERROR;
             jp.last_err = e;
             return e;
@@ -171,7 +162,7 @@ err_e job_pick_start(const bot_action_s *a)
     }
 
     e = pick_start_xy_move(&jp.pick_target);
-    if (e != ERR_NONE) {
+    if(e != ERR_NONE){
         jp.state = PICK_STATE_ERROR;
         jp.last_err = e;
         return e;
@@ -181,24 +172,23 @@ err_e job_pick_start(const bot_action_s *a)
     return ERR_NONE;
 }
 
-bool job_pick_step(err_e *out_err)
-{
+bool job_pick_step(err_e* out_err){
     err_e e = ERR_NONE;
     bool done = false;
 
-    switch (jp.state) {
+    switch(jp.state){
     case PICK_STATE_RAISE_TO_SAFE_Z:
-        if (!motion_is_done()) {
+        if(!motion_is_done()){
             return false;
         }
 
         e = motion_last_err();
-        if (e != ERR_NONE) {
+        if(e != ERR_NONE){
             return pick_fail(e, out_err);
         }
 
         e = pick_start_xy_move(&jp.pick_target);
-        if (e != ERR_NONE) {
+        if(e != ERR_NONE){
             return pick_fail(e, out_err);
         }
 
@@ -207,11 +197,11 @@ bool job_pick_step(err_e *out_err)
 
     case PICK_STATE_XY_MOVE:
         done = job_motion_finish_step(&jp.xy_finish, &e);
-        if (!done) {
+        if(!done){
             return false;
         }
 
-        if (e != ERR_NONE) {
+        if(e != ERR_NONE){
             return pick_fail(e, out_err);
         }
 
@@ -219,12 +209,12 @@ bool job_pick_step(err_e *out_err)
         return false;
 
     case PICK_STATE_XY_SETTLE:
-        if (!wait_elapsed(jp.wait_start_tick, PICK_WAIT_TICKS_XY_SETTLE)) {
+        if(!wait_elapsed(jp.wait_start_tick, PICK_WAIT_TICKS_XY_SETTLE)){
             return false;
         }
 
         e = pick_start_z_down();
-        if (e != ERR_NONE) {
+        if(e != ERR_NONE){
             return pick_fail(e, out_err);
         }
 
@@ -232,12 +222,12 @@ bool job_pick_step(err_e *out_err)
         return false;
 
     case PICK_STATE_Z_DOWN:
-        if (!motion_is_done()) {
+        if(!motion_is_done()){
             return false;
         }
 
         e = motion_last_err();
-        if (e != ERR_NONE) {
+        if(e != ERR_NONE){
             return pick_fail(e, out_err);
         }
 
@@ -245,7 +235,7 @@ bool job_pick_step(err_e *out_err)
         return false;
 
     case PICK_STATE_Z_DOWN_SETTLE:
-        if (!wait_elapsed(jp.wait_start_tick, PICK_WAIT_TICKS_Z_SETTLE)) {
+        if(!wait_elapsed(jp.wait_start_tick, PICK_WAIT_TICKS_Z_SETTLE)){
             return false;
         }
 
@@ -254,12 +244,12 @@ bool job_pick_step(err_e *out_err)
         return false;
 
     case PICK_STATE_MAGNET_WAIT:
-        if (!wait_elapsed(jp.wait_start_tick, PICK_WAIT_TICKS_MAGNET_GRAB)) {
+        if(!wait_elapsed(jp.wait_start_tick, PICK_WAIT_TICKS_MAGNET_GRAB)){
             return false;
         }
 
         e = pick_start_z_up();
-        if (e != ERR_NONE) {
+        if(e != ERR_NONE){
             return pick_fail(e, out_err);
         }
 
@@ -267,12 +257,12 @@ bool job_pick_step(err_e *out_err)
         return false;
 
     case PICK_STATE_Z_UP:
-        if (!motion_is_done()) {
+        if(!motion_is_done()){
             return false;
         }
 
         e = motion_last_err();
-        if (e != ERR_NONE) {
+        if(e != ERR_NONE){
             return pick_fail(e, out_err);
         }
 
@@ -280,33 +270,33 @@ bool job_pick_step(err_e *out_err)
         return false;
 
     case PICK_STATE_Z_UP_SETTLE:
-        if (!wait_elapsed(jp.wait_start_tick, PICK_WAIT_TICKS_Z_SETTLE)) {
+        if(!wait_elapsed(jp.wait_start_tick, PICK_WAIT_TICKS_Z_SETTLE)){
             return false;
         }
 
         jp.state = PICK_STATE_DONE;
         jp.last_err = ERR_NONE;
 
-        if (out_err != 0) {
+        if(out_err != 0){
             *out_err = ERR_NONE;
         }
         return true;
 
     case PICK_STATE_DONE:
-        if (out_err != 0) {
+        if(out_err != 0){
             *out_err = ERR_NONE;
         }
         return true;
 
     case PICK_STATE_ERROR:
-        if (out_err != 0) {
+        if(out_err != 0){
             *out_err = jp.last_err;
         }
         return true;
 
     case PICK_STATE_IDLE:
     default:
-        if (out_err != 0) {
+        if(out_err != 0){
             *out_err = ERR_INTERNAL;
         }
         return true;

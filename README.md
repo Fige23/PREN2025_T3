@@ -1,45 +1,86 @@
-# PREN Puzzleroboter
+# PREN Puzzleroboter - Branch `test/uart-stepper-driver`
 
 Firmware fuer den PREN-Puzzleroboter auf Basis des NXP Kinetis MK22FN512
-(TinyK22/MCUXpresso-Projekt). Der `master`-Branch beschreibt den aktuellen
-Hauptstand der Robotik-Firmware mit Step/Dir-Ansteuerung, Homing, Pick/Place,
-UART-Protokoll, Encoder-Positionsmessung und debugbaren Entwicklungsmodi.
+(TinyK22/MCUXpresso-Projekt). Dieser Branch testet die UART-Konfiguration der
+TMC2209-Schrittmotortreiber und bindet sie in die bestehende Step/Dir-Motion
+Engine ein.
 
-## Funktionsumfang
+## Fokus dieses Branches
 
-- Step/Dir-Ansteuerung fuer die Achsen `X`, `Y`, `Z` und `PHI`
-- Bewegungsplanung mit symmetrischem Beschleunigungsprofil
-- Physikalische Motion-Konfiguration in `mm/s`, `mm/s^2`, `deg/s` und
-  `deg/s^2`
-- Homing ueber Limit-Switches
-- Pick-/Place-Ablauf mit Magnetausgang
-- UART-Protokoll fuer externe Steuerung, z. B. Raspberry Pi
-- Command Queue fuer asynchrone Jobs
-- X/Y-Encoder ueber FTM1/FTM2 Quadrature Decoder
-- E-Stop- und Limit-Switch-Polling mit Filterung
-- Debug-Tools fuer Kalibration, Positionsdebug und Demo-Zeichnungen
-- SEGGER SystemView/RTT-Unterstuetzung im Debug-Build
+- Neuer TMC2209-UART-Treiber unter `source/TMC2209/`
+- Vier adressierte Treiber fuer `X`, `Y`, `Z` und `PHI`
+- Registerzugriff mit CRC, Timeout-Handling und Statuscodes
+- Default-Konfiguration fuer Strom, Microstepping, StealthChop, PWM und
+  StallGuard-nahe Diagnosewerte
+- Motion Engine verwendet die aktuell gesetzten TMC2209-Microsteps zur
+  Skalierung der Schrittwerte
+- UART0 fuer den TMC2209-Treiberbus, UART1 weiterhin fuer das Bot-Protokoll
 
 ## Projektstruktur
 
 ```text
 board/                  Pin-Mux, Clock- und Peripheral-Initialisierung
-CMSIS/                  ARM CMSIS Header
 device/, drivers/       MCUXpresso SDK / Kinetis-Treiber
-linker/                 Linker-Skripte
-startup/                Startup-Code fuer MK22
-source/app/             Initialisierung, Polling, Bot Engine
-source/com/             UART0/UART1 Low-Level-Treiber
-source/config/          Zentrale Build-, Geometrie- und Motion-Konfiguration
-source/io/              GPIO-Abstraktion fuer Step, Dir, Magnet, Limits, E-Stop
-source/job/             HOME, MOVE, PICK, PLACE Job-Logik
-source/motion/          Step/Dir Motion Engine und Limit-Switch Handling
-source/position/        Encoder-Positionsmessung
+source/app/             Systeminitialisierung, Polling, Bot Engine
+source/config/          Zentrale Konfigurationen
+source/TMC2209/         TMC2209-UART-Treiber
+source/motion/          Step/Dir Motion Engine, Limit Switch Handling
 source/proto/           UART-Protokoll und Command Parser
+source/job/             HOME, MOVE, PICK, PLACE Ablauflogik
 source/debug_tools/     Kalibration, Positionsdebug, Demo-Modi
-source/utils/           Hilfsfunktionen, Parser, FTM3-Tick
-docs/                   Architektur- und Finalisierungshinweise
+docs/                   Zusaetzliche Implementationsnotizen
 ```
+
+## Hardware-UARTs
+
+In diesem Branch sind zwei UART-Strecken relevant:
+
+| Zweck | UART | Pins | Bemerkung |
+| --- | --- | --- | --- |
+| TMC2209-Treiberbus | UART0 | PTA1 RX, PTA2 TX | Single-Wire-Bus fuer PDN_UART |
+| Externes Bot-Protokoll | UART1 | PTC3/PTC4 oder PTE0/PTE1 | Umschaltbar mit `UART1_USE_HARDWARE_PINS` |
+
+Die TMC2209-Adressen sind in `source/config/tmc2209_config.h` definiert:
+
+```c
+#define TMC2209_ADDR_X    0u
+#define TMC2209_ADDR_Y    1u
+#define TMC2209_ADDR_Z    2u
+#define TMC2209_ADDR_PHI  3u
+```
+
+Die Hardware-Adresspins der Treiber muessen dazu passen.
+
+## Wichtige Konfiguration
+
+Die zentrale Include-Datei ist `source/config/robot_config.h`. Sie zieht die
+Teilkonfigurationen ein und enthaelt Compile-Time-Checks.
+
+TMC2209:
+
+- `source/config/tmc2209_config.h`
+- `TMC2209_ENABLE` aktiviert/deaktiviert den Treiber
+- `TMC2209_UART_SINGLE_WIRE` steuert den Single-Wire-Betrieb
+- `TMC2209_MICROSTEPS_MOVE` ist aktuell `8`
+- `TMC2209_MICROSTEPS_CORRECTION` ist aktuell `64`
+- Run-/Hold-Stroeme werden pro Achse in Ampere konfiguriert
+- StealthChop ist standardmaessig aktiv
+
+Motion:
+
+- `source/config/motion_config.h`
+- `STEP_TICK_HZ` ist aktuell `50000`
+- Maximalgeschwindigkeit, Startgeschwindigkeit und Beschleunigung sind in
+  physikalischen Einheiten definiert und werden daraus in Steps/s abgeleitet
+- E-Stop wird zusaetzlich im Motion-ISR-Pfad gepollt
+- Limit-Switch-Filterung ist aktiv
+
+Kommunikation:
+
+- `source/config/communication_config.h`
+- `UART1_USE_HARDWARE_PINS = 0` nutzt die USB-C/Programmer-Pins PTC3/PTC4
+- `UART1_USE_HARDWARE_PINS = 1` nutzt die externen Hardware-Pins PTE0/PTE1
+- Das Bot-Protokoll laeuft mit `serial_init(115200)`
 
 ## Build
 
@@ -52,7 +93,7 @@ Voraussetzungen:
 - gesetzte Umgebungsvariablen `ARMGCC_DIR`, `SdkRootDirPath` und je nach Setup
   `POSTPROCESS_UTILITY`
 
-Build mit CMake Presets:
+Build mit Preset:
 
 ```powershell
 cmake --preset Debug
@@ -65,73 +106,27 @@ Das Ziel heisst:
 PREN_Puzzleroboter.elf
 ```
 
-Je nach Setup landet das Artefakt unter `cmake-build/Debug/` oder im
-`Debug/`-Ausgabeordner.
+Je nach CMake-/IDE-Setup landet das Artefakt unter `cmake-build/Debug/` oder
+im `Debug/`-Ausgabeordner.
 
-## Zentrale Konfiguration
-
-Alle Teilkonfigurationen werden ueber `source/config/robot_config.h`
-eingebunden.
-
-Wichtige Dateien:
-
-- `source/config/build_config.h`: Release/Debug, SystemView, Encoder,
-  Closed-Loop und Debug-Features
-- `source/config/communication_config.h`: UART-Protokoll, Queue-Laenge,
-  Debug-Ausgabe und Console-Simulation
-- `source/config/geometry_config.h`: Mechanik, Microstepping, Arbeitsraum und
-  Step/mm-Ableitung
-- `source/config/motion_config.h`: Motion-Timer, Beschleunigungsprofile,
-  E-Stop- und Limit-Switch-Filterung
-- `source/config/home_config.h`: Homing-Verhalten
-- `source/config/pick_config.h` und `source/config/place_config.h`:
-  Pick-/Place-Sequenzen
-- `source/config/encoder_config.h`: X/Y-Encoder-Skalierung und Invertierung
-- `source/config/calibration_config.h`: Kalibrationsparameter
-
-Im aktuellen Master ist `RELEASE` auf `0` gesetzt. Damit sind Debug-Modus,
-SystemView und Encoder-Messung aktiv, Closed-Loop-Korrektur fuer MOVE aber noch
-deaktiviert.
-
-## Hardware-Pins
-
-Die Pinbelegung wird in `board/pin_mux.c` und `board/pin_mux.h` erzeugt.
-
-| Signal | Pin/Funktion |
-| --- | --- |
-| STEP_X/Y/Z/PHI | PTD0 / PTD1 / PTD2 / PTD3 |
-| DIR_X/Y/Z/PHI | PTC8 / PTC9 / PTC10 / PTC11 |
-| ENABLE_PIN | PTA5, aktiv-low Ausgang |
-| Magnet | PTA13 |
-| E-Stop | PTA12, aktiv-low mit Pull-up |
-| Limit X/Y/Z | PTD4 / PTD5 / PTD6, aktiv-low mit Pull-up |
-| Encoder X | FTM1 Quadrature auf PTB0/PTB1 |
-| Encoder Y | FTM2 Quadrature auf PTB18/PTB19 |
-| UART1 Hardware | PTE0 TX / PTE1 RX |
-
-Fuer Entwicklung kann UART1 in `source/com/uart1.c` auf die USB-C/Programmer-
-Pins PTC3/PTC4 gelegt werden. Das wird ueber `UART1_USE_HARDWARE_PINS` in
-`source/config/communication_config.h` gesteuert.
-
-## Laufzeitablauf
+## Initialisierung zur Laufzeit
 
 Der Einstiegspunkt ist `source/main.c`.
 
 Beim Start passiert im Wesentlichen:
 
 1. Pins, Clocks und Peripherals initialisieren
-2. UART-Protokoll mit `115200` Baud starten
-3. FTM3 als periodischen Motion-Tick konfigurieren
-4. Encoder-Position initialisieren
-5. Motion Engine und Job-System initialisieren
-6. Command-Frontend initialisieren
-7. Stepper-Enable aktivieren
-8. Im Main Loop `poll_all()` und `bot_step()` ausfuehren
+2. TMC2209 ueber UART0 initialisieren und Default-Register schreiben
+3. UART1 fuer das Bot-Protokoll starten
+4. FTM3 als periodischen Motion-Tick konfigurieren
+5. Position, Motion Engine, Job-System und Command-Frontend initialisieren
+6. Stepper-Enable aktivieren
+7. Im Main Loop: `poll_all()` und `bot_step()`
 
-## UART-Protokoll
+## Bot-Protokoll
 
-Das externe Protokoll ist zeilenbasiert und laeuft ueber UART1 mit `115200 8N1`.
-Commands sind case-insensitive. Antworten enden mit `\n`.
+Das Protokoll wird zeilenbasiert ueber UART1 gelesen. Commands sind
+case-insensitive, Antworten enden mit `\n`.
 
 Nuetzliche Befehle:
 
@@ -148,53 +143,48 @@ MAGNET ON
 MAGNET OFF
 RESET
 CLEAR_ESTOP
-CESTOP
-UNLATCH
 ```
 
-Synchrone Befehle antworten direkt mit `OK ...` oder `ERR ...`.
-Bewegungs- und Job-Befehle werden in die Queue gelegt und antworten zuerst mit:
+Asynchrone Befehle antworten zuerst mit `QUEUED ... id=...`. Das finale
+`OK`/`ERR` kommt spaeter aus der Bot Engine.
 
-```text
-QUEUED <CMD> id=<n>
-```
+## TMC2209-Testhinweise
 
-Das finale `OK` oder `ERR` kommt spaeter aus der Bot Engine, wenn der Job
-abgeschlossen ist.
+Zum reinen UART-Sanity-Check eignet sich `tmc2209_read_ifcnt()`:
 
-## Koordinaten und Einheiten
+- Nach erfolgreichen Writes sollte `IFCNT` steigen
+- Wenn Writes `OK` liefern, `IFCNT` aber nicht steigt, sind typische Ursachen:
+  falsche Adresse, PDN_UART nicht verbunden, Single-Wire-Verschaltung falsch
+  oder RX/TX vertauscht
 
-- `x`, `y`, `z` werden im Protokoll in Millimeter angegeben
-- `phi` wird in Grad angegeben
-- Intern verwendet die Firmware Fixed-Point:
-  - `SCALE_MM = 1000` fuer 0.001 mm
-  - `SCALE_DEG = 100` fuer 0.01 deg
-- Mechanikwerte wie Travel pro Umdrehung und Microstepping werden in
-  `geometry_config.h` gepflegt
-- Motion-Werte fuer Geschwindigkeit und Beschleunigung stehen in
-  `motion_config.h` in physikalischen Einheiten
+Weitere Diagnosefunktionen:
 
-## Bring-up
+- `tmc2209_read_gstat()`
+- `tmc2209_read_drv_status()`
+- `tmc2209_read_sg_result()`
+- `tmc2209_clear_gstat()`
 
-1. Hardware gemaess Pinbelegung anschliessen.
-2. `UART1_USE_HARDWARE_PINS` passend zur Verbindung setzen.
-3. Firmware bauen und flashen.
-4. Serielle Verbindung mit `115200 8N1` oeffnen.
-5. Nach Start `CMD_READY` erwarten.
-6. Mit `PING` pruefen, ob die Kommunikation steht.
-7. Mit `STATUS` den aktuellen Zustand ansehen.
-8. Zum ersten Test ohne Homing `SET_POS x=0 y=0 z=0 phi=0` setzen.
-9. Kleine Einzelbewegungen mit `MOVE ...` testen.
-10. Danach Homing, Pick und Place schrittweise testen.
+## Schneller Bring-up-Ablauf
 
-## Debug-Modi
+1. TMC2209-Adresspins fuer X/Y/Z/PHI auf `0/1/2/3` setzen.
+2. PDN_UART-Bus mit UART0 verbinden:
+   - PTA2 TX ueber Serienwiderstand auf PDN_UART
+   - PTA1 RX auf denselben Busknoten
+3. Step/Dir/Enable gemaess `board/pin_mux.c` anschliessen.
+4. Firmware bauen und flashen.
+5. Ueber UART1 mit `115200 8N1` verbinden.
+6. `PING` senden und `OK PING` erwarten.
+7. Mit `STATUS` den Systemzustand pruefen.
+8. Fuer einen kontrollierten Test zuerst `SET_POS x=0 y=0 z=0 phi=0` setzen.
+9. Kleine Bewegungen mit `MOVE ...` testen.
 
-Debug- und Testfeatures werden in `source/config/build_config.h` geschaltet:
+## Offene Punkte
 
-- `CALIBRATION_MODE`: automatische Kalibration beim Start
-- `DEMO_DRAW_MODE`: Demo-Zeichnung in die Queue laden
-- `POSITION_DEBUG`: blockierende Live-Ausgabe der Encoderwerte
-- `SYSTEMVIEW`: SEGGER SystemView-Tracing aktivieren
-
-`POSITION_DEBUG` blockiert die normale Anwendung und ist nur fuer
-Encoder-Diagnose gedacht.
+- Es gibt noch keinen eigenen UART-Command fuer TMC2209-Diagnosewerte. Fuer
+  `IFCNT`, `GSTAT` oder `DRV_STATUS` muss aktuell ein Debug-Hook oder Testcode
+  verwendet werden.
+- `has_part` ist weiterhin ein softwareseitig angenommener Zustand, keine echte
+  Greif-/Ablageverifikation.
+- Die Dokumentation in `docs/IMPLEMENTATION_GUIDE_reworked.md` beschreibt
+  weitere sinnvolle Finalisierungsschritte fuer Queue-, Abort- und Reset-
+  Semantik.

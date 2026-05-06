@@ -370,30 +370,59 @@ static bool cmd_place(int argc, char** argv){
 
 // --- RESET (synchron) ---
 static bool cmd_reset(int argc, char** argv){
-    (void)argc;
-    (void)argv;
+    bool hard = false;
 
-    bot_clear_queue();
+    if(argc == 2 && strcmp(argv[1], "HARD")){
+        hard = true;
+    }
+    else if(argc != 1){
+        send_err("RESET", "SYNTAX");
+        return false;
+    }
 
-    g_status.estop = false;
-    g_status.state = STATE_IDLE;
+    //erst techn. zustand sicher freiräumen
+    bot_abort_current(true);
+
+    //puzzle zustand neu starten
+    g_status.has_part = false;
     g_status.last_err = ERR_NONE;
 
-    g_status.has_part = false;
-    g_status.homed = false;
+    //bot_clear_queue();
 
-    g_status.pos_internal.x_mm_scaled = 0;
-    g_status.pos_internal.y_mm_scaled = 0;
-    g_status.pos_internal.z_mm_scaled = 0;
-    g_status.pos_internal.phi_deg_scaled = 0;
+    if(hard){
+        g_status.homed = false;
 
-    // pos_measured bewusst NICHT künstlich nullen.
-    // Falls Encoder aktiv sind, bleibt dort der aktuell gemessene Wert stehen.
-    // Falls keine Encoder aktiv sind, wird position_poll() measured wieder aus internal ableiten.
-
-    send_ok("RESET");
+        // pos_measured bewusst NICHT künstlich nullen.
+        // Falls Encoder aktiv sind, bleibt dort der aktuell gemessene Wert stehen.
+        // Falls keine Encoder aktiv sind, wird position_poll() measured wieder aus internal ableiten.
+        g_status.pos_internal.x_mm_scaled = 0;
+        g_status.pos_internal.y_mm_scaled = 0;
+        g_status.pos_internal.z_mm_scaled = 0;
+        g_status.pos_internal.phi_deg_scaled = 0;
+    }
+    if(!g_status.estop){
+        g_status.state = STATE_IDLE;
+    }
+    send_ok(hard ? "RESET HARD" : "RESET");
     return true;
 }
+
+
+// Aborts the current job/motion
+static bool cmd_abort(int argc, char** argv){
+    if(argc != 1){
+        send_err("ABORT", "SYNTAX");
+        return false;
+    }
+    bot_abort_current(true);
+
+    g_status.last_err = ERR_NONE;
+    send_ok("ABORT");
+    return true;
+}
+
+
+
 
 static bool cmd_clear_estop(int argc, char** argv){
     (void)argc;
@@ -471,7 +500,8 @@ static const cmd_entry_s s_cmds[] = {
         { "CLEAR_ESTOP", cmd_clear_estop },
         { "CESTOP", cmd_clear_estop },
         { "UNLATCH", cmd_clear_estop },
-        { "SET_POS", cmd_set_pos}
+        { "SET_POS", cmd_set_pos},
+        { "ABORT", cmd_abort}
 };
 
 // -----------------------------------------------------------------------------

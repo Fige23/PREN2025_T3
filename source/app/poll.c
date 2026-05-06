@@ -1,13 +1,13 @@
 /*Project: PREN_Puzzleroboter
- (   (          )   (            )   ) (               )          
- )\ ))\ )    ( /(   )\ )      ( /(( /( )\ )      (  ( /(   *   )  
-(()/(()/((   )\()) (()/(   (  )\())\()|()/( (  ( )\ )\())` )  /(  
- /(_))(_))\ ((_)\   /(_))  )\((_)((_)\ /(_)))\ )((_|(_)\  ( )(_)) 
-(_))(_))((_) _((_) (_)) _ ((_)_((_)((_|_)) ((_|(_)_  ((_)(_(_())  
-| _ \ _ \ __| \| | | _ \ | | |_  /_  /| |  | __| _ )/ _ \|_   _|  
-|  _/   / _|| .` | |  _/ |_| |/ / / / | |__| _|| _ \ (_) | | |    
-|_| |_|_\___|_|\_| |_|  \___//___/___||____|___|___/\___/  |_|    
-poll.c	Created on: 25.03.2026	   Author: Fige23	Team 3                                                                
+ (   (          )   (            )   ) (               )
+ )\ ))\ )    ( /(   )\ )      ( /(( /( )\ )      (  ( /(   *   )
+(()/(()/((   )\()) (()/(   (  )\())\()|()/( (  ( )\ )\())` )  /(
+ /(_))(_))\ ((_)\   /(_))  )\((_)((_)\ /(_)))\ )((_|(_)\  ( )(_))
+(_))(_))((_) _((_) (_)) _ ((_)_((_)((_|_)) ((_|(_)_  ((_)(_(_())
+| _ \ _ \ __| \| | | _ \ | | |_  /_  /| |  | __| _ )/ _ \|_   _|
+|  _/   / _|| .` | |  _/ |_| |/ / / / | |__| _|| _ \ (_) | | |
+|_| |_|_\___|_|\_| |_|  \___//___/___||____|___|___/\___/  |_|
+poll.c	Created on: 25.03.2026	   Author: Fige23	Team 3
 */
 #include "robot_config.h"
 
@@ -16,31 +16,32 @@ poll.c	Created on: 25.03.2026	   Author: Fige23	Team 3
 #include "protocol.h"
 #include "position.h"
 #include "console_uart_sim.h"
+#include "debug.h"
 
 // polling ESTOP
-void estop_poll(void)
-{
+void estop_poll(void){
 #if ESTOP_POLL_MODE == ESTOP_POLL_MODE_EDGE
     static bool last = false;
     bool now = estop_button_pressed();
 
     // Original behavior: latch only on press edge.
-    if (now && !last) {
+    if(now && !last){
         g_status.estop = true;
+        debug_printf("ESTOP button pressed! Latching ESTOP state.\n");
     }
 
     last = now;
 #else
     // Robust behavior: latch on active level.
-    if (estop_button_pressed()) {
+    if(estop_button_pressed()){
+        //debug_printf("ESTOP button pressed! Latching ESTOP state.\n");
         g_status.estop = true;
     }
 #endif
 }
 
 
-static void frontend_poll(void)
-{
+static void frontend_poll(void){
 #if ENABLE_CONSOLE_UART_SIM
     console_uart_sim_poll();
 #else
