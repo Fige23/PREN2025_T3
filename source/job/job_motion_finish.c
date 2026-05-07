@@ -419,6 +419,20 @@ bool job_motion_finish_step(job_motion_finish_s* ctx, err_e* out_err){
 
         return false;
     }
+
+    /*
+     * Closed-loop is compiled in, but the encoder can be disabled at runtime
+     * after an encoder fault. In that mode a clean stepper motion is accepted
+     * like open-loop motion.
+     */
+    set_internal_pos_exact(&ctx->final_target);
+    restore_motion_microsteps_if_needed(ctx);
+
+    if(out_err){
+        *out_err = ERR_NONE;
+    }
+
+    return true;
 #else
     /* Ohne closed-loop ist nach sauberem Motion-Ende alles fertig */
     set_internal_pos_exact(&ctx->final_target);

@@ -727,7 +727,7 @@ static bool cmd_place(int argc, char** argv){
 static bool cmd_reset(int argc, char** argv){
     bool hard = false;
 
-    if(argc == 2 && strcmp(argv[1], "HARD")){
+    if(argc == 2 && strcmp(argv[1], "HARD") == 0){
         hard = true;
     }
     else if(argc != 1){
@@ -765,11 +765,26 @@ static bool cmd_reset(int argc, char** argv){
 
 // Aborts the current job/motion
 static bool cmd_abort(int argc, char** argv){
-    if(argc != 1){
+    bool magnet_off = !g_status.has_part;
+
+    if(argc == 2){
+        if(strcmp(argv[1], "KEEP_MAGNET") == 0 || strcmp(argv[1], "KEEP") == 0){
+            magnet_off = false;
+        }
+        else if(strcmp(argv[1], "MAGNET_OFF") == 0){
+            magnet_off = true;
+        }
+        else{
+            send_err("ABORT", "SYNTAX");
+            return false;
+        }
+    }
+    else if(argc != 1){
         send_err("ABORT", "SYNTAX");
         return false;
     }
-    bot_abort_current(true);
+
+    bot_abort_current(magnet_off);
 
     g_status.last_err = ERR_NONE;
     send_ok("ABORT");
@@ -781,19 +796,19 @@ static bool cmd_encoder(int argc, char** argv){
         send_err("ENCODER", "SYNTAX");
         return false;
     }
-    if(argc == 2 && strcmp(argv[1], "ENABLE")){
+    if(strcmp(argv[1], "ENABLE") == 0){
         g_status.encoder_enabled = true;
         send_ok("ENCODER");
         return true;
     }
-    if(argc == 2 && strcmp(argv[1], "DISABLE")){
+    if(strcmp(argv[1], "DISABLE") == 0){
         g_status.encoder_enabled = false;
         send_ok("ENCODER");
         return true;
     }
-    else{
-        send_err("ENCODER", "INTERNAL COMMAND ERROR (line 743 in cmd.c)");
-    }return false;
+
+    send_err("ENCODER", "SYNTAX");
+    return false;
 }
 
 

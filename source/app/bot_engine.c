@@ -128,6 +128,9 @@ void bot_abort_current(bool magnet_off){
     }
     s_busy = false;
     if(g_status.estop){
+        g_status.state = STATE_EMERGENCY_STOP;
+    }
+    else{
         g_status.state = STATE_IDLE;
     }
     g_status.last_err = ERR_NONE;
