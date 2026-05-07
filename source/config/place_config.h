@@ -64,13 +64,23 @@ place_config.h	Created on: 01.04.2026	   Author: Fige23	Team 3
     { (start_sps), (max_sps), (accel_sps2) }
 
 // Z axis motion profiles for place operation
-#define PLACE_Z_DOWN_START_STEP_RATE_SPS   150u
-#define PLACE_Z_DOWN_MAX_STEP_RATE_SPS     800u
-#define PLACE_Z_DOWN_ACCEL_SPS2            2000u
+#define PLACE_Z_DOWN_START_SPEED_MM_S     1.2f
+#define PLACE_Z_DOWN_MAX_SPEED_MM_S       2.0f
+#define PLACE_Z_DOWN_ACCEL_MM2S          50.0f
 
-#define PLACE_Z_UP_START_STEP_RATE_SPS     150u
-#define PLACE_Z_UP_MAX_STEP_RATE_SPS       800u
-#define PLACE_Z_UP_ACCEL_SPS2              2000u
+// Z axis motion profiles for pick operation
+#define PLACE_Z_DOWN_START_STEP_RATE_SPS   MM_S_TO_SPS(PLACE_Z_DOWN_START_SPEED_MM_S, STEPS_PER_MM_Z_Q1000)
+#define PLACE_Z_DOWN_MAX_STEP_RATE_SPS     MM_S_TO_SPS(PLACE_Z_DOWN_MAX_SPEED_MM_S, STEPS_PER_MM_Z_Q1000)
+#define PLACE_Z_DOWN_ACCEL_SPS2            MM_S2_TO_SPS2(PLACE_Z_DOWN_ACCEL_MM2S, STEPS_PER_MM_Z_Q1000)
+
+#define PLACE_Z_UP_START_SPEED_MM_S        1.2f
+#define PLACE_Z_UP_MAX_SPEED_MM_S          2.0f
+#define PLACE_Z_UP_ACCEL_MM2S             50.0f    
+
+
+#define PLACE_Z_UP_START_STEP_RATE_SPS     MM_S_TO_SPS(PLACE_Z_UP_START_SPEED_MM_S, STEPS_PER_MM_Z_Q1000)
+#define PLACE_Z_UP_MAX_STEP_RATE_SPS       MM_S_TO_SPS(PLACE_Z_UP_MAX_SPEED_MM_S, STEPS_PER_MM_Z_Q1000)
+#define PLACE_Z_UP_ACCEL_SPS2              MM_S2_TO_SPS2(PLACE_Z_UP_ACCEL_MM2S, STEPS_PER_MM_Z_Q1000)
 
 // Profile initializers
 #define PLACE_Z_DOWN_PROFILE \
