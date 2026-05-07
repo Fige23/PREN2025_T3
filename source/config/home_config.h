@@ -95,12 +95,12 @@ home_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 #define HOME_Z_RELEASE_MAX_MM_S          1.5f
 #define HOME_Z_RELEASE_ACCEL_MM_S2       5.0f
 
-#define HOME_Z_FAST_START_MM_S           0.75f
-#define HOME_Z_FAST_MAX_MM_S             2.5f
+#define HOME_Z_FAST_START_MM_S           5.0f
+#define HOME_Z_FAST_MAX_MM_S             7.0f
 #define HOME_Z_FAST_ACCEL_MM_S2         10.0f
 
-#define HOME_Z_BACKOFF_START_MM_S        0.5f
-#define HOME_Z_BACKOFF_MAX_MM_S          1.25f
+#define HOME_Z_BACKOFF_START_MM_S        2.0f
+#define HOME_Z_BACKOFF_MAX_MM_S         1.25f
 #define HOME_Z_BACKOFF_ACCEL_MM_S2       5.0f
 
 #define HOME_Z_SLOW_START_MM_S           0.25f
