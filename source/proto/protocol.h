@@ -25,40 +25,40 @@ Team 3
 //States und errors
 
 typedef enum {
-	STATE_INIT = 0,
-	STATE_IDLE,
-	STATE_MOVING,
-	STATE_HOMING,
-	STATE_PICKING,
-	STATE_PLACING,
-	STATE_ERROR,
-	STATE_EMERGENCY_STOP,
+    STATE_INIT = 0,
+    STATE_IDLE,
+    STATE_MOVING,
+    STATE_HOMING,
+    STATE_PICKING,
+    STATE_PLACING,
+    STATE_ERROR,
+    STATE_EMERGENCY_STOP,
 }bot_state_e;
 
 typedef enum {
-	ERR_NONE = 0,
-	ERR_SYNTAX,
-	ERR_RANGE,
-	ERR_NO_HOME,
-	ERR_NO_PART,
-	ERR_PLACE_FAIL,
-	ERR_MOTOR,
-	ERR_ESTOP,
-	ERR_INTERNAL,
-	ERR_NOT_IMPLEMENTED,
-	ERR_ENCODER_MAX_ITERATIONS,
-	ERR_UNEXPECTED_LIMIT,
-	ERR_ENCODER_NO_PROGRESS,
-	ERR_ENCODER_POSITION_MISMATCH
+    ERR_NONE = 0,
+    ERR_SYNTAX,
+    ERR_RANGE,
+    ERR_NO_HOME,
+    ERR_NO_PART,
+    ERR_PLACE_FAIL,
+    ERR_MOTOR,
+    ERR_ESTOP,
+    ERR_INTERNAL,
+    ERR_NOT_IMPLEMENTED,
+    ERR_ENCODER_MAX_ITERATIONS,
+    ERR_UNEXPECTED_LIMIT,
+    ERR_ENCODER_NO_PROGRESS,
+    ERR_ENCODER_POSITION_MISMATCH
 }err_e;
 
 typedef struct {
-	bool x_latched;
-	bool y_latched;
-	bool z_latched;
-	bool x_now;
-	bool y_now;
-	bool z_now;
+    bool x_latched;
+    bool y_latched;
+    bool z_latched;
+    bool x_now;
+    bool y_now;
+    bool z_now;
 }limits_s;
 
 // Pose intern in Fixed-Point
@@ -82,13 +82,14 @@ typedef struct {
     robot_pos_s pos_internal;   // "commanded" (Stepper-Zählung / Soll-Ist im Firmware-Sinn)
     robot_pos_s pos_measured;  // "measured"  (Encoder, später)
     limits_s limits;
+    bool encoder_enabled;
 } bot_status_s;
 
 
 
 extern volatile bot_status_s g_status;
 //string helpers
-const char *err_to_str(err_e e);
-const char *state_to_str(bot_state_e s);
+const char* err_to_str(err_e e);
+const char* state_to_str(bot_state_e s);
 
 #endif /* PROTO_PROTOCOL_H_ */

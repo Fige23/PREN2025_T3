@@ -240,59 +240,101 @@ static void tune_export_profile_macros(motion_profile_kind_e kind,
 
 static void tune_show_move_profiles(void){
     tune_print_profile_summary("X", MOTION_PROFILE_KIND_MOVE,
-        (motion_profile_s){ X_START_STEP_RATE_SPS, X_MAX_STEP_RATE_SPS, X_ACCEL_SPS2 });
+        (motion_profile_s){
+        X_START_STEP_RATE_SPS, X_MAX_STEP_RATE_SPS, X_ACCEL_SPS2
+    });
     tune_print_profile_summary("Y", MOTION_PROFILE_KIND_MOVE,
-        (motion_profile_s){ Y_START_STEP_RATE_SPS, Y_MAX_STEP_RATE_SPS, Y_ACCEL_SPS2 });
+        (motion_profile_s){
+        Y_START_STEP_RATE_SPS, Y_MAX_STEP_RATE_SPS, Y_ACCEL_SPS2
+    });
     tune_print_profile_summary("Z", MOTION_PROFILE_KIND_MOVE,
-        (motion_profile_s){ Z_START_STEP_RATE_SPS, Z_MAX_STEP_RATE_SPS, Z_ACCEL_SPS2 });
+        (motion_profile_s){
+        Z_START_STEP_RATE_SPS, Z_MAX_STEP_RATE_SPS, Z_ACCEL_SPS2
+    });
     tune_print_profile_summary("PHI", MOTION_PROFILE_KIND_MOVE,
-        (motion_profile_s){ PHI_START_STEP_RATE_SPS, PHI_MAX_STEP_RATE_SPS, PHI_ACCEL_SPS2 });
+        (motion_profile_s){
+        PHI_START_STEP_RATE_SPS, PHI_MAX_STEP_RATE_SPS, PHI_ACCEL_SPS2
+    });
 }
 
 static void tune_show_home_profiles(void){
     tune_print_profile_summary("X_RELEASE", MOTION_PROFILE_KIND_HOME,
-        (motion_profile_s){ HOME_X_RELEASE_START_STEP_RATE_SPS, HOME_X_RELEASE_MAX_STEP_RATE_SPS, HOME_X_RELEASE_ACCEL_SPS2 });
+        (motion_profile_s){
+        HOME_X_RELEASE_START_STEP_RATE_SPS, HOME_X_RELEASE_MAX_STEP_RATE_SPS, HOME_X_RELEASE_ACCEL_SPS2
+    });
     tune_print_profile_summary("X_FAST", MOTION_PROFILE_KIND_HOME,
-        (motion_profile_s){ HOME_X_FAST_START_STEP_RATE_SPS, HOME_X_FAST_MAX_STEP_RATE_SPS, HOME_X_FAST_ACCEL_SPS2 });
+        (motion_profile_s){
+        HOME_X_FAST_START_STEP_RATE_SPS, HOME_X_FAST_MAX_STEP_RATE_SPS, HOME_X_FAST_ACCEL_SPS2
+    });
     tune_print_profile_summary("X_BACKOFF", MOTION_PROFILE_KIND_HOME,
-        (motion_profile_s){ HOME_X_BACKOFF_START_STEP_RATE_SPS, HOME_X_BACKOFF_MAX_STEP_RATE_SPS, HOME_X_BACKOFF_ACCEL_SPS2 });
+        (motion_profile_s){
+        HOME_X_BACKOFF_START_STEP_RATE_SPS, HOME_X_BACKOFF_MAX_STEP_RATE_SPS, HOME_X_BACKOFF_ACCEL_SPS2
+    });
     tune_print_profile_summary("X_SLOW", MOTION_PROFILE_KIND_HOME,
-        (motion_profile_s){ HOME_X_SLOW_START_STEP_RATE_SPS, HOME_X_SLOW_MAX_STEP_RATE_SPS, HOME_X_SLOW_ACCEL_SPS2 });
+        (motion_profile_s){
+        HOME_X_SLOW_START_STEP_RATE_SPS, HOME_X_SLOW_MAX_STEP_RATE_SPS, HOME_X_SLOW_ACCEL_SPS2
+    });
     tune_print_profile_summary("Y_RELEASE", MOTION_PROFILE_KIND_HOME,
-        (motion_profile_s){ HOME_Y_RELEASE_START_STEP_RATE_SPS, HOME_Y_RELEASE_MAX_STEP_RATE_SPS, HOME_Y_RELEASE_ACCEL_SPS2 });
+        (motion_profile_s){
+        HOME_Y_RELEASE_START_STEP_RATE_SPS, HOME_Y_RELEASE_MAX_STEP_RATE_SPS, HOME_Y_RELEASE_ACCEL_SPS2
+    });
     tune_print_profile_summary("Y_FAST", MOTION_PROFILE_KIND_HOME,
-        (motion_profile_s){ HOME_Y_FAST_START_STEP_RATE_SPS, HOME_Y_FAST_MAX_STEP_RATE_SPS, HOME_Y_FAST_ACCEL_SPS2 });
+        (motion_profile_s){
+        HOME_Y_FAST_START_STEP_RATE_SPS, HOME_Y_FAST_MAX_STEP_RATE_SPS, HOME_Y_FAST_ACCEL_SPS2
+    });
     tune_print_profile_summary("Y_BACKOFF", MOTION_PROFILE_KIND_HOME,
-        (motion_profile_s){ HOME_Y_BACKOFF_START_STEP_RATE_SPS, HOME_Y_BACKOFF_MAX_STEP_RATE_SPS, HOME_Y_BACKOFF_ACCEL_SPS2 });
+        (motion_profile_s){
+        HOME_Y_BACKOFF_START_STEP_RATE_SPS, HOME_Y_BACKOFF_MAX_STEP_RATE_SPS, HOME_Y_BACKOFF_ACCEL_SPS2
+    });
     tune_print_profile_summary("Y_SLOW", MOTION_PROFILE_KIND_HOME,
-        (motion_profile_s){ HOME_Y_SLOW_START_STEP_RATE_SPS, HOME_Y_SLOW_MAX_STEP_RATE_SPS, HOME_Y_SLOW_ACCEL_SPS2 });
+        (motion_profile_s){
+        HOME_Y_SLOW_START_STEP_RATE_SPS, HOME_Y_SLOW_MAX_STEP_RATE_SPS, HOME_Y_SLOW_ACCEL_SPS2
+    });
     tune_print_profile_summary("Z_RELEASE", MOTION_PROFILE_KIND_HOME,
-        (motion_profile_s){ HOME_Z_RELEASE_START_STEP_RATE_SPS, HOME_Z_RELEASE_MAX_STEP_RATE_SPS, HOME_Z_RELEASE_ACCEL_SPS2 });
+        (motion_profile_s){
+        HOME_Z_RELEASE_START_STEP_RATE_SPS, HOME_Z_RELEASE_MAX_STEP_RATE_SPS, HOME_Z_RELEASE_ACCEL_SPS2
+    });
     tune_print_profile_summary("Z_FAST", MOTION_PROFILE_KIND_HOME,
-        (motion_profile_s){ HOME_Z_FAST_START_STEP_RATE_SPS, HOME_Z_FAST_MAX_STEP_RATE_SPS, HOME_Z_FAST_ACCEL_SPS2 });
+        (motion_profile_s){
+        HOME_Z_FAST_START_STEP_RATE_SPS, HOME_Z_FAST_MAX_STEP_RATE_SPS, HOME_Z_FAST_ACCEL_SPS2
+    });
     tune_print_profile_summary("Z_BACKOFF", MOTION_PROFILE_KIND_HOME,
-        (motion_profile_s){ HOME_Z_BACKOFF_START_STEP_RATE_SPS, HOME_Z_BACKOFF_MAX_STEP_RATE_SPS, HOME_Z_BACKOFF_ACCEL_SPS2 });
+        (motion_profile_s){
+        HOME_Z_BACKOFF_START_STEP_RATE_SPS, HOME_Z_BACKOFF_MAX_STEP_RATE_SPS, HOME_Z_BACKOFF_ACCEL_SPS2
+    });
     tune_print_profile_summary("Z_SLOW", MOTION_PROFILE_KIND_HOME,
-        (motion_profile_s){ HOME_Z_SLOW_START_STEP_RATE_SPS, HOME_Z_SLOW_MAX_STEP_RATE_SPS, HOME_Z_SLOW_ACCEL_SPS2 });
+        (motion_profile_s){
+        HOME_Z_SLOW_START_STEP_RATE_SPS, HOME_Z_SLOW_MAX_STEP_RATE_SPS, HOME_Z_SLOW_ACCEL_SPS2
+    });
 }
 
 static void tune_show_pick_profiles(void){
     tune_print_profile_summary("Z_DOWN", MOTION_PROFILE_KIND_PICK,
-        (motion_profile_s){ PICK_Z_DOWN_START_STEP_RATE_SPS, PICK_Z_DOWN_MAX_STEP_RATE_SPS, PICK_Z_DOWN_ACCEL_SPS2 });
+        (motion_profile_s){
+        PICK_Z_DOWN_START_STEP_RATE_SPS, PICK_Z_DOWN_MAX_STEP_RATE_SPS, PICK_Z_DOWN_ACCEL_SPS2
+    });
     tune_print_profile_summary("Z_UP", MOTION_PROFILE_KIND_PICK,
-        (motion_profile_s){ PICK_Z_UP_START_STEP_RATE_SPS, PICK_Z_UP_MAX_STEP_RATE_SPS, PICK_Z_UP_ACCEL_SPS2 });
+        (motion_profile_s){
+        PICK_Z_UP_START_STEP_RATE_SPS, PICK_Z_UP_MAX_STEP_RATE_SPS, PICK_Z_UP_ACCEL_SPS2
+    });
 }
 
 static void tune_show_place_profiles(void){
     tune_print_profile_summary("Z_DOWN", MOTION_PROFILE_KIND_PLACE,
-        (motion_profile_s){ PLACE_Z_DOWN_START_STEP_RATE_SPS, PLACE_Z_DOWN_MAX_STEP_RATE_SPS, PLACE_Z_DOWN_ACCEL_SPS2 });
+        (motion_profile_s){
+        PLACE_Z_DOWN_START_STEP_RATE_SPS, PLACE_Z_DOWN_MAX_STEP_RATE_SPS, PLACE_Z_DOWN_ACCEL_SPS2
+    });
     tune_print_profile_summary("Z_UP", MOTION_PROFILE_KIND_PLACE,
-        (motion_profile_s){ PLACE_Z_UP_START_STEP_RATE_SPS, PLACE_Z_UP_MAX_STEP_RATE_SPS, PLACE_Z_UP_ACCEL_SPS2 });
+        (motion_profile_s){
+        PLACE_Z_UP_START_STEP_RATE_SPS, PLACE_Z_UP_MAX_STEP_RATE_SPS, PLACE_Z_UP_ACCEL_SPS2
+    });
 }
 
 static void tune_show_corr_profiles(void){
     tune_print_profile_summary("XY_CORR", MOTION_PROFILE_KIND_CORR,
-        (motion_profile_s){ POS_CORR_START_STEP_RATE_SPS, POS_CORR_MAX_STEP_RATE_SPS, POS_CORR_ACCEL_SPS2 });
+        (motion_profile_s){
+        POS_CORR_START_STEP_RATE_SPS, POS_CORR_MAX_STEP_RATE_SPS, POS_CORR_ACCEL_SPS2
+    });
 }
 
 static void tune_show_group_profiles(motion_profile_kind_e kind){
@@ -433,6 +475,15 @@ static bool cmd_status(int argc, char** argv){
     print_mm3("x", g_status.pos_measured.x_mm_scaled);
     print_mm3("y", g_status.pos_measured.y_mm_scaled);
 #endif
+
+    // ENCODER ENABLED/DISABLED print
+    if(g_status.encoder_enabled){
+        proto_reply_printf("encoder=ENABLED");
+    }
+    else{
+        proto_reply_printf("encoder=DISABLED");
+    }
+
 #if MOTION_TUNING_ENABLE
     proto_reply_printf(" TUNE ");
     proto_reply_printf("global=%u move=%u home=%u pick=%u place=%u corr=%u",
@@ -725,6 +776,25 @@ static bool cmd_abort(int argc, char** argv){
     return true;
 }
 
+static bool cmd_encoder(int argc, char** argv){
+    if(argc != 2){
+        send_err("ENCODER", "SYNTAX");
+        return false;
+    }
+    if(argc == 2 && strcmp(argv[1], "ENABLE")){
+        g_status.encoder_enabled = true;
+        send_ok("ENCODER");
+        return true;
+    }
+    if(argc == 2 && strcmp(argv[1], "DISABLE")){
+        g_status.encoder_enabled = false;
+        send_ok("ENCODER");
+        return true;
+    }
+    else{
+        send_err("ENCODER", "INTERNAL COMMAND ERROR (line 743 in cmd.c)");
+    }return false;
+}
 
 
 
@@ -906,7 +976,8 @@ static const cmd_entry_s s_cmds[] = {
         { "CESTOP", cmd_clear_estop },
         { "UNLATCH", cmd_clear_estop },
         { "SET_POS", cmd_set_pos},
-        { "ABORT", cmd_abort}
+        { "ABORT", cmd_abort},
+        { "ENCODER", cmd_encoder}
 };
 
 // -----------------------------------------------------------------------------
