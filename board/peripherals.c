@@ -143,12 +143,12 @@ instance:
     - ftm_edge_aligned_channels_config:
       - 0:
         - channelId: ''
-        - edge_aligned_mode: 'kFTM_OutputCompare'
-        - output_compare:
-          - chnNumber: 'kFTM_Chnl_0'
-          - output_compare_mode: 'kFTM_NoOutputSignal'
-          - compareValueStr: '1000'
-          - enable_chan_irq: 'false'
+        - edge_aligned_mode: 'kFTM_EdgeAlignedPwm'
+        - edge_aligned_pwm:
+          - chnlNumber: 'kFTM_Chnl_0'
+          - level: 'kFTM_NoPwmSignal'
+          - dutyValueStr: '50'
+          - enable_chan_irq: 'true'
  * BE CAREFUL MODIFYING THIS COMMENT - IT IS YAML SETTINGS FOR TOOLS **********/
 /* clang-format on */
 const ftm_config_t FTM3_config = {
@@ -168,11 +168,19 @@ const ftm_config_t FTM3_config = {
   .useGlobalTimeBase = false
 };
 
+const ftm_chnl_pwm_config_param_t FTM3_pwmSignalParams[] = { 
+  {
+    .chnlNumber = kFTM_Chnl_0,
+    .level = kFTM_NoPwmSignal,
+    .dutyValue = 50,
+  }
+};
+
 static void FTM3_init(void) {
   FTM_Init(FTM3_PERIPHERAL, &FTM3_config);
   FTM_SetTimerPeriod(FTM3_PERIPHERAL, FTM3_TIMER_MODULO_VALUE);
-  FTM_SetupOutputCompare(FTM3_PERIPHERAL, kFTM_Chnl_0, kFTM_NoOutputSignal, 1000U);
-  FTM_EnableInterrupts(FTM3_PERIPHERAL, kFTM_TimeOverflowInterruptEnable);
+  FTM_SetupPwmMode(FTM3_PERIPHERAL, FTM3_pwmSignalParams, sizeof(FTM3_pwmSignalParams) / sizeof(ftm_chnl_pwm_config_param_t), kFTM_EdgeAlignedPwm);
+  FTM_EnableInterrupts(FTM3_PERIPHERAL, kFTM_Chnl0InterruptEnable | kFTM_TimeOverflowInterruptEnable);
   /* Interrupt vector FTM3_IRQn priority settings in the NVIC. */
   NVIC_SetPriority(FTM3_IRQN, FTM3_IRQ_PRIORITY);
   /* Enable interrupt FTM3_IRQN request in the NVIC */

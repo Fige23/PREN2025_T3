@@ -14,6 +14,7 @@ ftm3.c	Created on: 18.12.2025	   Author: Fige23	Team 3
 #include "fsl_ftm.h"
 #include "fsl_clock.h"
 #include "fsl_common.h"
+#include "magnet.h"
 #include "robot_config.h"
 #include "platform.h"
 
@@ -108,6 +109,7 @@ void FTM3_IRQHandler(void)
 
     if (flags & kFTM_TimeOverflowFlag) {
         if (s_cb) s_cb();						//ruft callback auf (motion_tick_dispatch)
+        magnet_pwm_tick();
     }
     #if SYSTEMVIEW
     if(g_systrack.sysview_track){
