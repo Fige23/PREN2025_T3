@@ -27,7 +27,7 @@ communication_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 #define PROTO_REPLY_BUFFER_LEN          192
 
 //Checks 
-#define CHECK_FOR_PART_PICK_PLACE       1
+#define CHECK_FOR_PART_PICK_PLACE       0
 
 // UART Pin-Auswahl:
 // 0 = USB-C Debug (PTC3/PTC4) - für Entwicklung mit Programmer

@@ -16,6 +16,7 @@
 //Neues makro machen, welches UART pin konfiguration ausschaötet
 #include "robot_config.h"
 
+
 #include "debug.h"
 #include "ftm3.h"
 #include "init.h"
@@ -26,6 +27,10 @@
 #include "SEGGER_SYSVIEW.h"
 #endif
 #include "io.h"
+#if MAGNET_CHECK_ENABLE
+#include "magnet_check.h"
+#endif
+
 int main(void){
     init_all();
     enable_pin(true);						//initialisiert alles
@@ -45,6 +50,9 @@ int main(void){
     test_tools_run();				//führt alle aktivierten Testfunktionen aus
 
     for(;;){
+#if MAGNET_CHECK_ENABLE
+        check_magnet();
+#endif
 #if SYSTEMVIEW
         SEGGER_SYSVIEW_OnUserStart(1);
 #endif

@@ -659,7 +659,7 @@ static bool cmd_pick(int argc, char** argv){
         argc, argv, 1,
         &x_s, &y_s, &z_s, &ph_s,
         /*require_mask=*/KV_X | KV_Y,
-        /*allowed_mask=*/KV_X | KV_Y,
+        /*allowed_mask=*/KV_X | KV_Y | KV_Z,
         /*seen_out=*/NULL
     );
     if(e != ERR_NONE){ send_err("PICK", err_to_str(e)); return false; }
@@ -685,7 +685,7 @@ static bool cmd_pick(int argc, char** argv){
 
 
 // --- PLACE (asynchron) ---
-// Legt ein Teil an Ziel XY/PHI ab. Protokoll erlaubt kein z=.
+// Legt ein Teil an Ziel XY/PHI ab. Protokoll erlaubt z=.
 // Pflicht: x,y,phi.
 static bool cmd_place(int argc, char** argv){
     if(g_status.estop){ send_err("PLACE", "ESTOP");   return false; }
@@ -697,12 +697,12 @@ static bool cmd_place(int argc, char** argv){
 
     int32_t x_s = 0, y_s = 0, z_s = 0, ph_s = 0;
 
-    // PLACE: x,y,phi Pflicht / z verboten (Whitelist!)
+    // PLACE: x,y,phi Pflicht / z erlaubt 
     err_e e = parse_pos_tokens_mask(
         argc, argv, 1,
         &x_s, &y_s, &z_s, &ph_s,
         /*require_mask=*/KV_X | KV_Y | KV_PHI,
-        /*allowed_mask=*/KV_X | KV_Y | KV_PHI,
+        /*allowed_mask=*/KV_X | KV_Y | KV_PHI | KV_Z,
         /*seen_out=*/NULL
     );
     if(e != ERR_NONE){ send_err("PLACE", err_to_str(e)); return false; }

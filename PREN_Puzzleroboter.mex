@@ -310,11 +310,6 @@
                   <data type="Version">2.5.1</data>
                </feature>
             </dependency>
-            <dependency resourceType="Tool" resourceId="Clocks" description="The Clocks tool is required by the Peripherals tool, but it is disabled." problem_level="2" source="Peripherals">
-               <feature name="enabled" evaluation="equal">
-                  <data>true</data>
-               </feature>
-            </dependency>
          </dependencies>
          <generated_project_files>
             <file path="board/peripherals.c" update_enabled="true"/>
@@ -499,12 +494,12 @@
                         <array name="ftm_edge_aligned_channels_config">
                            <struct name="0">
                               <setting name="channelId" value=""/>
-                              <setting name="edge_aligned_mode" value="kFTM_OutputCompare"/>
-                              <struct name="output_compare">
-                                 <setting name="chnNumber" value="kFTM_Chnl_0"/>
-                                 <setting name="output_compare_mode" value="kFTM_NoOutputSignal"/>
-                                 <setting name="compareValueStr" value="1000"/>
-                                 <setting name="enable_chan_irq" value="false"/>
+                              <setting name="edge_aligned_mode" value="kFTM_EdgeAlignedPwm"/>
+                              <struct name="edge_aligned_pwm">
+                                 <setting name="chnlNumber" value="kFTM_Chnl_0"/>
+                                 <setting name="level" value="kFTM_NoPwmSignal"/>
+                                 <setting name="dutyValueStr" value="50"/>
+                                 <setting name="enable_chan_irq" value="true"/>
                               </struct>
                            </struct>
                         </array>

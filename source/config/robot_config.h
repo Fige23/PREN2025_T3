@@ -31,6 +31,7 @@ Config file: Dieses File inkludiert alle kleineren Config Files!
 #include "home_config.h"
 #include "motion_config.h"
 #include "tmc2209_config.h"
+#include "magnet_config.h"
 
 /* ============================================================================
  * CONFIG CHECKS

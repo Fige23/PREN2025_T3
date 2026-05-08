@@ -29,7 +29,7 @@ pick_config.h	Created on: 01.04.2026	   Author: Fige23	Team 3
  * ========================================================================== */
 
 /* Z position during XY movement (safe height to avoid collisions) */
-#define PICK_Z_SAFE_POS_MM_SCALED        (SCALE_MM*30)
+#define PICK_Z_SAFE_POS_MM_SCALED        (SCALE_MM*10)
 
 /* Z position when actually gripping the object. Larger Z is further down. */
 

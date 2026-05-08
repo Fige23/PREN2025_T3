@@ -28,7 +28,7 @@ place_config.h	Created on: 01.04.2026	   Author: Fige23	Team 3
  * ========================================================================== */
 
 /* Z position during XY+phi movement (safe height to avoid collisions) */
-#define PLACE_Z_SAFE_POS_MM_SCALED        (SCALE_MM*20)
+#define PLACE_Z_SAFE_POS_MM_SCALED        (SCALE_MM*10)
 
 /* Z position when actually dropping / placing the object. Larger Z is further down. */
 
