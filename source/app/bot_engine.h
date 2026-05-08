@@ -29,6 +29,7 @@ typedef struct {
 
     // Zusatzdaten je nach Action
     bool     magnet_on;     // nur für ACT_MAGNET
+    bool     target_z_valid; // optionales z= bei ACT_PICK/ACT_PLACE
     uint16_t request_id;    // Antwort-Korrelation (ID)
 } bot_action_s;
 

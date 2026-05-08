@@ -39,6 +39,7 @@ typedef struct {
 
     robot_pos_s place_target;        /* original ACT_PLACE target */
     robot_pos_s xy_phi_safe_target;  /* actual target used for motion_finish */
+    bool target_z_valid;
 
     job_motion_finish_s xy_phi_finish;
 } job_place_s;
@@ -84,6 +85,16 @@ static bool place_needs_raise_to_safe(void){
     return g_status.pos_internal.z_mm_scaled > PLACE_Z_SAFE_POS_MM_SCALED;
 }
 
+static int32_t place_drop_z_mm_scaled(void){
+#if ALLOW_AND_USE_Z_FOR_PICK_PLACE
+    if(jp.target_z_valid){
+        return jp.place_target.z_mm_scaled;
+    }
+#endif
+
+    return PLACE_Z_DROP_POS_MM_SCALED;
+}
+
 static err_e place_start_raise_to_safe_z(void){
     bot_action_s cmd = { 0 };
 
@@ -117,7 +128,7 @@ static err_e place_start_z_down(void){
 
     cmd.type = ACT_PLACE;
     cmd.target_pos = g_status.pos_internal;
-    cmd.target_pos.z_mm_scaled = PLACE_Z_DROP_POS_MM_SCALED;
+    cmd.target_pos.z_mm_scaled = place_drop_z_mm_scaled();
 
     return motion_start(&cmd, limit_none, &g_place_z_down_profile, MOTION_PROFILE_KIND_PLACE);
 }
@@ -147,6 +158,7 @@ err_e job_place_start(const bot_action_s* a){
     jp.state = PLACE_STATE_IDLE;
     jp.last_err = ERR_NONE;
     jp.place_target = a->target_pos;
+    jp.target_z_valid = a->target_z_valid;
 
     if(place_needs_raise_to_safe()){
         e = place_start_raise_to_safe_z();

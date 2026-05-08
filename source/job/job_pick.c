@@ -39,6 +39,7 @@ typedef struct {
 
     robot_pos_s pick_target;      /* original target from ACT_PICK */
     robot_pos_s xy_safe_target;   /* actual XY move target used for motion_finish */
+    bool target_z_valid;
 
     job_motion_finish_s xy_finish;
 } job_pick_s;
@@ -84,6 +85,16 @@ static bool pick_needs_raise_to_safe(void){
     return g_status.pos_internal.z_mm_scaled > PICK_Z_SAFE_POS_MM_SCALED;
 }
 
+static int32_t pick_grip_z_mm_scaled(void){
+#if ALLOW_AND_USE_Z_FOR_PICK_PLACE
+    if(jp.target_z_valid){
+        return jp.pick_target.z_mm_scaled;
+    }
+#endif
+
+    return PICK_Z_GRIP_POS_MM_SCALED;
+}
+
 static err_e pick_start_raise_to_safe_z(void){
     bot_action_s cmd = { 0 };
 
@@ -118,7 +129,7 @@ static err_e pick_start_z_down(void){
 
     cmd.type = ACT_PICK;
     cmd.target_pos = g_status.pos_internal;
-    cmd.target_pos.z_mm_scaled = PICK_Z_GRIP_POS_MM_SCALED;
+    cmd.target_pos.z_mm_scaled = pick_grip_z_mm_scaled();
 
     return motion_start(&cmd, limit_none, &g_pick_z_down_profile, MOTION_PROFILE_KIND_PICK);
 }
@@ -148,6 +159,7 @@ err_e job_pick_start(const bot_action_s* a){
     jp.state = PICK_STATE_IDLE;
     jp.last_err = ERR_NONE;
     jp.pick_target = a->target_pos;
+    jp.target_z_valid = a->target_z_valid;
 
     if(pick_needs_raise_to_safe()){
         e = pick_start_raise_to_safe_z();

@@ -69,6 +69,10 @@ Config file: Dieses File inkludiert alle kleineren Config Files!
 #error "ENABLE_CONSOLE_UART_SIM must be 0 or 1"
 #endif
 
+#if (ALLOW_AND_USE_Z_FOR_PICK_PLACE != 0) && (ALLOW_AND_USE_Z_FOR_PICK_PLACE != 1)
+#error "ALLOW_AND_USE_Z_FOR_PICK_PLACE must be 0 or 1"
+#endif
+
 #if (ESTOP_POLL_MODE != ESTOP_POLL_MODE_EDGE) && (ESTOP_POLL_MODE != ESTOP_POLL_MODE_LEVEL_LATCH)
 #error "ESTOP_POLL_MODE must be ESTOP_POLL_MODE_EDGE or ESTOP_POLL_MODE_LEVEL_LATCH"
 #endif

@@ -39,8 +39,8 @@ build_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 //impacts internal pick and place z position (grip/drop pos)
 #define PUZZLE_HAS_PIN                  1
 
-
-
+//allows a z parameter for pick and place and uses it as grip/place position.
+#define ALLOW_AND_USE_Z_FOR_PICK_PLACE  1
 
 
 // -------------------------------------------------------------------------

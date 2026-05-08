@@ -642,7 +642,7 @@ static bool cmd_move(int argc, char** argv){
 
 
 // --- PICK (asynchron) ---
-// Nimmt ein Teil an Ziel XY auf. Protokoll erlaubt kein z= (Z läuft intern).
+// Nimmt ein Teil an Ziel XY auf. z= ist per ALLOW_AND_USE_Z_FOR_PICK_PLACE optional.
 // Pflicht: x,y. Optional: phi.
 static bool cmd_pick(int argc, char** argv){
     if(g_status.estop){ send_err("PICK", "ESTOP");   return false; }
@@ -653,14 +653,19 @@ static bool cmd_pick(int argc, char** argv){
 #endif
 
     int32_t x_s = 0, y_s = 0, z_s = 0, ph_s = 0;
+    uint8_t seen = 0u;
 
-    // PICK: x,y Pflicht / z,phi verboten (Whitelist!)
+    // PICK: x,y Pflicht / z nur erlaubt, wenn ALLOW_AND_USE_Z_FOR_PICK_PLACE aktiv ist.
     err_e e = parse_pos_tokens_mask(
         argc, argv, 1,
         &x_s, &y_s, &z_s, &ph_s,
         /*require_mask=*/KV_X | KV_Y,
-        /*allowed_mask=*/KV_X | KV_Y | KV_Z,
-        /*seen_out=*/NULL
+        /*allowed_mask=*/KV_X | KV_Y
+#if ALLOW_AND_USE_Z_FOR_PICK_PLACE
+            | KV_Z
+#endif
+        ,
+        /*seen_out=*/&seen
     );
     if(e != ERR_NONE){ send_err("PICK", err_to_str(e)); return false; }
 
@@ -669,10 +674,16 @@ static bool cmd_pick(int argc, char** argv){
         .target_pos = {
             .x_mm_scaled = x_s,
             .y_mm_scaled = y_s,
-            .z_mm_scaled = z_s,        // bleibt 0 (Z wird intern im Job gemacht)
+            .z_mm_scaled = z_s,
             .phi_deg_scaled = ph_s     // optional -> entweder geparst oder default
         },
         .magnet_on = false,
+        .target_z_valid =
+#if ALLOW_AND_USE_Z_FOR_PICK_PLACE
+            ((seen & KV_Z) != 0u),
+#else
+            false,
+#endif
         .request_id = s_next_req_id++
     };
 
@@ -685,7 +696,7 @@ static bool cmd_pick(int argc, char** argv){
 
 
 // --- PLACE (asynchron) ---
-// Legt ein Teil an Ziel XY/PHI ab. Protokoll erlaubt z=.
+// Legt ein Teil an Ziel XY/PHI ab. z= ist per ALLOW_AND_USE_Z_FOR_PICK_PLACE optional.
 // Pflicht: x,y,phi.
 static bool cmd_place(int argc, char** argv){
     if(g_status.estop){ send_err("PLACE", "ESTOP");   return false; }
@@ -696,27 +707,37 @@ static bool cmd_place(int argc, char** argv){
 #endif
 
     int32_t x_s = 0, y_s = 0, z_s = 0, ph_s = 0;
+    uint8_t seen = 0u;
 
-    // PLACE: x,y,phi Pflicht / z erlaubt 
+    // PLACE: x,y,phi Pflicht / z nur erlaubt, wenn ALLOW_AND_USE_Z_FOR_PICK_PLACE aktiv ist.
     err_e e = parse_pos_tokens_mask(
         argc, argv, 1,
         &x_s, &y_s, &z_s, &ph_s,
         /*require_mask=*/KV_X | KV_Y | KV_PHI,
-        /*allowed_mask=*/KV_X | KV_Y | KV_PHI | KV_Z,
-        /*seen_out=*/NULL
+        /*allowed_mask=*/KV_X | KV_Y | KV_PHI
+#if ALLOW_AND_USE_Z_FOR_PICK_PLACE
+            | KV_Z
+#endif
+        ,
+        /*seen_out=*/&seen
     );
     if(e != ERR_NONE){ send_err("PLACE", err_to_str(e)); return false; }
 
-    // (nach parse_pos_tokens_mask)
     bot_action_s a = {
         .type = ACT_PLACE,
         .target_pos = {
             .x_mm_scaled = x_s,
             .y_mm_scaled = y_s,
-            .z_mm_scaled = 0,       // bleibt 0 (Z-Profil intern)
+            .z_mm_scaled = z_s,
             .phi_deg_scaled = ph_s  // Pflicht
         },
         .magnet_on = false,
+        .target_z_valid =
+#if ALLOW_AND_USE_Z_FOR_PICK_PLACE
+            ((seen & KV_Z) != 0u),
+#else
+            false,
+#endif
         .request_id = s_next_req_id++
     };
 
