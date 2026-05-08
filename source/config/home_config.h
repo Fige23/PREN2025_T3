@@ -28,7 +28,7 @@ home_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 // 1 = MOVE nur erlaubt nach HOME
 // 0 = MOVE auch ohne HOME erlauben
 #if !RELEASE
-#define REQUIRE_HOME_FOR_MOVE            0
+#define REQUIRE_HOME_FOR_MOVE            1
 
 #define HOME_ENABLE_X                    1
 #define HOME_ENABLE_Y                    1

@@ -20,7 +20,7 @@ Team 3
 #include "limit_switch.h"
 #include "protocol.h"
 #include "robot_config.h"
-
+#include "io.h"
 
 #include "position.h"
 
@@ -322,7 +322,7 @@ static bool home_finish_or_start_next_after_x(err_e* out_err){
 // -----------------------------------------------------------------------------
 err_e job_home_start(const bot_action_s* a){
     (void)a;
-
+    magnet_off();
     jh.state = HOME_STATE_IDLE;
 
 #if HOME_ENABLE_Z

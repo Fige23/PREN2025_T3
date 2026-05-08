@@ -91,9 +91,9 @@ motion_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 #define Z_ACCEL_MM_S2                    50.0f
 
 // PHI axis
-#define PHI_MAX_SPEED_DEG_S             800.0f
-#define PHI_START_SPEED_DEG_S            25.0f
-#define PHI_ACCEL_DEG_S2                400.0f
+#define PHI_MAX_SPEED_DEG_S             400.0f
+#define PHI_START_SPEED_DEG_S            5.0f
+#define PHI_ACCEL_DEG_S2                200.0f
 
 
 /* ============================================================================

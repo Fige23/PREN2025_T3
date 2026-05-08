@@ -32,6 +32,16 @@ build_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
  *
  * See source/debug_tools/ for debug feature implementations.
  * ========================================================================== */
+// -------------------------------------------------------------------------
+// PUZZLE PEICES
+// -------------------------------------------------------------------------
+
+//impacts internal pick and place z position (grip/drop pos)
+#define PUZZLE_HAS_PIN                  1
+
+
+
+
 
 // -------------------------------------------------------------------------
 // RELEASE MODE

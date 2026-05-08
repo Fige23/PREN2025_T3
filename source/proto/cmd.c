@@ -647,7 +647,10 @@ static bool cmd_move(int argc, char** argv){
 static bool cmd_pick(int argc, char** argv){
     if(g_status.estop){ send_err("PICK", "ESTOP");   return false; }
     if(REQUIRE_HOME_FOR_MOVE && !g_status.homed){ send_err("PICK", "NO_HOME"); return false; }
+
+#if CHECK_FOR_PART_PICK_PLACE
     if(g_status.has_part){ send_err("PICK", "HAS_PART");   return false; }
+#endif
 
     int32_t x_s = 0, y_s = 0, z_s = 0, ph_s = 0;
 
@@ -687,7 +690,10 @@ static bool cmd_pick(int argc, char** argv){
 static bool cmd_place(int argc, char** argv){
     if(g_status.estop){ send_err("PLACE", "ESTOP");   return false; }
     if(REQUIRE_HOME_FOR_MOVE && !g_status.homed){ send_err("PLACE", "NO_HOME"); return false; }
+
+#if CHECK_FOR_PART_PICK_PLACE
     if(!g_status.has_part){ send_err("PLACE", "NO_PART"); return false; }
+#endif
 
     int32_t x_s = 0, y_s = 0, z_s = 0, ph_s = 0;
 
@@ -1052,10 +1058,33 @@ void cmd_dispatch_line(char* line){
 // Init meldet dem Pi, dass der Parser bereit ist.
 void cmd_init(void){
     proto_reply_raw("CMD_READY\n");
+#if PUZZLE_HAS_PIN
+    proto_reply_raw("Build for Puzzle with Pin!\n");
+#elif
+    proto_reply_raw("Build for Puzzle without Pin!\n");
+#endif
+#if POSITION_ENABLE
+    proto_reply_raw("Position enabled\n");
+#elif 
+    proto_reply_raw("Position disabled\n");
+#endif
+#if POSITION_CLOSED_LOOP_ENABLE
+    proto_reply_raw("Closed Loop enabled\n");
+#elif
+    proto_reply_raw("Closed Loop disabled\n");
+#endif
+#if MOTION_TUNING_ENABLE
+    proto_reply_raw("Motion tuning enabled\n");
+#elif
+    proto_reply_raw("Motion tuning disabled\n");
+#endif
+
 }
 
+
+
 // Non-blocking Zeilensammler.
-// - Liest Bytes von UART bis \n oder \r.
+// - Liest Bytes von UART bis \n oder \r.B
 // - Bei kompletter Zeile -> dispatch_line().
 // - Bei Overflow -> Zeile verwerfen + ERR LINE OVERFLOW.
 void cmd_poll(void){

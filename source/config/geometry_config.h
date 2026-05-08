@@ -35,8 +35,8 @@ geometry_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 #define MOTOR_STEP_ANGLE_DEG_PHI        1.8f
 
 // Driver microstepping per axis.
-#define MICROSTEPS_X                    8u
-#define MICROSTEPS_Y                    8u
+#define MICROSTEPS_X                    16u
+#define MICROSTEPS_Y                    16u
 #define MICROSTEPS_Z                    8u
 #define MICROSTEPS_PHI                  8u
 
@@ -44,7 +44,7 @@ geometry_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 // These are the main mechanics values for X/Y/Z.
 #define X_TRAVEL_PER_REV_UM             40640u
 #define Y_TRAVEL_PER_REV_UM             40640u
-#define Z_TRAVEL_PER_REV_UM              4000u
+#define Z_TRAVEL_PER_REV_UM              4000u          // steigung
 
 // Phi gear ratio: output revolutions per motor revolution = NUM / DEN.
 // Direct drive => 1 / 1.
@@ -102,11 +102,11 @@ geometry_config.h	Created on: 24.03.2026	   Author: Fige23	Team 3
 
 // Physikalische Limits (unskaliert)
 #define LIMIT_X_MIN                      0
-#define LIMIT_X_MAX                      350
+#define LIMIT_X_MAX                      262
 #define LIMIT_Y_MIN                      0
-#define LIMIT_Y_MAX                      255
+#define LIMIT_Y_MAX                      298
 #define LIMIT_Z_MIN                      0
-#define LIMIT_Z_MAX                      150
+#define LIMIT_Z_MAX                      55
 #define LIMIT_PHI_MIN                   -360
 #define LIMIT_PHI_MAX                    360
 

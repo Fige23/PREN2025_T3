@@ -43,7 +43,7 @@ volatile bot_status_s g_status = {
     .pos_measured = {.x_mm_scaled = 0, .y_mm_scaled = 0, .z_mm_scaled = 0, .phi_deg_scaled = 0 }, //z, phi immer null: ungemessen
     .limits = {.x_latched = false, .y_latched = false, .z_latched = false,
                 .x_now = false, .y_now = false, .z_now = false},
-    .encoder_enabled = false
+    .encoder_enabled = true
 
 };
 
@@ -71,15 +71,14 @@ const char* err_to_str(err_e e){
     case ERR_NOT_IMPLEMENTED:
         return "NOT_IMPLEMENTED";
     case ERR_ENCODER_MAX_ITERATIONS:
-        return "ENCODER_MAX_CORR_ITERATIONS_REACHED";
-    default:
-        return "INTERNAL";
+        return "ENCODER_MAX_CORR_ITERATIONS";
     case ERR_UNEXPECTED_LIMIT:
-        return "UNEXPECTED_LIMIT_HIT";
+        return "UNEXPECTED_LIMIT";
     case ERR_ENCODER_NO_PROGRESS:
         return "ENCODER_NO_PROGRESS";
     case ERR_ENCODER_POSITION_MISMATCH:
         return "ENCODER_POSITION_MISMATCH";
+    default:
     }
 }
 
