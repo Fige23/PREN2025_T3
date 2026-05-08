@@ -43,7 +43,8 @@ volatile bot_status_s g_status = {
     .pos_measured = {.x_mm_scaled = 0, .y_mm_scaled = 0, .z_mm_scaled = 0, .phi_deg_scaled = 0 }, //z, phi immer null: ungemessen
     .limits = {.x_latched = false, .y_latched = false, .z_latched = false,
                 .x_now = false, .y_now = false, .z_now = false},
-    .encoder_enabled = true
+    .encoder_enabled = true,
+    .magnet = false
 
 };
 

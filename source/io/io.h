@@ -16,6 +16,7 @@ io.h	Created on: 26.11.2025	   Author: Fige23	Team 3
 #include <stdbool.h>
 #include "fsl_gpio.h"
 #include "pin_mux.h"
+#include "magnet.h"
 
 //Magnet funktionen:
 

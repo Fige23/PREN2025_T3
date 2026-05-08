@@ -83,6 +83,7 @@ typedef struct {
     robot_pos_s pos_measured;  // "measured"  (Encoder, später)
     limits_s limits;
     bool encoder_enabled;
+    bool magnet;
 } bot_status_s;
 
 

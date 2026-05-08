@@ -14,23 +14,26 @@ io.c	Created on: 26.11.2025	   Author: Fige23	Team 3
 #include <stdbool.h>
 #include "io.h"
 #include "pin_mux.h"
-
+#include "protocol.h"
 
 void magnet_on(void){
-    GPIO_PinWrite(BOARD_INITPINS_Magnet_GPIO, BOARD_INITPINS_Magnet_PIN, true);
+    magnet_pwm_enable(true);
+    g_status.magnet = true;
 }
 
 void magnet_off(void){
-    GPIO_PinWrite(BOARD_INITPINS_Magnet_GPIO, BOARD_INITPINS_Magnet_PIN, false);
+    magnet_pwm_enable(false);
+    g_status.magnet = true;
 }
 
 void magnet_toggle(void){
-    uint32_t current = GPIO_PinRead(BOARD_INITPINS_Magnet_GPIO, BOARD_INITPINS_Magnet_PIN);
-    GPIO_PinWrite(BOARD_INITPINS_Magnet_GPIO, BOARD_INITPINS_Magnet_PIN, !current);
+    magnet_pwm_enable(!magnet_pwm_is_enabled());
+    g_status.magnet = !g_status.magnet;
 }
 
 void magnet_on_off(bool onoff){
-    GPIO_PinWrite(BOARD_INITPINS_Magnet_GPIO, BOARD_INITPINS_Magnet_PIN, onoff);
+    magnet_pwm_enable(onoff);
+    g_status.magnet = onoff;
 }
 
 void stepper_x_dir(bool onoff){
